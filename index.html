@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planet Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <canvas id="glcanvas"> </canvas>
+    <button id="controls-toggle" class="controls-toggle" aria-label="Toggle Controls">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+    </button>
+
+    <div id="controls" class="controls-panel">
+        <div class="controls-header">
+            <div class="header-left">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="settings-icon">
+                <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <span>Controles de variáveis</span>
+            </div>
+        <div class="header-right">
+            <button id="controls-close" class="controls-close" aria-label="Close Controls">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="controls-content">
+      
+        <div class="control-section">
+            <h4>Noise</h4>
+            <div class="control-group">
+                <label for="octaves">Octaves</label>
+                <input type="range" id="octaves" min="1" max="10" value="4" step="1">
+                <span id="octaves-value">4</span>
+            </div>
+            <div class="control-group">
+                <label for="persistence">Persistence</label>
+                <input type="range" id="persistence" min="0.1" max="1.0" value="0.5" step="0.05">
+                <span id="persistence-value">0.5</span>
+            </div>
+            <div class="control-group">
+                <label for="lacunarity">Lacunarity</label>
+                <input type="range" id="lacunarity" min="1.0" max="4.0" value="2.0" step="0.1">
+                <span id="lacunarity-value">2.0</span>
+            </div>
+            <div class="control-group">
+                <label for="noise-zoom">Noise Zoom</label>
+                <input type="range" id="noise-zoom" min="1.0" max="10.0" value="1.0" step="0.1">
+                <span id="noise-zoom-value">1.0</span>
+            </div>
+            <!-- <div class="control-group">
+                <label for="noise-resolution">Noise Resolution</label>
+                <input type="range" id="noise-resolution" min="256" max="4096" value="512" step="256">
+                <span id="noise-resolution-value">512</span>
+            </div> -->
+            <div class="control-group">
+                <label for="seed-input">Seed</label>
+                <input type="number" id="seed-input" min="0" max="100000" value="42" step="1">
+                <button id="seed-random" style="padding: 4px 12px; background: #4fd1c7; border: none; border-radius: 4px; color: #1a202c; font-size: 12px; cursor: pointer; font-weight: 500;">RANDOM</button>
+
+            </div>
+        </div>
+
+        <div class="control-section">
+            <h4>Shaders</h4>
+            <div class="control-group">
+                <label for="light-speed">Light Speed</label>
+                <input type="range" id="light-speed" min="0.0" max="10.0" value="1.5" step="0.1">
+                <span id="light-speed-value">1.5</span>
+            </div>
+            <div class="control-group">
+                <label for="light-speed">Light Brightness</label>
+                <input type="range" id="light-brightness" min="0.0" max="3.0" value="1.0" step="0.1">
+                <span id="light-brightness-value">1.0</span>
+            </div>
+            <div class="control-group">
+                <label for="light-angle">XXXXXXXX</label>
+                <input type="range" id="light-angle" min="0" max="360" value="45" step="1">
+                <span id="light-angle-value">XX°</span>
+            </div>
+            <div class="control-group">
+                <label for="light-pitch">XXXXXXXX</label>
+                <input type="range" id="light-pitch" min="-90" max="90" value="30" step="1">
+                <span id="light-pitch-value">XX°</span>
+            </div>
+
+            <div class="control-group">
+                <label for="lambertian-toggle">Lambertian Diffuse Shadow</label>
+                <input type="checkbox" id="lambertian-toggle" checked>
+            </div>
+
+            <div class="control-section">
+                <h4>Terrain Layers</h4>
+                <div class="control-group">
+                    <label for="num-layers">Active Layers</label>
+                    <input type="number" id="num-layers" min="1" max="10" value="10" step="1">
+                    <span id="num-layers-value">10</span>
+                </div>
+                <div class="control-group">
+                    <label for="layer0-level">Layer 0</label>
+                    <input type="color" id="layer0-color" value="#000080">
+                    <input type="range" id="layer0-level" min="0.0" max="1.0" value="0.20" step="0.01">
+                    <span id="layer0-value">0.20</span>
+                </div>
+                <div class="control-group">
+                    <label for="layer1-level">Layer 1</label>
+                    <input type="color" id="layer1-color" value="#0000ff">
+                    <input type="range" id="layer1-level" min="0.0" max="1.0" value="0.30" step="0.01">
+                    <span id="layer1-value">0.30</span>
+                </div>
+                <div class="control-group">
+                    <label for="layer2-level">Layer 2</label>
+                    <input type="color" id="layer2-color" value="#0080ff">
+                    <input type="range" id="layer2-level" min="0.0" max="1.0" value="0.35" step="0.01">
+                    <span id="layer2-value">0.35</span>
+                </div>
+                <div class="control-group">
+                    <label for="layer3-level">Layer 3</label>
+                    <input type="color" id="layer3-color" value="#ccb380">
+                    <input type="range" id="layer3-level" min="0.0" max="1.0" value="0.40" step="0.01">
+                    <span id="layer3-value">0.40</span>
+                </div>
+                <div class="control-group">
+                    <label for="layer4-level">Layer 4</label>
+                    <input type="color" id="layer4-color" value="#33ff33">
+                    <input type="range" id="layer4-level" min="0.0" max="1.0" value="0.50" step="0.01">
+                    <span id="layer4-value">0.50</span>
+                </div>
+                <div class="control-group">
+                    <label for="layer5-level">Layer 5</label>
+                    <input type="color" id="layer5-color" value="#008000">
+                    <input type="range" id="layer5-level" min="0.0" max="1.0" value="0.60" step="0.01">
+                    <span id="layer5-value">0.60</span>
+                </div>
+                <div class="control-group">
+                    <label for="layer6-level">Layer 6</label>
+                    <input type="color" id="layer6-color" value="#808080">
+                    <input type="range" id="layer6-level" min="0.0" max="1.0" value="0.70" step="0.01">
+                    <span id="layer6-value">0.70</span>
+                </div>
+                <div class="control-group">
+                    <label for="layer7-level">Layer 7</label>
+                    <input type="color" id="layer7-color" value="#404040">
+                    <input type="range" id="layer7-level" min="0.0" max="1.0" value="0.75" step="0.01">
+                    <span id="layer7-value">0.75</span>
+                </div>
+                <div class="control-group">
+                    <label for="layer8-level">Layer 8</label>
+                    <input type="color" id="layer8-color" value="#b36b00">
+                    <input type="range" id="layer8-level" min="0.0" max="1.0" value="0.80" step="0.01">
+                    <span id="layer8-value">0.80</span>
+                </div>
+                <div class="control-group">
+                    <label for="layer9-level">Layer 9</label>
+                    <input type="color" id="layer9-color" value="#8b4513">
+                    <input type="range" id="layer9-level" min="0.0" max="1.0" value="0.85" step="0.01">
+                    <span id="layer9-value">0.90</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-section">
+            <h4>Outro</h4>
+            <div class="control-group">
+                <label for="wireframe-toggle">Wireframe</label>
+                <input type="checkbox" id="wireframe-toggle" unchecked>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="main.js"></script>
+</body>
+</html>
