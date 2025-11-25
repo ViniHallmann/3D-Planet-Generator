@@ -483,7 +483,8 @@ export class Renderer {
 
         mat4.perspective(projectionMatrix, Math.PI / 4, this.canvas.width / this.canvas.height, 0.1, 100.0); // Adiciona ilusao de profundidade, basicamente transforma de 3D para 2D para "caber" na tela
         mat4.multiply(mvpMatrix, projectionMatrix, viewMatrix);                                              // Combina tudo em uma so coisa. ViewMatrix vira relativo a projection aqui e depois a projection vira 2D com profundidade
-        
+        mat4.multiply(mvpMatrix, mvpMatrix, modelMatrix);                                                     // Agora a mvpMatrix tem tudo junto
+
         this.setTime(time);
         this.setLambertianDiffuseUse(lambertianDiffuse);
         this.setMatrix(mvpMatrix);
