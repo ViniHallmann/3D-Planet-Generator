@@ -471,16 +471,18 @@ export class Renderer {
         
         gl.useProgram(this.program);
 
-        const projectionMatrix = mat4.create(); 
-        mat4.perspective(projectionMatrix, Math.PI / 4, this.canvas.width / this.canvas.height, 0.1, 100.0);
-
+        const modelMatrix = mat4.create();
         const viewMatrix = mat4.create();
-        mat4.lookAt(viewMatrix, [cameraPos.x, cameraPos.y, cameraPos.z], [0, 0, 0], [0, 1, 0]);
-        
-        if (autoRotate) { mat4.rotateY(viewMatrix, viewMatrix, time * -0.1); }
-        
+        const projectionMatrix = mat4.create();
         const mvpMatrix = mat4.create();
-        mat4.multiply(mvpMatrix, projectionMatrix, viewMatrix);
+
+        mat4.identity(modelMatrix);                                                             // Isso aqui faz com que a matriz modelo fique na origem do mundo 
+        mat4.lookAt(viewMatrix, [cameraPos.x, cameraPos.y, cameraPos.z], [0, 0, 0], [0, 1, 0]); // Isso aqui passa os valores da camera: pos, origem do mundo que ela vai olhar, up vector
+        
+        if (autoRotate) { mat4.rotateY(viewMatrix, viewMatrix, time * -0.1); } 
+
+        mat4.perspective(projectionMatrix, Math.PI / 4, this.canvas.width / this.canvas.height, 0.1, 100.0); // Adiciona ilusao de profundidade, basicamente transforma de 3D para 2D para "caber" na tela
+        mat4.multiply(mvpMatrix, projectionMatrix, viewMatrix);                                              // Combina tudo em uma so coisa. ViewMatrix vira relativo a projection aqui e depois a projection vira 2D com profundidade
         
         this.setTime(time);
         this.setLambertianDiffuseUse(lambertianDiffuse);
