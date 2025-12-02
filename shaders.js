@@ -55,7 +55,7 @@ export const vertexShaderSource = glsl`#version 300 es
 
         if (u_renderPass == 2.) {
             float displacementValue = getCloudDisplacement(a_position.xyz);
-            float totalScale = u_cloudScale + (displacementValue * u_cloudDisplacementIntensity * a_tri);
+            float totalScale = u_cloudScale + (displacementValue * u_cloudDisplacementIntensity * a_triangleHeight);
             
             pos = a_position.xyz * totalScale; 
             v_height = 0.0; 

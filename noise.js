@@ -96,6 +96,13 @@ export class NoiseGenerator {
             frequency *= lacunarity;
         }
         return (total / maxValue + 1) / 2;
+        //FAZ com que o noise varie entre numeros mais baixo
+        //Ele acaba sempre normalizando seu valor no meio [0.5], entao esse ajuste de contraste faz com que os valores fiquem mais proximos de 0 ou 1
+        // let normalized = (total / maxValue + 1) / 2;
+        // let contrast = 1.5; 
+        // let val = (normalized - 0.5) * contrast + 0.5;
+
+        // return Math.max(0.0, Math.min(1.0, val));
     }
     
 }
