@@ -97,7 +97,63 @@
             </div>
 
             <div class="control-section">
+                <h4>Clouds</h4>
+
+                <div class="control-group">
+                    <label for="cloud-speed">Cloud Speed</label>
+                    <input type="range" id="cloud-speed" min="0.0" max="1.0" value="0.1" step="0.05">
+                    <span id="cloud-speed-value">0.1</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="cloud-opacity">Cloud Opacity</label>
+                    <input type="range" id="cloud-opacity" min="0.0" max="1.0" value="0.5" step="0.05">
+                    <span id="cloud-opacity-value">0.5</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="cloud-warp-intensity">Cloud Warp Intensity</label>
+                    <input type="range" id="cloud-warp-intensity" min="0.0" max="1.0" value="0.5" step="0.05">
+                    <span id="cloud-warp-intensity-value">0.5</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="cloud-warp-time">Cloud Warp Time</label>
+                    <input type="range" id="cloud-warp-time" min="0.0" max="1.0" value="0.5" step="0.05">
+                    <span id="cloud-warp-time-value">0.5</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="cloud-texture-zoom">Cloud texture-zoom</label>
+                    <input type="range" id="cloud-texture-zoom" min="0.0" max="5.0" value="1.10" step="0.1">
+                    <span id="cloud-texture-zoom-value">1.10</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="cloud-threshold">Cloud Threshold</label>
+                    <input type="range" id="cloud-threshold" min="0.0" max="1.0" value="0.65" step="0.01">
+                    <span id="cloud-threshold-value">0.65</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="cloud-alpha">Cloud Alpha</label>
+                    <input type="range" id="cloud-alpha" min="0.0" max="1.0" value="0.65" step="0.01">
+                    <span id="cloud-alpha-value">0.65</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="cloud-color">Cloud Color</label>
+                    <input type="color" id="cloud-color" value="#FFFFFF">
+                    <span id="cloud-color-value">#FFFFFF</span>
+                </div>
+
+            <div class="control-section">
                 <h4>Terrain Layers</h4>
+                <div class="control-group">
+                    <label for="terrain-displacement">Terrain Displacement</label>
+                    <input type="range" id="terrain-displacement" min="0.0" max="1.0" value="0.3" step="0.01">
+                    <span id="terrain-displacement-value">0.3</span>
+                </div>
                 <div class="control-group">
                     <label for="num-layers">Active Layers</label>
                     <input type="number" id="num-layers" min="1" max="10" value="10" step="1">
