@@ -42,6 +42,8 @@ function getControlsElements() {
         controlsClose : document.getElementById('controls-close'),
         seedInput     : document.getElementById('seed-input'),
         seedRandomBtn : document.getElementById('seed-random'),
+        subdivisionsSlider : document.getElementById('subdivisons'),
+        subdivisionsValue  : document.getElementById('subdivisons-value'),
         octavesSlider : document.getElementById('octaves'),
         octavesValue  : document.getElementById('octaves-value'),
         persistenceSlider: document.getElementById('persistence'),
@@ -116,6 +118,7 @@ async function main() {
     const {
         controlsToggle, controlsPanel, controlsClose,
         seedInput, seedRandomBtn,
+        subdivisionsSlider, subdivisionsValue,
         octavesSlider, octavesValue,
         persistenceSlider, persistenceValue,
         lacunaritySlider, lacunarityValue,
@@ -144,6 +147,7 @@ async function main() {
     let showWireframe = false;
     let showLambertianDiffuse = false;
     let noiseParams = {
+        subdivisions: 1,
         octaves: 4,    
         persistence: 0.5, 
         lacunarity: 2.0 ,
@@ -278,17 +282,19 @@ async function main() {
         }
     });
 
-    function setupInputListeners(sliderElement, valueElement, targetObject, paramKey, parseFunc, formatFunc, debounce=true) {
+    function setupInputListeners(sliderElement, valueElement, targetObject, paramKey, parseFunc, formatFunc, debounce=true, onChangeCallback=null) {
         let timeoutId;
         sliderElement.addEventListener('input', (e) => {
             targetObject[paramKey] = parseFunc(e.target.value);
             valueElement.textContent = formatFunc(targetObject[paramKey]);
             
             clearTimeout(timeoutId);
+            //ISSO AQUI SERVE PARA ADICIONAR UM TEMPINHO ANTES DE CHAMAR A FUNCAO
             if (debounce) {
                 timeoutId = setTimeout(() => { renderer.regenerateTerrain(noiseParams); }, 150);
             } else {
-                renderer.regenerateTerrain(noiseParams);
+                //FIZ ISSO AQUI PRA CHAMAR UMA FUNCAO DE CALLBACK QUANDO MUDAR UM PARAMETRO QUE PRECISE REGERAR OUTRA COISA
+                if (onChangeCallback){ onChangeCallback(targetObject[paramKey]); }
             }
         });   
     }
@@ -366,11 +372,16 @@ async function main() {
         renderer.setLayerColors(layerColors);
     });
 
+    renderer.setGeometry(noiseParams.subdivisions);
     renderer.setLightSpeed(shadersParams.lightSpeed);
     renderer.setLightBrightness(shadersParams.lightBrightness);
     renderer.setLayerLevels(layerLevels);
     renderer.setLayerColors(layerColors);
 
+    setupInputListeners(subdivisionsSlider, subdivisionsValue, noiseParams, 'subdivisions', parseInt, (val) => val.toString(), false, (value) => { 
+        renderer.regenerateIcosphere(value, noiseParams);
+        return value;
+    });
     setupInputListeners(octavesSlider,      octavesValue,     noiseParams, 'octaves',     parseInt,   (val) => val.toString());
     setupInputListeners(persistenceSlider,  persistenceValue, noiseParams, 'persistence', parseFloat, (val) => val.toFixed(2));
     setupInputListeners(lacunaritySlider,   lacunarityValue,  noiseParams, 'lacunarity',  parseFloat, (val) => val.toFixed(2));
@@ -386,9 +397,8 @@ async function main() {
     setupInputListeners(cloudThreshold, cloudThresholdValue, cloudParams, 'cloudThreshold', parseFloat, (val) => val.toFixed(2), false);
     setupInputListeners(cloudAlpha, cloudAlphaValue, cloudParams, 'cloudAlpha', parseFloat, (val) => val.toFixed(2), false);
     setupInputListeners(cloudOpacity, cloudOpacityValue, cloudParams, 'opacity', parseFloat, (val) => val.toFixed(2), false);
-    setupInputListeners(cloudColor, cloudColorValue, cloudParams, 'color', (val) => val, (val) => {
-        const rgb = hexToRgb(val);
-        return `R: ${Math.round(rgb[0]*255)} G: ${Math.round(rgb[1]*255)} B: ${Math.round(rgb[2]*255)}`;
+    setupInputListeners(cloudColor, cloudColorValue, cloudParams, 'color', (val) => hexToRgb(val), (val) => {
+        return `R: ${Math.round(val[0]*255)} G: ${Math.round(val[1]*255)} B: ${Math.round(val[2]*255)}`;
     }, false);
     setupInputListeners(terrainDisplacement, terrainDisplacementValue, shadersParams, 'terrainDisplacement', parseFloat, (val) => val.toFixed(2), false);
     setupInputListeners(cloudTextureZoom, cloudTextureZoomValue, cloudParams, 'textureZoom', parseFloat, (val) => val.toFixed(2), false);
