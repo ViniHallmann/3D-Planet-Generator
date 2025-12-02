@@ -56,6 +56,24 @@ function getControlsElements() {
         lightBrightness: document.getElementById('light-brightness'),
         lightBrightnessValue: document.getElementById('light-brightness-value'),
         lambertianDiffuseToggle: document.getElementById('lambertian-toggle'),
+        cloudSpeed: document.getElementById('cloud-speed'),
+        cloudSpeedValue: document.getElementById('cloud-speed-value'),
+        cloudOpacity: document.getElementById('cloud-opacity'),
+        cloudOpacityValue: document.getElementById('cloud-opacity-value'),
+        cloudWarpIntensity: document.getElementById('cloud-warp-intensity'),
+        cloudWarpIntensityValue: document.getElementById('cloud-warp-intensity-value'),
+        cloudWarpTime: document.getElementById('cloud-warp-time'),
+        cloudWarpTimeValue: document.getElementById('cloud-warp-time-value'),
+        cloudThreshold: document.getElementById('cloud-threshold'),
+        cloudThresholdValue: document.getElementById('cloud-threshold-value'),
+        cloudAlpha: document.getElementById('cloud-alpha'),
+        cloudAlphaValue: document.getElementById('cloud-alpha-value'),
+        cloudColor: document.getElementById('cloud-color'),
+        cloudColorValue: document.getElementById('cloud-color-value'),
+        cloudTextureZoom: document.getElementById('cloud-texture-zoom'),
+        cloudTextureZoomValue: document.getElementById('cloud-texture-zoom-value'),
+        terrainDisplacement: document.getElementById('terrain-displacement'),
+        terrainDisplacementValue: document.getElementById('terrain-displacement-value'),
         numLayersSlider: document.getElementById('num-layers'),
         numLayersValue: document.getElementById('num-layers-value'),
         layer0Slider: document.getElementById('layer0-level'),
@@ -104,6 +122,15 @@ async function main() {
         noiseZoomSlider, noiseZoomValue,
         wireframeToggle,
         lightSpeed, lightSpeedValue, lightBrightness, lightBrightnessValue, lambertianDiffuseToggle,
+        cloudSpeed, cloudSpeedValue,
+        cloudOpacity, cloudOpacityValue,
+        cloudWarpIntensity, cloudWarpIntensityValue,
+        cloudWarpTime, cloudWarpTimeValue,
+        cloudThreshold, cloudThresholdValue,
+        cloudAlpha, cloudAlphaValue,
+        cloudColor, cloudColorValue,
+        cloudTextureZoom, cloudTextureZoomValue,
+        terrainDisplacement, terrainDisplacementValue,
         numLayersSlider, numLayersValue,
         layer0Slider, layer1Slider, layer2Slider, layer3Slider, layer4Slider, layer5Slider, layer6Slider, layer7Slider, layer8Slider, layer9Slider, 
         layer0Value, layer1Value, layer2Value, layer3Value, layer4Value, layer5Value, layer6Value, layer7Value, layer8Value, layer9Value,
@@ -146,6 +173,7 @@ async function main() {
         layer9: 0.90,
     };
 
+    // PRA FAZER DEPOIS, PRECISO MODIFICAR OS VALORES DAS CORES PARA SER O MESMO DO HTML OU VICE VERSA
     let layerColors = {
         layer0:  [0.0, 0.0, 0.5],    
         layer1:  [0.0, 0.5, 1.0],
@@ -163,17 +191,32 @@ async function main() {
         lightSpeed: 1.5,
         lightBrightness: 1.0,
         layers : layerLevels,
-        useLambertianDiffuse: showLambertianDiffuse
+        useLambertianDiffuse: showLambertianDiffuse,
+        terrainDisplacement: 0.3,
     }
 
     let cloudParams = {
         opacity: 0.5,
-        scale: 1.25
+        scale: 1.25,
+        warpIntensity: 0.1,
+        warpTime: 1.0,
+        threshold: 0.65,
+        alpha: 0.5,
+        color: [1.0, 1.0, 1.0],
+        textureZoom: 1.10,
+        speed: 0.01,
     };
 
     let cloudShadowParams = {
         opacity: 0.35,
-        scale: 1.25
+        scale: 1.25,
+        warpIntensity: 0.1,
+        warpTime: 1.0,
+        threshold: 0.65,
+        alpha: 0.85,
+        color: [0.0, 0.0, 0.0],
+        terrainDisplacement: 0.3,
+        textureZoom: 1.10,
     };
 
     const renderer = new Renderer(canvas, noiseParams);
@@ -336,6 +379,20 @@ async function main() {
     setupInputListeners(lightSpeed, lightSpeedValue,  shadersParams, 'lightSpeed', parseFloat, (val) => val.toFixed(2), false);
     setupInputListeners(lightBrightness, lightBrightnessValue,  shadersParams, 'lightBrightness', parseFloat, (val) => val.toFixed(2), false);
 
+
+    setupInputListeners(cloudSpeed, cloudSpeedValue, cloudParams, 'cloudSpeed', parseFloat, (val) => val.toFixed(2), false);
+    setupInputListeners(cloudWarpIntensity, cloudWarpIntensityValue, cloudParams, 'cloudWarpIntensity', parseFloat, (val) => val.toFixed(2), false);
+    setupInputListeners(cloudWarpTime, cloudWarpTimeValue, cloudParams, 'cloudWarpTime', parseFloat, (val) => val.toFixed(2), false);
+    setupInputListeners(cloudThreshold, cloudThresholdValue, cloudParams, 'cloudThreshold', parseFloat, (val) => val.toFixed(2), false);
+    setupInputListeners(cloudAlpha, cloudAlphaValue, cloudParams, 'cloudAlpha', parseFloat, (val) => val.toFixed(2), false);
+    setupInputListeners(cloudOpacity, cloudOpacityValue, cloudParams, 'opacity', parseFloat, (val) => val.toFixed(2), false);
+    setupInputListeners(cloudColor, cloudColorValue, cloudParams, 'color', (val) => val, (val) => {
+        const rgb = hexToRgb(val);
+        return `R: ${Math.round(rgb[0]*255)} G: ${Math.round(rgb[1]*255)} B: ${Math.round(rgb[2]*255)}`;
+    }, false);
+    setupInputListeners(terrainDisplacement, terrainDisplacementValue, shadersParams, 'terrainDisplacement', parseFloat, (val) => val.toFixed(2), false);
+    setupInputListeners(cloudTextureZoom, cloudTextureZoomValue, cloudParams, 'textureZoom', parseFloat, (val) => val.toFixed(2), false);
+    setupInputListeners(cloudTextureZoom, cloudTextureZoomValue, cloudShadowParams, 'textureZoom', parseFloat, (val) => val.toFixed(2), false);
     setupLayerListeners(layer0Slider, layer0Value, layerLevels, 'layer0');
     setupLayerListeners(layer1Slider, layer1Value, layerLevels, 'layer1');
     setupLayerListeners(layer2Slider, layer2Value, layerLevels, 'layer2');
@@ -422,7 +479,7 @@ async function main() {
             const layerParams = {
                 ...cloudParams,
                 scale: cloudParams.scale + (i * cloudLayerOffset),
-                opacity: layerOpacity
+                opacity: layerOpacity,
             };
             renderer.render(time, cameraPosition, layerParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 2.);
         }
