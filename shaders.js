@@ -13,6 +13,9 @@ export const vertexShaderSource = glsl`#version 300 es
     uniform float u_renderPass;
 
     uniform float u_cloudScale;
+    uniform float u_terrainDisplacement;      
+    uniform float u_cloudDisplacementIntensity;
+    uniform float u_cloudSpeed;
 
     out vec3 v_normal;
     out vec2 v_texcoord;
@@ -30,9 +33,9 @@ export const vertexShaderSource = glsl`#version 300 es
         weights = max(weights - 0.2, 0.0);
         weights /= dot(weights, vec3(1.0));
 
-        float speed = 0.1; 
+        //float speed = 0.1; 
         vec3 p = pos;
-        p.xz = rotate2D(u_time * speed) * p.xz; 
+        p.xz = rotate2D(u_time * u_cloudSpeed) * p.xz; 
 
         float x = texture(u_cloudTexture, p.yz).r;
         float y = texture(u_cloudTexture, p.zx).r;
@@ -45,14 +48,14 @@ export const vertexShaderSource = glsl`#version 300 es
         vec3 pos;
 
         if (u_renderPass == 1.) {
-            vec3 displacement = a_position.xyz * a_triangleHeight * 0.3;
+            vec3 displacement = a_position.xyz * a_triangleHeight * u_terrainDisplacement;
             pos = a_position.xyz + displacement;
             v_height = a_triangleHeight;
         }
 
         if (u_renderPass == 2.) {
             float displacementValue = getCloudDisplacement(a_position.xyz);
-            float totalScale = u_cloudScale + (displacementValue * 0.06);
+            float totalScale = u_cloudScale + (displacementValue * u_cloudDisplacementIntensity * a_tri);
             
             pos = a_position.xyz * totalScale; 
             v_height = 0.0; 
@@ -61,10 +64,10 @@ export const vertexShaderSource = glsl`#version 300 es
             // ALEM DISSO AINDA PRECISO PASSAR TODAS AS VARIAVEIS PELO HTML
         }
 
-        if (u_renderPass == 3.) {
-            vec3 terrainDisplacement = a_position.xyz * a_triangleHeight * 0.3;
+        if (u_renderPass == 3.) { //AQUI USA U_TERRAINDISPLACEMENT POIS A SOMBRA EH PROJETADA NA TERRA
+            vec3 terrainDisplacement = a_position.xyz * a_triangleHeight * u_terrainDisplacement;
             
-            vec3 shadowOffset = normalize(a_position.xyz) * 0.005;
+            vec3 shadowOffset = normalize(a_position.xyz) * 0.005; // ESSE VALOR AQUI PODE VIRAR UMA VARIAVEL DE CONTROLE MAS NAO VEJO MUITO SENTIDO AGORA
             
             pos = a_position.xyz + terrainDisplacement + shadowOffset;
             v_height = 0.0;
@@ -117,13 +120,23 @@ export const fragmentShaderSource = glsl`#version 300 es
     uniform sampler2D u_cloudTexture;
 
     uniform float u_time;
-    uniform float u_lightSpeed;
-    uniform float u_rotationSpeed;
+    uniform float u_lightSpeed;      
+    uniform float u_lightAngle;      
+    uniform float u_lightPitch;
     uniform bool u_lambertianDiffuse;
     uniform float u_lightBrightness;
 
     uniform float u_cloudOpacity;
     uniform float u_cloudScale;
+    uniform float u_cloudSpeed;
+    uniform float u_cloudWarpIntensity;
+    uniform float u_cloudWarpTime;
+    uniform float u_cloudThreshold;
+    uniform float u_cloudAlpha;
+    uniform vec3 u_cloudColor;
+    uniform float u_cloudTextureZoom;
+
+    //uniform float u_shadowOpacity;
     
     out vec4 outColor;
 
@@ -173,7 +186,7 @@ export const fragmentShaderSource = glsl`#version 300 es
         weights /= dot(weights, vec3(1.0));
 
 
-        float warpTime = u_time * 0.05;
+        float warpTime = u_time * u_cloudWarpTime * 0.1;
         vec3 warpOffset = vec3(warpTime, warpTime * 0.5, -warpTime);
         vec3 warpPos = (pos * scale * 0.5) + warpOffset;
 
@@ -185,8 +198,8 @@ export const fragmentShaderSource = glsl`#version 300 es
         float flowTime = u_time * 0.02;
         vec3 flowOffset = vec3(flowTime, 0.0, flowTime * 0.2);
         
-        float warpIntensity = 0.4;
-        vec3 mainPos = (pos * scale) + flowOffset + (vec3(warpVal) * warpIntensity);
+        // float warpIntensity = 0.4;
+        vec3 mainPos = (pos * scale) + flowOffset + (vec3(warpVal) * u_cloudWarpIntensity);
 
         float x = texture(u_cloudTexture, mainPos.yz).r;
         float y = texture(u_cloudTexture, mainPos.zx).r;
@@ -197,8 +210,10 @@ export const fragmentShaderSource = glsl`#version 300 es
 
     void main() {
         vec3 normal = normalize(v_normal);
-        float angle = u_time * u_lightSpeed;
-        float pitch = 0.5;
+        // float angle = u_time * u_lightSpeed;
+        // float pitch = 0.5;
+        float angle = u_lightAngle + (u_time * u_lightSpeed);
+        float pitch = u_lightPitch;
         vec3 lightDir = normalize(vec3(
             cos(angle) * cos(pitch),
             sin(pitch),
@@ -224,10 +239,10 @@ export const fragmentShaderSource = glsl`#version 300 es
 
         if (u_renderPass == 2.) {
 
-            float cloudNoise = triplanarSample(v_modelPosition, normal, 1.15); 
+            float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
 
             // u_cloudThreshold depois
-            if (cloudNoise < 0.65) discard;
+            if (cloudNoise < u_cloudThreshold) discard;
             
             float alpha = u_cloudOpacity * smoothstep(0.5, 0.8, cloudNoise);
 
@@ -236,8 +251,8 @@ export const fragmentShaderSource = glsl`#version 300 es
         } 
         if (u_renderPass == 3.) {
             
-            float cloudNoise = triplanarSample(v_modelPosition, normal, 1.15); 
-            if (cloudNoise < 0.65) discard;
+            float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
+            if (cloudNoise < u_cloudThreshold) discard;
 
             float alpha = smoothstep(0.65, 0.8, cloudNoise);
             
