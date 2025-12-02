@@ -63,6 +63,14 @@ export class Renderer {
         this.renderPassLoc   = gl.getUniformLocation(this.program, 'u_renderPass');
         this.cloudOpacityLoc = gl.getUniformLocation(this.program, 'u_cloudOpacity');
         this.cloudScaleLoc   = gl.getUniformLocation(this.program, 'u_cloudScale');
+        this.cloudSpeedLoc   = gl.getUniformLocation(this.program, 'u_cloudSpeed');
+        this.cloudWarpIntensityLoc = gl.getUniformLocation(this.program, 'u_cloudWarpIntensity');
+        this.cloudWarpTimeLoc      = gl.getUniformLocation(this.program, 'u_cloudWarpTime');
+        this.cloudThresholdLoc     = gl.getUniformLocation(this.program, 'u_cloudThreshold');
+        this.cloudAlphaLoc         = gl.getUniformLocation(this.program, 'u_cloudAlpha');
+        this.cloudColorLoc         = gl.getUniformLocation(this.program, 'u_cloudColor');
+        this.cloudTextureZoomLoc   = gl.getUniformLocation(this.program, 'u_cloudTextureZoom');
+        this.terrainDisplacementLoc = gl.getUniformLocation(this.program, 'u_terrainDisplacement');
 
         this.layer0LevelLoc = gl.getUniformLocation(this.program, 'u_layer0Level');
         this.layer1LevelLoc = gl.getUniformLocation(this.program, 'u_layer1Level');
@@ -359,6 +367,11 @@ export class Renderer {
         this.gl.uniform1i(this.lambertianDiffuseLoc, bool);
     }
 
+    setTerrainDisplacement(displacement){
+        this.gl.useProgram(this.program);
+        this.gl.uniform1f(this.terrainDisplacementLoc, displacement);
+    }
+
     setRenderPass(pass){
         this.gl.useProgram(this.program);
         this.gl.uniform1f(this.renderPassLoc, pass);
@@ -372,6 +385,41 @@ export class Renderer {
     setCloudScale(scale){
         this.gl.useProgram(this.program);
         this.gl.uniform1f(this.cloudScaleLoc, scale);
+    }
+
+    setCloudSpeed(speed){
+        this.gl.useProgram(this.program);
+        this.gl.uniform1f(this.cloudSpeedLoc, speed);
+    }
+
+    setCloudWarpIntensity(intensity){
+        this.gl.useProgram(this.program);
+        this.gl.uniform1f(this.cloudWarpIntensityLoc, intensity);
+    }
+
+    setCloudWarpTime(time){
+        this.gl.useProgram(this.program);
+        this.gl.uniform1f(this.cloudWarpTimeLoc, time);
+    }
+
+    setCloudThreshold(threshold){
+        this.gl.useProgram(this.program);
+        this.gl.uniform1f(this.cloudThresholdLoc, threshold);
+    }
+
+    setCloudAlpha(alpha){
+        this.gl.useProgram(this.program);
+        this.gl.uniform1f(this.cloudAlphaLoc, alpha);
+    }
+
+    setCloudColor(color){
+        this.gl.useProgram(this.program);
+        this.gl.uniform3fv(this.cloudColorLoc, color);
+    }
+
+    setCloudTextureZoom(zoom){
+        this.gl.useProgram(this.program);
+        this.gl.uniform1f(this.cloudTextureZoomLoc, zoom);
     }
 
     setLambertianDiffuseUse(bool){
@@ -396,6 +444,7 @@ export class Renderer {
         this.setLightSpeed(shadersParams.lightSpeed);
         this.setLightBrightness(shadersParams.lightBrightness);
         this.setLambertianDiffuseUse(shadersParams.useLambertianDiffuse);
+        this.setTerrainDisplacement(shadersParams.terrainDisplacement);
         this.setLayerLevels(shadersParams.layers);
 
         gl.bindVertexArray(this.vao);
@@ -422,8 +471,16 @@ export class Renderer {
         gl.disable(gl.CULL_FACE);
 
         this.setRenderPass(2);
+        this.setTerrainDisplacement(cloudParams.terrainDisplacement);
         this.setCloudOpacity(cloudParams.opacity);
         this.setCloudScale(cloudParams.scale);
+        this.setCloudSpeed(cloudParams.speed);
+        this.setCloudWarpIntensity(cloudParams.warpIntensity);
+        this.setCloudWarpTime(cloudParams.warpTime);
+        this.setCloudThreshold(cloudParams.threshold);
+        this.setCloudAlpha(cloudParams.alpha);
+        this.setCloudColor(cloudParams.color);
+        this.setCloudTextureZoom(cloudParams.textureZoom);
 
         if (cloudParams.texture) {
             this.setCloudTexture(cloudParams.texture);
@@ -449,6 +506,14 @@ export class Renderer {
         this.setRenderPass(3);
         this.setCloudOpacity(cloudParams.opacity);
         this.setCloudScale(cloudParams.scale);
+        this.setCloudSpeed(cloudParams.speed);
+        this.setCloudWarpIntensity(cloudParams.warpIntensity);
+        this.setCloudWarpTime(cloudParams.warpTime);
+        this.setCloudThreshold(cloudParams.threshold);
+        this.setCloudAlpha(cloudParams.alpha);
+        this.setCloudColor(cloudParams.color);
+        this.setCloudTextureZoom(cloudParams.textureZoom);
+        this.setTerrainDisplacement(cloudParams.terrainDisplacement);
 
         if (cloudParams.texture) {
             this.setCloudTexture(cloudParams.texture);
