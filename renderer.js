@@ -17,7 +17,7 @@ export class Renderer {
         this.initializeWebGL();
         this.createShaderProgram();
         this.getLocations();
-        this.initializeGeometry();
+        this.initializeGeometry(noiseParams.subdivisions);
         this.initializeNoise(noiseParams);
         this.createBuffers(this.geometry);
         this.createNoiseTexture(noiseParams);
@@ -97,8 +97,8 @@ export class Renderer {
         this.layer10ColorLoc = gl.getUniformLocation(this.program, 'u_layer10Color');
     }
 
-    initializeGeometry() {
-        this.geometry = createIcosphere(6);
+    initializeGeometry(subdivisions) {
+        this.geometry = createIcosphere(subdivisions);
         this.numElements = this.geometry.indices.length;
         this.numElementsLines = this.geometry.edgeIndices.length;
     }
@@ -180,13 +180,21 @@ export class Renderer {
         this.noiseGenerator.setSeed(seed);
     }
 
-    regenerateTerrain(params ) {
+    regenerateTerrain(params) {
         const { octaves, persistence, lacunarity, noiseZoom, noiseResolution } = params;
 
         this.triangleHeights = this.calculateTriangleHeights(this.geometry, params);
         
         this.updateTriangleHeightBuffer();
         this.createNoiseTexture(params);
+    }
+
+    regenerateIcosphere(subdivisions, noiseParams) {
+        this.initializeGeometry(subdivisions);
+        this.initializeNoise(noiseParams);
+        this.createBuffers(this.geometry);
+        this.triangleHeights = this.calculateTriangleHeights(this.geometry, noiseParams);
+        this.updateTriangleHeightBuffer();
     }
 
     // calculateTriangleHeights(geometry, params) {
@@ -285,6 +293,10 @@ export class Renderer {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
         
         //gl.bindTexture(gl.TEXTURE_2D, null);
+    }
+
+    setGeometry(subdivisions) {
+        this.geometry = createIcosphere(subdivisions);
     }
 
     setLayerLevels(layers) {
