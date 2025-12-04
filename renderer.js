@@ -8,6 +8,7 @@ export class Renderer {
     constructor(canvas, noiseParams) {
         this.canvas = canvas;
         this.gl = canvas.getContext('webgl2');
+        this.uniformLocations = {};
         
         if (!this.gl) {
             console.error('WebGL2 not supported in this browser.');
@@ -41,61 +42,110 @@ export class Renderer {
         );
     }
 
-    getLocations() {
+    //No Renderer.js, modifique o método getLocations. Em vez de salvar propriedades soltas (this.lightSpeedLoc), itere sobre todos os uniformes ativos do programa WebGL:
+
+    // Use gl.getActiveUniform e gl.getUniformLocation para popular um dicionário: this.uniformLocations = { 'u_lightSpeed': location, ... }.
+
+    // Crie um método único updateUniforms(params).
+
+    // Este método recebe um objeto de parâmetros (ex: shadersParams).
+
+    // Ele itera sobre as chaves desse objeto (ex: lightSpeed).
+
+    // Verifica se existe uma chave correspondente no dicionário de locations (ex: u_lightSpeed).
+
+    // Se existir, verifica o tipo do valor (número, array de 3, booleano) e chama a função WebGL apropriada (uniform1f, uniform3fv, uniform1i) automaticamente.
+
+    // Remova todos os métodos manuais como setLightSpeed, setCloudOpacity, etc.
+    getLocations(params) {
         const gl = this.gl;
-        
         this.positionLoc = gl.getAttribLocation(this.program, 'a_position');
         this.normalLoc   = gl.getAttribLocation(this.program, 'a_normal');
         this.uvLoc       = gl.getAttribLocation(this.program, 'a_texcoord');
         this.triangleHeightLoc = gl.getAttribLocation(this.program, 'a_triangleHeight');
         
-        this.matrixLoc   = gl.getUniformLocation(this.program, 'u_matrix');
-        this.colorLoc    = gl.getUniformLocation(this.program, 'u_color');
-        this.useColorLoc = gl.getUniformLocation(this.program, 'u_useColor');
-        this.timeLoc     = gl.getUniformLocation(this.program, 'u_time');
-        this.textureLoc  = gl.getUniformLocation(this.program, 'u_noiseTexture');
-        this.cloudTextureLoc = gl.getUniformLocation(this.program, 'u_cloudTexture');
-
-        this.lightSpeedLoc        = gl.getUniformLocation(this.program, 'u_lightSpeed');
-        this.lightBrightnessLoc   = gl.getUniformLocation(this.program, 'u_lightBrightness');
-        this.lambertianDiffuseLoc = gl.getUniformLocation(this.program, 'u_lambertianDiffuse');
-
-        this.renderPassLoc   = gl.getUniformLocation(this.program, 'u_renderPass');
-        this.cloudOpacityLoc = gl.getUniformLocation(this.program, 'u_cloudOpacity');
-        this.cloudScaleLoc   = gl.getUniformLocation(this.program, 'u_cloudScale');
-        this.cloudSpeedLoc   = gl.getUniformLocation(this.program, 'u_cloudSpeed');
-        this.cloudWarpIntensityLoc = gl.getUniformLocation(this.program, 'u_cloudWarpIntensity');
-        this.cloudWarpTimeLoc      = gl.getUniformLocation(this.program, 'u_cloudWarpTime');
-        this.cloudThresholdLoc     = gl.getUniformLocation(this.program, 'u_cloudThreshold');
-        this.cloudAlphaLoc         = gl.getUniformLocation(this.program, 'u_cloudAlpha');
-        this.cloudColorLoc         = gl.getUniformLocation(this.program, 'u_cloudColor');
-        this.cloudTextureZoomLoc   = gl.getUniformLocation(this.program, 'u_cloudTextureZoom');
-        this.terrainDisplacementLoc = gl.getUniformLocation(this.program, 'u_terrainDisplacement');
-
-        this.layer0LevelLoc = gl.getUniformLocation(this.program, 'u_layer0Level');
-        this.layer1LevelLoc = gl.getUniformLocation(this.program, 'u_layer1Level');
-        this.layer2LevelLoc = gl.getUniformLocation(this.program, 'u_layer2Level');
-        this.layer3LevelLoc = gl.getUniformLocation(this.program, 'u_layer3Level');
-        this.layer4LevelLoc = gl.getUniformLocation(this.program, 'u_layer4Level');
-        this.layer5LevelLoc = gl.getUniformLocation(this.program, 'u_layer5Level');
-        this.layer6LevelLoc = gl.getUniformLocation(this.program, 'u_layer6Level');
-        this.layer7LevelLoc = gl.getUniformLocation(this.program, 'u_layer7Level');
-        this.layer8LevelLoc = gl.getUniformLocation(this.program, 'u_layer8Level');
-        this.layer9LevelLoc = gl.getUniformLocation(this.program, 'u_layer9Level');
-        this.layer10LevelLoc = gl.getUniformLocation(this.program, 'u_layer10Level');
-
-        this.layer0ColorLoc = gl.getUniformLocation(this.program, 'u_layer0Color');
-        this.layer1ColorLoc = gl.getUniformLocation(this.program, 'u_layer1Color');
-        this.layer2ColorLoc = gl.getUniformLocation(this.program, 'u_layer2Color');
-        this.layer3ColorLoc = gl.getUniformLocation(this.program, 'u_layer3Color');
-        this.layer4ColorLoc = gl.getUniformLocation(this.program, 'u_layer4Color');
-        this.layer5ColorLoc = gl.getUniformLocation(this.program, 'u_layer5Color');
-        this.layer6ColorLoc = gl.getUniformLocation(this.program, 'u_layer6Color');
-        this.layer7ColorLoc = gl.getUniformLocation(this.program, 'u_layer7Color');
-        this.layer8ColorLoc = gl.getUniformLocation(this.program, 'u_layer8Color');
-        this.layer9ColorLoc = gl.getUniformLocation(this.program, 'u_layer9Color');
-        this.layer10ColorLoc = gl.getUniformLocation(this.program, 'u_layer10Color');
+        const numUniforms = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS);
+        for (let i = 0; i < numUniforms; i++) {
+            const activeUniform = gl.getActiveUniform(this.program, i);
+            this.uniformLocations[activeUniform.name] = gl.getUniformLocation(this.program, activeUniform.name)
+        }
     }
+    updateUniforms(params) {
+    const gl = this.gl;
+
+    for (const [key, value] of Object.entries(params)) {
+        
+        const uniformName = `u_${key}`;
+        const location = this.uniformLocations[uniformName];
+
+        if (location) {
+            if (typeof value === 'number') {
+                gl.uniform1f(location, value);
+            } else if (typeof value === 'boolean') {
+                gl.uniform1i(location, value ? 1 : 0);
+            } else if (Array.isArray(value) && value.length === 3) {
+                gl.uniform3fv(location, value);
+            }
+            else if (value instanceof Float32Array && value.length === 16) {
+                gl.uniformMatrix4fv(location, false, value);
+            }
+        } 
+        else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            this.updateUniforms(value);
+        }
+    }
+}
+
+    // getLocations() {
+    //     const gl = this.gl;
+        
+    //     this.matrixLoc   = gl.getUniformLocation(this.program, 'u_matrix');
+    //     this.colorLoc    = gl.getUniformLocation(this.program, 'u_color');
+    //     this.useColorLoc = gl.getUniformLocation(this.program, 'u_useColor');
+    //     this.timeLoc     = gl.getUniformLocation(this.program, 'u_time');
+    //     this.textureLoc  = gl.getUniformLocation(this.program, 'u_noiseTexture');
+    //     this.cloudTextureLoc = gl.getUniformLocation(this.program, 'u_cloudTexture');
+
+    //     this.lightSpeedLoc        = gl.getUniformLocation(this.program, 'u_lightSpeed');
+    //     this.lightBrightnessLoc   = gl.getUniformLocation(this.program, 'u_lightBrightness');
+    //     this.lambertianDiffuseLoc = gl.getUniformLocation(this.program, 'u_lambertianDiffuse');
+
+    //     this.renderPassLoc   = gl.getUniformLocation(this.program, 'u_renderPass');
+    //     this.cloudOpacityLoc = gl.getUniformLocation(this.program, 'u_cloudOpacity');
+    //     this.cloudScaleLoc   = gl.getUniformLocation(this.program, 'u_cloudScale');
+    //     this.cloudSpeedLoc   = gl.getUniformLocation(this.program, 'u_cloudSpeed');
+    //     this.cloudWarpIntensityLoc = gl.getUniformLocation(this.program, 'u_cloudWarpIntensity');
+    //     this.cloudWarpTimeLoc      = gl.getUniformLocation(this.program, 'u_cloudWarpTime');
+    //     this.cloudThresholdLoc     = gl.getUniformLocation(this.program, 'u_cloudThreshold');
+    //     this.cloudAlphaLoc         = gl.getUniformLocation(this.program, 'u_cloudAlpha');
+    //     this.cloudColorLoc         = gl.getUniformLocation(this.program, 'u_cloudColor');
+    //     this.cloudTextureZoomLoc   = gl.getUniformLocation(this.program, 'u_cloudTextureZoom');
+    //     this.terrainDisplacementLoc = gl.getUniformLocation(this.program, 'u_terrainDisplacement');
+
+    //     this.layer0LevelLoc = gl.getUniformLocation(this.program, 'u_layer0Level');
+    //     this.layer1LevelLoc = gl.getUniformLocation(this.program, 'u_layer1Level');
+    //     this.layer2LevelLoc = gl.getUniformLocation(this.program, 'u_layer2Level');
+    //     this.layer3LevelLoc = gl.getUniformLocation(this.program, 'u_layer3Level');
+    //     this.layer4LevelLoc = gl.getUniformLocation(this.program, 'u_layer4Level');
+    //     this.layer5LevelLoc = gl.getUniformLocation(this.program, 'u_layer5Level');
+    //     this.layer6LevelLoc = gl.getUniformLocation(this.program, 'u_layer6Level');
+    //     this.layer7LevelLoc = gl.getUniformLocation(this.program, 'u_layer7Level');
+    //     this.layer8LevelLoc = gl.getUniformLocation(this.program, 'u_layer8Level');
+    //     this.layer9LevelLoc = gl.getUniformLocation(this.program, 'u_layer9Level');
+    //     this.layer10LevelLoc = gl.getUniformLocation(this.program, 'u_layer10Level');
+
+    //     this.layer0ColorLoc = gl.getUniformLocation(this.program, 'u_layer0Color');
+    //     this.layer1ColorLoc = gl.getUniformLocation(this.program, 'u_layer1Color');
+    //     this.layer2ColorLoc = gl.getUniformLocation(this.program, 'u_layer2Color');
+    //     this.layer3ColorLoc = gl.getUniformLocation(this.program, 'u_layer3Color');
+    //     this.layer4ColorLoc = gl.getUniformLocation(this.program, 'u_layer4Color');
+    //     this.layer5ColorLoc = gl.getUniformLocation(this.program, 'u_layer5Color');
+    //     this.layer6ColorLoc = gl.getUniformLocation(this.program, 'u_layer6Color');
+    //     this.layer7ColorLoc = gl.getUniformLocation(this.program, 'u_layer7Color');
+    //     this.layer8ColorLoc = gl.getUniformLocation(this.program, 'u_layer8Color');
+    //     this.layer9ColorLoc = gl.getUniformLocation(this.program, 'u_layer9Color');
+    //     this.layer10ColorLoc = gl.getUniformLocation(this.program, 'u_layer10Color');
+    // }
 
     initializeGeometry(subdivisions) {
         this.geometry = createIcosphere(subdivisions);
@@ -197,43 +247,6 @@ export class Renderer {
         this.updateTriangleHeightBuffer();
     }
 
-    // calculateTriangleHeights(geometry, params) {
-    //     const { octaves, persistence, lacunarity, noiseZoom, noiseResolution } = params;
-
-    //     const numVertices = geometry.positions.length / 3;
-    //     const heights = new Float32Array(numVertices);
-        
-    //     const noiseData = this.noiseGenerator.generate({octaves, persistence, lacunarity, noiseZoom, noiseResolution});
-        
-    //     for (let i = 0; i < geometry.indices.length; i += 3) {
-    //         const idx0 = geometry.indices[i];
-    //         const idx1 = geometry.indices[i + 1];
-    //         const idx2 = geometry.indices[i + 2];
-            
-    //         const u0 = geometry.uvs[idx0 * 2];
-    //         const v0 = geometry.uvs[idx0 * 2 + 1];
-    //         const u1 = geometry.uvs[idx1 * 2];
-    //         const v1 = geometry.uvs[idx1 * 2 + 1];
-    //         const u2 = geometry.uvs[idx2 * 2];
-    //         const v2 = geometry.uvs[idx2 * 2 + 1];
-            
-    //         const avgU = (u0 + u1 + u2) / 3;
-    //         const avgV = (v0 + v1 + v2) / 3;
-            
-    //         const texX = Math.floor(avgU * (noiseResolution - 1));
-    //         const texY = Math.floor(avgV * (noiseResolution - 1));
-    //         const noiseIndex = texY * noiseResolution + texX;
-            
-    //         const heightValue = noiseData[noiseIndex];
-            
-    //         heights[idx0] = heightValue;
-    //         heights[idx1] = heightValue;
-    //         heights[idx2] = heightValue;
-    //     }
-        
-    //     return heights;
-    // }
-
     calculateTriangleHeights(geometry, params) {
         const { octaves, persistence, lacunarity, noiseZoom } = params;
 
@@ -302,141 +315,141 @@ export class Renderer {
     setLayerLevels(layers) {
         const gl = this.gl;
         gl.useProgram(this.program);
-        gl.uniform1f(this.layer0LevelLoc, layers.layer0);
-        gl.uniform1f(this.layer1LevelLoc, layers.layer1);
-        gl.uniform1f(this.layer2LevelLoc, layers.layer2);
-        gl.uniform1f(this.layer3LevelLoc, layers.layer3);
-        gl.uniform1f(this.layer4LevelLoc, layers.layer4);
-        gl.uniform1f(this.layer5LevelLoc, layers.layer5);
-        gl.uniform1f(this.layer6LevelLoc, layers.layer6);
-        gl.uniform1f(this.layer7LevelLoc, layers.layer7);
-        gl.uniform1f(this.layer8LevelLoc, layers.layer8);
-        gl.uniform1f(this.layer9LevelLoc, layers.layer9);
+        gl.uniform1f(this.uniformLocations['u_layer0Level'], layers.layer0);
+        gl.uniform1f(this.uniformLocations['u_layer1Level'], layers.layer1);
+        gl.uniform1f(this.uniformLocations['u_layer2Level'], layers.layer2);
+        gl.uniform1f(this.uniformLocations['u_layer3Level'], layers.layer3);
+        gl.uniform1f(this.uniformLocations['u_layer4Level'], layers.layer4);
+        gl.uniform1f(this.uniformLocations['u_layer5Level'], layers.layer5);
+        gl.uniform1f(this.uniformLocations['u_layer6Level'], layers.layer6);
+        gl.uniform1f(this.uniformLocations['u_layer7Level'], layers.layer7);
+        gl.uniform1f(this.uniformLocations['u_layer8Level'], layers.layer8);
+        gl.uniform1f(this.uniformLocations['u_layer9Level'], layers.layer9);
     }
 
     setLayerColors(colors) {
         const gl = this.gl;
         gl.useProgram(this.program);
-        gl.uniform3fv(this.layer0ColorLoc, colors.layer0);
-        gl.uniform3fv(this.layer1ColorLoc, colors.layer1);
-        gl.uniform3fv(this.layer2ColorLoc, colors.layer2);
-        gl.uniform3fv(this.layer3ColorLoc, colors.layer3);
-        gl.uniform3fv(this.layer4ColorLoc, colors.layer4);
-        gl.uniform3fv(this.layer5ColorLoc, colors.layer5);
-        gl.uniform3fv(this.layer6ColorLoc, colors.layer6);
-        gl.uniform3fv(this.layer7ColorLoc, colors.layer7);
-        gl.uniform3fv(this.layer8ColorLoc, colors.layer8);
-        gl.uniform3fv(this.layer9ColorLoc, colors.layer9);
+        gl.uniform3fv(this.uniformLocations['u_layer0Color'], colors.layer0);
+        gl.uniform3fv(this.uniformLocations['u_layer1Color'], colors.layer1);
+        gl.uniform3fv(this.uniformLocations['u_layer2Color'], colors.layer2);
+        gl.uniform3fv(this.uniformLocations['u_layer3Color'], colors.layer3);
+        gl.uniform3fv(this.uniformLocations['u_layer4Color'], colors.layer4);
+        gl.uniform3fv(this.uniformLocations['u_layer5Color'], colors.layer5);
+        gl.uniform3fv(this.uniformLocations['u_layer6Color'], colors.layer6);
+        gl.uniform3fv(this.uniformLocations['u_layer7Color'], colors.layer7);
+        gl.uniform3fv(this.uniformLocations['u_layer8Color'], colors.layer8);
+        gl.uniform3fv(this.uniformLocations['u_layer9Color'], colors.layer9);
     }
 
     setLightSpeed(speed) {
         this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.lightSpeedLoc, speed);
+        this.gl.uniform1f(this.uniformLocations['u_lightSpeed'], speed);
     }
 
     setLightBrightness(brightness) {
         this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.lightBrightnessLoc, brightness);
+        this.gl.uniform1f(this.uniformLocations['u_lightBrightness'], brightness);
     }
 
     setTime(time) {
         this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.timeLoc, time);
+        this.gl.uniform1f(this.uniformLocations['u_time'], time);
     }
 
     setMatrix(mvpMatrix) {
         this.gl.useProgram(this.program);
-        this.gl.uniformMatrix4fv(this.matrixLoc, false, mvpMatrix);
+        this.gl.uniformMatrix4fv(this.uniformLocations['u_matrix'], false, mvpMatrix);
     }
 
     setNoiseTexture() {
         const gl = this.gl;
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.noiseTexture);
-        gl.uniform1i(this.textureLoc, 0);
+        gl.uniform1i(this.uniformLocations['u_noiseTexture'], 0);
     }
 
     setCloudTexture(texture) {
         const gl = this.gl;
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.uniform1i(this.cloudTextureLoc, 1);
+        gl.uniform1i(this.uniformLocations['u_cloudTexture'], 1);
 
     }
 
     setUseColor(useColor) {
         this.gl.useProgram(this.program);
-        this.gl.uniform1i(this.useColorLoc, useColor);
+        this.gl.uniform1i(this.uniformLocations['u_useColor'], useColor);
     }
 
     setColor(r, g, b) {
         this.gl.useProgram(this.program);
-        this.gl.uniform3f(this.colorLoc, r, g, b);
+        this.gl.uniform3f(this.uniformLocations['u_color'], r, g, b);
     }
 
     setLambertianDiffuseUse(bool){
         this.gl.useProgram(this.program);
-        this.gl.uniform1i(this.lambertianDiffuseLoc, bool);
+        this.gl.uniform1i(this.uniformLocations['u_useLambertianDiffuse'], bool);
     }
 
     setTerrainDisplacement(displacement){
         this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.terrainDisplacementLoc, displacement);
+        this.gl.uniform1f(this.uniformLocations['u_terrainDisplacement'], displacement);
     }
 
     setRenderPass(pass){
         this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.renderPassLoc, pass);
+        this.gl.uniform1f(this.uniformLocations['u_renderPass'], pass);
     }
 
     setCloudOpacity(opacity){
         this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.cloudOpacityLoc, opacity);
+        this.gl.uniform1f(this.uniformLocations['u_cloudOpacity'], opacity);
     }
     
     setCloudScale(scale){
         this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.cloudScaleLoc, scale);
+        this.gl.uniform1f(this.uniformLocations['u_cloudScale'], scale);
     }
 
     setCloudSpeed(speed){
         this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.cloudSpeedLoc, speed);
+        this.gl.uniform1f(this.uniformLocations['u_cloudSpeed'], speed);
     }
 
     setCloudWarpIntensity(intensity){
         this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.cloudWarpIntensityLoc, intensity);
+        this.gl.uniform1f(this.uniformLocations['u_cloudWarpIntensity'], intensity);
     }
 
     setCloudWarpTime(time){
         this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.cloudWarpTimeLoc, time);
+        this.gl.uniform1f(this.uniformLocations['u_cloudWarpTime'], time);
     }
 
     setCloudThreshold(threshold){
         this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.cloudThresholdLoc, threshold);
+        this.gl.uniform1f(this.uniformLocations['u_cloudThreshold'], threshold);
     }
 
     setCloudAlpha(alpha){
         this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.cloudAlphaLoc, alpha);
+        this.gl.uniform1f(this.uniformLocations['u_cloudAlpha'], alpha);
     }
 
     setCloudColor(color){
         this.gl.useProgram(this.program);
-        this.gl.uniform3fv(this.cloudColorLoc, color);
+        this.gl.uniform3fv(this.uniformLocations['u_cloudColor'], color);
     }
 
     setCloudTextureZoom(zoom){
         this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.cloudTextureZoomLoc, zoom);
+        this.gl.uniform1f(this.uniformLocations['u_cloudTextureZoom'], zoom);
     }
 
     setLambertianDiffuseUse(bool){
         this.gl.useProgram(this.program);
-        this.gl.uniform1i(this.lambertianDiffuseLoc, bool);
+        this.gl.uniform1i(this.uniformLocations['u_useLambertianDiffuse'], bool);
     }
 
     resizeCanvas() {
@@ -453,11 +466,12 @@ export class Renderer {
         const gl = this.gl;
 
         this.setRenderPass(1);
-        this.setLightSpeed(shadersParams.lightSpeed);
-        this.setLightBrightness(shadersParams.lightBrightness);
-        this.setLambertianDiffuseUse(shadersParams.useLambertianDiffuse);
-        this.setTerrainDisplacement(shadersParams.terrainDisplacement);
-        this.setLayerLevels(shadersParams.layers);
+        this.updateUniforms(shadersParams);
+        // this.setLightSpeed(shadersParams.lightSpeed);
+        // this.setLightBrightness(shadersParams.lightBrightness);
+        // this.setLambertianDiffuseUse(shadersParams.useLambertianDiffuse);
+        // this.setTerrainDisplacement(shadersParams.terrainDisplacement);
+        // this.setLayerLevels(shadersParams.layers);
 
         gl.bindVertexArray(this.vao);
         gl.drawElements(gl.TRIANGLES, this.numElements, gl.UNSIGNED_SHORT, 0);
@@ -483,16 +497,17 @@ export class Renderer {
         gl.disable(gl.CULL_FACE);
 
         this.setRenderPass(2);
-        this.setTerrainDisplacement(cloudParams.terrainDisplacement);
-        this.setCloudOpacity(cloudParams.opacity);
-        this.setCloudScale(cloudParams.scale);
-        this.setCloudSpeed(cloudParams.speed);
-        this.setCloudWarpIntensity(cloudParams.warpIntensity);
-        this.setCloudWarpTime(cloudParams.warpTime);
-        this.setCloudThreshold(cloudParams.threshold);
-        this.setCloudAlpha(cloudParams.alpha);
-        this.setCloudColor(cloudParams.color);
-        this.setCloudTextureZoom(cloudParams.textureZoom);
+        this.updateUniforms(cloudParams);
+        // this.setTerrainDisplacement(cloudParams.terrainDisplacement);
+        // this.setCloudOpacity(cloudParams.opacity);
+        // this.setCloudScale(cloudParams.scale);
+        // this.setCloudSpeed(cloudParams.speed);
+        // this.setCloudWarpIntensity(cloudParams.warpIntensity);
+        // this.setCloudWarpTime(cloudParams.warpTime);
+        // this.setCloudThreshold(cloudParams.threshold);
+        // this.setCloudAlpha(cloudParams.alpha);
+        // this.setCloudColor(cloudParams.color);
+        // this.setCloudTextureZoom(cloudParams.textureZoom);
 
         if (cloudParams.texture) {
             this.setCloudTexture(cloudParams.texture);
@@ -516,16 +531,17 @@ export class Renderer {
         gl.disable(gl.CULL_FACE);
 
         this.setRenderPass(3);
-        this.setCloudOpacity(cloudParams.opacity);
-        this.setCloudScale(cloudParams.scale);
-        this.setCloudSpeed(cloudParams.speed);
-        this.setCloudWarpIntensity(cloudParams.warpIntensity);
-        this.setCloudWarpTime(cloudParams.warpTime);
-        this.setCloudThreshold(cloudParams.threshold);
-        this.setCloudAlpha(cloudParams.alpha);
-        this.setCloudColor(cloudParams.color);
-        this.setCloudTextureZoom(cloudParams.textureZoom);
-        this.setTerrainDisplacement(cloudParams.terrainDisplacement);
+        this.updateUniforms(cloudParams);
+        // this.setCloudOpacity(cloudParams.opacity);
+        // this.setCloudScale(cloudParams.scale);
+        // this.setCloudSpeed(cloudParams.speed);
+        // this.setCloudWarpIntensity(cloudParams.warpIntensity);
+        // this.setCloudWarpTime(cloudParams.warpTime);
+        // this.setCloudThreshold(cloudParams.threshold);
+        // this.setCloudAlpha(cloudParams.alpha);
+        // this.setCloudColor(cloudParams.color);
+        // this.setCloudTextureZoom(cloudParams.textureZoom);
+        // this.setTerrainDisplacement(cloudParams.terrainDisplacement);
 
         if (cloudParams.texture) {
             this.setCloudTexture(cloudParams.texture);
@@ -562,11 +578,17 @@ export class Renderer {
         mat4.multiply(mvpMatrix, projectionMatrix, viewMatrix);                                              // Combina tudo em uma so coisa. ViewMatrix vira relativo a projection aqui e depois a projection vira 2D com profundidade
         mat4.multiply(mvpMatrix, mvpMatrix, modelMatrix);                                                     // Agora a mvpMatrix tem tudo junto
 
-        this.setTime(time);
-        this.setLambertianDiffuseUse(lambertianDiffuse);
-        this.setMatrix(mvpMatrix);
+        const frameParams = {
+            time: time,
+            matrix: mvpMatrix,              
+            lambertianDiffuse: lambertianDiffuse,
+            useColor: false,
+            noiseTexture: 0,                
+            cloudTexture: 1                 
+        };
+
+        this.updateUniforms(frameParams);
         this.setNoiseTexture();
-        this.setUseColor(false);
 
         if (renderPass === 1) {
             this.drawPlanetPass(params, wireframe);
