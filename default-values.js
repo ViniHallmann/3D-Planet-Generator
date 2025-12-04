@@ -11,8 +11,9 @@ let numActiveLayers = MAX_LAYERS;
 let numActiveCloudLayers = MAX_CLOUD_LAYERS;
 let cloudLayerOffset = MAX_CLOUD_OFFSET;
 let isMouseOverUI = false;
+let isModifyingTerrain = false;
 let showWireframe = false;
-let showLambertianDiffuse = false;
+let showLambertianDiffuse = true;
 
 let noiseParams = {
     subdivisions: 1,
@@ -33,16 +34,16 @@ let camera = {
 };
 
 let layerLevels = {
-    layer0: 0.35,
-    layer1: 0.45,
-    layer2: 0.50,
-    layer3: 0.55,
-    layer4: 0.60,
-    layer5: 0.65,
-    layer6: 0.70,
-    layer7: 0.75,
-    layer8: 0.80,
-    layer9: 0.90,
+    layer0Level: 0.35,
+    layer1Level: 0.45,
+    layer2Level: 0.50,
+    layer3Level: 0.55,
+    layer4Level: 0.60,
+    layer5Level: 0.65,
+    layer6Level: 0.70,
+    layer7Level: 0.75,
+    layer8Level: 0.80,
+    layer9Level: 0.90,
 };
 
 // PRA FAZER DEPOIS, PRECISO MODIFICAR OS VALORES DAS CORES PARA SER O MESMO DO HTML OU VICE VERSA
@@ -63,32 +64,32 @@ let shadersParams = {
     lightSpeed: 1.5,
     lightBrightness: 1.0,
     layers : layerLevels,
-    useLambertianDiffuse: showLambertianDiffuse,
+    lambertianDiffuse: showLambertianDiffuse,
     terrainDisplacement: 0.3,
 }
 
 let cloudParams = {
-    opacity: 0.5,
-    scale: 1.25,
-    warpIntensity: 0.1,
-    warpTime: 1.0,
-    threshold: 0.65,
-    alpha: 0.5,
-    color: [1.0, 1.0, 1.0],
-    textureZoom: 1.10,
-    speed: 0.01,
+    cloudOpacity: 0.5,
+    cloudScale: 1.25,
+    cloudWarpIntensity: 0.1,
+    cloudWarpTime: 1.0,
+    cloudThreshold: 0.65,
+    cloudAlpha: 0.5,
+    cloudColor: [1.0, 1.0, 1.0],
+    cloudTextureZoom: 1.10,
+    cloudSpeed: 0.01,
 };
 
 let cloudShadowParams = {
-    opacity: 0.35,
-    scale: 1.25,
-    warpIntensity: 0.1,
-    warpTime: 1.0,
-    threshold: 0.65,
-    alpha: 0.85,
-    color: [0.0, 0.0, 0.0],
+    cloudOpacity: 0.35,
+    cloudScale: 1.25,
+    cloudWarpIntensity: 0.1,
+    cloudWarpTime: 1.0,
+    cloudThreshold: 0.65,
+    cloudAlpha: 0.85,
+    cloudColor: [0.0, 0.0, 0.0],
     terrainDisplacement: 0.3,
-    textureZoom: 1.10,
+    cloudTextureZoom: 1.10,
 };
 
 const DEFAULT_VARIABLES_VALUES = {
@@ -111,6 +112,7 @@ const DEFAULT_VARIABLES_VALUES = {
     numActiveCloudLayers,
     cloudLayerOffset,
     isMouseOverUI,
+    isModifyingTerrain,
     showWireframe,
     showLambertianDiffuse,
 };
