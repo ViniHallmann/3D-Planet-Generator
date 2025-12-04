@@ -247,8 +247,9 @@ export const fragmentShaderSource = glsl`#version 300 es
             float alpha = u_cloudOpacity * smoothstep(0.5, 0.8, cloudNoise);
 
             // u_cloudColor depois no lugar de vec3(1.0)
-            outColor = vec4(vec3(1.0) * light, alpha);
+            outColor = vec4(vec3(1.0), alpha * light);
         } 
+        
         if (u_renderPass == 3.) {
             
             float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
@@ -257,7 +258,7 @@ export const fragmentShaderSource = glsl`#version 300 es
             float alpha = smoothstep(0.65, 0.8, cloudNoise);
             
             alpha = 0.85; 
-            outColor = vec4(vec3(0.0), alpha);
+            outColor = vec4(vec3(0.0), alpha * light);
         }
     }
 `;
