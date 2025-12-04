@@ -149,6 +149,7 @@ async function main() {
         numActiveCloudLayers,
         cloudLayerOffset,
         isMouseOverUI,
+        isModifyingTerrain,
         showWireframe,
         showLambertianDiffuse
     } = DEFAULT_VARIABLES_VALUES;
@@ -412,6 +413,9 @@ async function main() {
         }
         
         renderer.clearScreen();
+        if (isModifyingTerrain) {
+            renderer.regenerateTerrain(noiseParams);
+        }
         renderer.render(time, cameraPosition, shadersParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 1.);
         renderer.render(time, cameraPosition, cloudShadowParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 3.);
         for (let i = 0; i < numActiveCloudLayers; i++) {
