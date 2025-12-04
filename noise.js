@@ -104,5 +104,34 @@ export class NoiseGenerator {
 
         // return Math.max(0.0, Math.min(1.0, val));
     }
+
+    modifyTerrain(data, brushX, brushY, brushSize, intensity, action) {
+        const startX = Math.max(0, brushX - brushSize);
+        const endX = Math.min(this.width - 1, brushX + brushSize);
+        const startY = Math.max(0, brushY - brushSize);
+        const endY = Math.min(this.height - 1, brushY + brushSize);
+
+        for (let y = startY; y <= endY; y++) {
+            for (let x = startX; x <= endX; x++) {
+                const dx = x - brushX;
+                const dy = y - brushY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < brushSize) {
+                    const falloff = 1.0 - (distance / brushSize);
+                    const noiseModulation = this.noise2D(x / 50, y / 50);
+                    const modulatedIntensity = intensity + (intensity * noiseModulation * 0.5); 
+
+                    const index = y * this.width + x;
+                    if (action === 'add') {
+                        data[index] += modulatedIntensity * falloff;
+                    } else if (action === 'remove') {
+                        data[index] -= modulatedIntensity * falloff;
+                    }
+                    
+                }
+            }
+        }
+    }
     
 }
