@@ -71,81 +71,33 @@ export class Renderer {
         }
     }
     updateUniforms(params) {
-    const gl = this.gl;
+        const gl = this.gl;
 
-    for (const [key, value] of Object.entries(params)) {
-        
-        const uniformName = `u_${key}`;
-        const location = this.uniformLocations[uniformName];
+        for (const [key, value] of Object.entries(params)) {
+            
+            //LEMBRAR AQUI QUE AGORA OS NOMES DAS VARIAVEIS PRECISAM SER IGUAIS AOS DOS SHADERS!
+            const uniformName = `u_${key}`;
+            const location = this.uniformLocations[uniformName];
 
-        if (location) {
-            if (typeof value === 'number') {
-                gl.uniform1f(location, value);
-            } else if (typeof value === 'boolean') {
-                gl.uniform1i(location, value ? 1 : 0);
-            } else if (Array.isArray(value) && value.length === 3) {
-                gl.uniform3fv(location, value);
+            if (location) {
+                if (typeof value === 'number') {
+                    gl.uniform1f(location, value);
+                } else if (typeof value === 'boolean') {
+                    gl.uniform1i(location, value ? 1 : 0);
+                } else if (Array.isArray(value) && value.length === 3) {
+                    gl.uniform3fv(location, value);
+                }
+                else if (value instanceof Float32Array && value.length === 16) {
+                    gl.uniformMatrix4fv(location, false, value);
+                }
+            } 
+            else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                this.updateUniforms(value);
             }
-            else if (value instanceof Float32Array && value.length === 16) {
-                gl.uniformMatrix4fv(location, false, value);
-            }
-        } 
-        else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-            this.updateUniforms(value);
         }
     }
-}
 
-    // getLocations() {
-    //     const gl = this.gl;
-        
-    //     this.matrixLoc   = gl.getUniformLocation(this.program, 'u_matrix');
-    //     this.colorLoc    = gl.getUniformLocation(this.program, 'u_color');
-    //     this.useColorLoc = gl.getUniformLocation(this.program, 'u_useColor');
-    //     this.timeLoc     = gl.getUniformLocation(this.program, 'u_time');
-    //     this.textureLoc  = gl.getUniformLocation(this.program, 'u_noiseTexture');
-    //     this.cloudTextureLoc = gl.getUniformLocation(this.program, 'u_cloudTexture');
 
-    //     this.lightSpeedLoc        = gl.getUniformLocation(this.program, 'u_lightSpeed');
-    //     this.lightBrightnessLoc   = gl.getUniformLocation(this.program, 'u_lightBrightness');
-    //     this.lambertianDiffuseLoc = gl.getUniformLocation(this.program, 'u_lambertianDiffuse');
-
-    //     this.renderPassLoc   = gl.getUniformLocation(this.program, 'u_renderPass');
-    //     this.cloudOpacityLoc = gl.getUniformLocation(this.program, 'u_cloudOpacity');
-    //     this.cloudScaleLoc   = gl.getUniformLocation(this.program, 'u_cloudScale');
-    //     this.cloudSpeedLoc   = gl.getUniformLocation(this.program, 'u_cloudSpeed');
-    //     this.cloudWarpIntensityLoc = gl.getUniformLocation(this.program, 'u_cloudWarpIntensity');
-    //     this.cloudWarpTimeLoc      = gl.getUniformLocation(this.program, 'u_cloudWarpTime');
-    //     this.cloudThresholdLoc     = gl.getUniformLocation(this.program, 'u_cloudThreshold');
-    //     this.cloudAlphaLoc         = gl.getUniformLocation(this.program, 'u_cloudAlpha');
-    //     this.cloudColorLoc         = gl.getUniformLocation(this.program, 'u_cloudColor');
-    //     this.cloudTextureZoomLoc   = gl.getUniformLocation(this.program, 'u_cloudTextureZoom');
-    //     this.terrainDisplacementLoc = gl.getUniformLocation(this.program, 'u_terrainDisplacement');
-
-    //     this.layer0LevelLoc = gl.getUniformLocation(this.program, 'u_layer0Level');
-    //     this.layer1LevelLoc = gl.getUniformLocation(this.program, 'u_layer1Level');
-    //     this.layer2LevelLoc = gl.getUniformLocation(this.program, 'u_layer2Level');
-    //     this.layer3LevelLoc = gl.getUniformLocation(this.program, 'u_layer3Level');
-    //     this.layer4LevelLoc = gl.getUniformLocation(this.program, 'u_layer4Level');
-    //     this.layer5LevelLoc = gl.getUniformLocation(this.program, 'u_layer5Level');
-    //     this.layer6LevelLoc = gl.getUniformLocation(this.program, 'u_layer6Level');
-    //     this.layer7LevelLoc = gl.getUniformLocation(this.program, 'u_layer7Level');
-    //     this.layer8LevelLoc = gl.getUniformLocation(this.program, 'u_layer8Level');
-    //     this.layer9LevelLoc = gl.getUniformLocation(this.program, 'u_layer9Level');
-    //     this.layer10LevelLoc = gl.getUniformLocation(this.program, 'u_layer10Level');
-
-    //     this.layer0ColorLoc = gl.getUniformLocation(this.program, 'u_layer0Color');
-    //     this.layer1ColorLoc = gl.getUniformLocation(this.program, 'u_layer1Color');
-    //     this.layer2ColorLoc = gl.getUniformLocation(this.program, 'u_layer2Color');
-    //     this.layer3ColorLoc = gl.getUniformLocation(this.program, 'u_layer3Color');
-    //     this.layer4ColorLoc = gl.getUniformLocation(this.program, 'u_layer4Color');
-    //     this.layer5ColorLoc = gl.getUniformLocation(this.program, 'u_layer5Color');
-    //     this.layer6ColorLoc = gl.getUniformLocation(this.program, 'u_layer6Color');
-    //     this.layer7ColorLoc = gl.getUniformLocation(this.program, 'u_layer7Color');
-    //     this.layer8ColorLoc = gl.getUniformLocation(this.program, 'u_layer8Color');
-    //     this.layer9ColorLoc = gl.getUniformLocation(this.program, 'u_layer9Color');
-    //     this.layer10ColorLoc = gl.getUniformLocation(this.program, 'u_layer10Color');
-    // }
 
     initializeGeometry(subdivisions) {
         this.geometry = createIcosphere(subdivisions);

@@ -240,8 +240,6 @@ export const fragmentShaderSource = glsl`#version 300 es
         if (u_renderPass == 2.) {
 
             float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
-
-            // u_cloudThreshold depois
             if (cloudNoise < u_cloudThreshold) discard;
             
             float alpha = u_cloudOpacity * smoothstep(0.5, 0.8, cloudNoise);
