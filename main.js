@@ -416,8 +416,11 @@ async function main() {
         if (isModifyingTerrain) {
             renderer.regenerateTerrain(noiseParams);
         }
+        //PLANETA
         renderer.render(time, cameraPosition, shadersParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 1.);
+        //SOMBRA DAS NUVENS
         renderer.render(time, cameraPosition, cloudShadowParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 3.);
+        //NUVENS
         for (let i = 0; i < numActiveCloudLayers; i++) {
             let layerOpacity = cloudParams.opacity / numActiveCloudLayers;
             const layerParams = {

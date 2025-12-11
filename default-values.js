@@ -64,7 +64,6 @@ let shadersParams = {
     lightSpeed: 1.5,
     lightBrightness: 1.0,
     layers : layerLevels,
-    lambertianDiffuse: showLambertianDiffuse,
     terrainDisplacement: 0.3,
 }
 
