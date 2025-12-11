@@ -327,23 +327,23 @@ async function main() {
     setupInputListeners(cloudWarpTime, cloudWarpTimeValue, cloudParams, 'cloudWarpTime', parseFloat, (val) => val.toFixed(2), false);
     setupInputListeners(cloudThreshold, cloudThresholdValue, cloudParams, 'cloudThreshold', parseFloat, (val) => val.toFixed(2), false);
     setupInputListeners(cloudAlpha, cloudAlphaValue, cloudParams, 'cloudAlpha', parseFloat, (val) => val.toFixed(2), false);
-    setupInputListeners(cloudOpacity, cloudOpacityValue, cloudParams, 'opacity', parseFloat, (val) => val.toFixed(2), false);
-    setupInputListeners(cloudColor, cloudColorValue, cloudParams, 'color', (val) => hexToRgb(val), (val) => {
+    setupInputListeners(cloudOpacity, cloudOpacityValue, cloudParams, 'cloudOpacity', parseFloat, (val) => val.toFixed(2), false);
+    setupInputListeners(cloudColor, cloudColorValue, cloudParams, 'cloudColor', (val) => hexToRgb(val), (val) => {
         return `R: ${Math.round(val[0]*255)} G: ${Math.round(val[1]*255)} B: ${Math.round(val[2]*255)}`;
     }, false);
     setupInputListeners(terrainDisplacement, terrainDisplacementValue, shadersParams, 'terrainDisplacement', parseFloat, (val) => val.toFixed(2), false);
-    setupInputListeners(cloudTextureZoom, cloudTextureZoomValue, cloudParams, 'textureZoom', parseFloat, (val) => val.toFixed(2), false);
-    setupInputListeners(cloudTextureZoom, cloudTextureZoomValue, cloudShadowParams, 'textureZoom', parseFloat, (val) => val.toFixed(2), false);
-    setupLayerListeners(layer0Slider, layer0Value, layerLevels, 'layer0');
-    setupLayerListeners(layer1Slider, layer1Value, layerLevels, 'layer1');
-    setupLayerListeners(layer2Slider, layer2Value, layerLevels, 'layer2');
-    setupLayerListeners(layer3Slider, layer3Value, layerLevels, 'layer3');
-    setupLayerListeners(layer4Slider, layer4Value, layerLevels, 'layer4');
-    setupLayerListeners(layer5Slider, layer5Value, layerLevels, 'layer5');
-    setupLayerListeners(layer6Slider, layer6Value, layerLevels, 'layer6');
-    setupLayerListeners(layer7Slider, layer7Value, layerLevels, 'layer7');
-    setupLayerListeners(layer8Slider, layer8Value, layerLevels, 'layer8');
-    setupLayerListeners(layer9Slider, layer9Value, layerLevels, 'layer9');
+    setupInputListeners(cloudTextureZoom, cloudTextureZoomValue, cloudParams, 'cloudTextureZoom', parseFloat, (val) => val.toFixed(2), false);
+    setupInputListeners(cloudTextureZoom, cloudTextureZoomValue, cloudShadowParams, 'cloudTextureZoom', parseFloat, (val) => val.toFixed(2), false);
+    setupLayerListeners(layer0Slider, layer0Value, layerLevels, 'layer0Level');
+    setupLayerListeners(layer1Slider, layer1Value, layerLevels, 'layer1Level');
+    setupLayerListeners(layer2Slider, layer2Value, layerLevels, 'layer2Level');
+    setupLayerListeners(layer3Slider, layer3Value, layerLevels, 'layer3Level');
+    setupLayerListeners(layer4Slider, layer4Value, layerLevels, 'layer4Level');
+    setupLayerListeners(layer5Slider, layer5Value, layerLevels, 'layer5Level');
+    setupLayerListeners(layer6Slider, layer6Value, layerLevels, 'layer6Level');
+    setupLayerListeners(layer7Slider, layer7Value, layerLevels, 'layer7Level');
+    setupLayerListeners(layer8Slider, layer8Value, layerLevels, 'layer8Level');
+    setupLayerListeners(layer9Slider, layer9Value, layerLevels, 'layer9Level');
 
     //setupLayerColorListeners();
 
