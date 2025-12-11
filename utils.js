@@ -1,10 +1,10 @@
-function initCallbacks() {
-    document.onkeydown = keydown;
-    document.onkeyup = keyup;
-    state.canvas.onmousedown = mousedown;
-    state.canvas.onmouseup = mouseup;
-    state.canvas.onmousemove = mousemove;
-}
+// function initCallbacks() {
+//     document.onkeydown = keydown;
+//     document.onkeyup = keyup;
+//     state.canvas.onmousedown = mousedown;
+//     state.canvas.onmouseup = mouseup;
+//     state.canvas.onmousemove = mousemove;
+// }
 
 function initGL() {
     state.gl.clearColor(0,0,0,1);
