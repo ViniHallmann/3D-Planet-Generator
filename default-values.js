@@ -65,6 +65,7 @@ let shadersParams = {
     lightBrightness: 1.0,
     layers : layerLevels,
     terrainDisplacement: 0.3,
+    planetScale: 0.05,
 }
 
 let cloudParams = {
@@ -77,6 +78,7 @@ let cloudParams = {
     cloudColor: [1.0, 1.0, 1.0],
     cloudTextureZoom: 1.10,
     cloudSpeed: 0.01,
+    planetScale: 0.05,
 };
 
 let cloudShadowParams = {
@@ -89,6 +91,7 @@ let cloudShadowParams = {
     cloudColor: [0.0, 0.0, 0.0],
     terrainDisplacement: 0.3,
     cloudTextureZoom: 1.10,
+    planetScale: 0.05,
 };
 
 const DEFAULT_VARIABLES_VALUES = {
@@ -115,5 +118,7 @@ const DEFAULT_VARIABLES_VALUES = {
     showWireframe,
     showLambertianDiffuse,
 };
+
+
 
 export { DEFAULT_VARIABLES_VALUES };
