@@ -347,7 +347,7 @@ async function main() {
 
     //setupLayerColorListeners();
 
-    let cloudTexture = await loadTexture(renderer, 'assets/cloud2.png');
+    let cloudTexture = await loadTexture(renderer, 'assets/noises/cloud2.png');
     renderer.setCloudTexture(cloudTexture);
 
     function handleZoom(event) {
