@@ -1,5 +1,5 @@
 import { Renderer } from './renderer.js';
-import { hexToRgb } from './utils.js';
+import { hexToRgb, easing } from './utils.js';
 import { DEFAULT_VARIABLES_VALUES } from './default-values.js';
 
 async function loadTexture(renderer, url) {
@@ -404,12 +404,45 @@ async function main() {
         renderer.cameraPosition = { x, y, z };
     }
 
+    const animation = {
+        isAnimating: true,
+        startTime: performance.now(),
+        duration: 3000, 
+        startScale: 0.005,
+        targetScale: 1.0,
+        currentScale: 0.005,
+    };
+
     function handleAnimation() {
         const time = performance.now() / 1000;
         const cameraPosition ={
             x: camera.radius * Math.sin(camera.phi) * Math.cos(camera.theta),
             y: camera.radius * Math.cos(camera.phi),
             z: camera.radius * Math.sin(camera.phi) * Math.sin(camera.theta)
+        }
+
+        if (animation.isAnimating) {
+            const elapsed = performance.now() - animation.startTime;
+            const progress = Math.min(elapsed / animation.duration, 1.0);
+            
+        
+            //const easedProgress = easing.easeOutBack(progress);
+            //const easedProgress = easing.easeOutCubic(progress);
+            const easedProgress = easing.easeOutElastic(progress);
+            
+            animation.currentScale = animation.startScale + 
+                (animation.targetScale - animation.startScale) * easedProgress;
+            
+            shadersParams.planetScale = animation.currentScale;
+            cloudParams.planetScale = animation.currentScale;
+            cloudShadowParams.planetScale = animation.currentScale;
+            
+            if (progress >= 1.0) {
+                animation.isAnimating = false;
+                shadersParams.planetScale = animation.targetScale;
+                cloudParams.planetScale = animation.targetScale;
+                cloudShadowParams.planetScale = animation.targetScale;
+            }
         }
         
         renderer.clearScreen();
