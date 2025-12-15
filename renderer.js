@@ -522,6 +522,7 @@ export class Renderer {
         const mvpMatrix = mat4.create();
 
         mat4.identity(modelMatrix);                                                             // Isso aqui faz com que a matriz modelo fique na origem do mundo 
+        mat4.scale(modelMatrix, modelMatrix, [params.planetScale, params.planetScale, params.planetScale]); // Escala o planeta de acordo com o valor passado
         mat4.lookAt(viewMatrix, [cameraPos.x, cameraPos.y, cameraPos.z], [0, 0, 0], [0, 1, 0]); // Isso aqui passa os valores da camera: pos, origem do mundo que ela vai olhar, up vector
         
         if (autoRotate) { mat4.rotateY(viewMatrix, viewMatrix, time * -0.1); } 
