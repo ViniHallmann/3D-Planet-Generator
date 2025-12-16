@@ -389,6 +389,11 @@ export class Renderer {
         this.gl.uniform1i(this.uniformLocations['u_useLambertianDiffuse'], bool);
     }
 
+    setViewPosition(position){
+        this.gl.useProgram(this.program);
+        this.gl.uniform3fv(this.uniformLocations['u_viewPosition'], position);
+    }
+
     resizeCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
@@ -497,7 +502,8 @@ export class Renderer {
             lambertianDiffuse: lambertianDiffuse,
             useColor: false,
             noiseTexture: 0,                
-            cloudTexture: 1                 
+            cloudTexture: 1,
+            viewPosition: [cameraPos.x, cameraPos.y, cameraPos.z]              
         };
 
         this.updateUniforms(frameParams);

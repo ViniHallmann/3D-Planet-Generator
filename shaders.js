@@ -76,7 +76,8 @@ export const vertexShaderSource = glsl`#version 300 es
         gl_Position = u_matrix * vec4(pos, 1.0);
         v_normal = a_normal;
         v_texcoord = a_texcoord;
-        v_modelPosition = a_position.xyz;
+        v_modelPosition = pos;
+        //v_modelPosition = a_position.xyz;
     }
 `;
 
@@ -135,6 +136,8 @@ export const fragmentShaderSource = glsl`#version 300 es
     uniform float u_cloudAlpha;
     uniform vec3 u_cloudColor;
     uniform float u_cloudTextureZoom;
+
+    uniform vec3 u_viewPosition;
 
     //uniform float u_shadowOpacity;
     
@@ -235,6 +238,25 @@ export const fragmentShaderSource = glsl`#version 300 es
                 vec3 color = defineTerrainColor(v_height).rgb;
                 outColor = vec4(color * light, 1.0);
             }
+            vec3 worldPos = v_modelPosition * 0.5;
+            
+            // 2. Calculate View Direction
+            vec3 viewDir = normalize(u_viewPosition - worldPos);
+
+            // 3. Calculate Fresnel (Rim) Factor
+            // dot(viewDir, normal) is 1.0 when looking straight at surface, 0.0 at edges
+            float rim = 1.0 - max(dot(viewDir, normal), 0.0);
+            
+            // 4. Sharpen the rim
+            rim = pow(rim, 3.5);
+            vec3 rimColor = vec3(0.0, 0.5, 1.0);
+
+            // 5. Apply color and intensity
+            vec3 rimLighting = rimColor * rim * 1.;
+
+            // 6. Add to final color
+            outColor.rgb += rimLighting;
+
         }
 
         if (u_renderPass == 2.) {

@@ -67,6 +67,9 @@ let shadersParams = {
     layers : layerLevels,
     terrainDisplacement: 0.3,
     planetScale: 0.05,
+    rimColor: [0.0, 0.5, 1.0],
+    rimSize: 2.0,
+    rimIntensity: 1.5,
 }
 
 let cloudParams = {
