@@ -13,7 +13,7 @@ let cloudLayerOffset = MAX_CLOUD_OFFSET;
 let isMouseOverUI = false;
 let isModifyingTerrain = false;
 let showWireframe = false;
-let showLambertianDiffuse = true;
+let showLambertianDiffuse = false;
 
 let noiseParams = {
     subdivisions: 1,
@@ -21,7 +21,8 @@ let noiseParams = {
     persistence: 0.5, 
     lacunarity: 2.0 ,
     noiseZoom: 1.0,
-    noiseResolution: 512         
+    noiseResolution: 512,
+    noiseType: 'simplex',      
 };
    
 let camera = {
