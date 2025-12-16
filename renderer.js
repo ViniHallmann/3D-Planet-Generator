@@ -42,21 +42,6 @@ export class Renderer {
         );
     }
 
-    //No Renderer.js, modifique o método getLocations. Em vez de salvar propriedades soltas (this.lightSpeedLoc), itere sobre todos os uniformes ativos do programa WebGL:
-
-    // Use gl.getActiveUniform e gl.getUniformLocation para popular um dicionário: this.uniformLocations = { 'u_lightSpeed': location, ... }.
-
-    // Crie um método único updateUniforms(params).
-
-    // Este método recebe um objeto de parâmetros (ex: shadersParams).
-
-    // Ele itera sobre as chaves desse objeto (ex: lightSpeed).
-
-    // Verifica se existe uma chave correspondente no dicionário de locations (ex: u_lightSpeed).
-
-    // Se existir, verifica o tipo do valor (número, array de 3, booleano) e chama a função WebGL apropriada (uniform1f, uniform3fv, uniform1i) automaticamente.
-
-    // Remova todos os métodos manuais como setLightSpeed, setCloudOpacity, etc.
     getLocations(params) {
         const gl = this.gl;
         this.positionLoc = gl.getAttribLocation(this.program, 'a_position');
@@ -419,11 +404,6 @@ export class Renderer {
 
         this.setRenderPass(1);
         this.updateUniforms(shadersParams);
-        // this.setLightSpeed(shadersParams.lightSpeed);
-        // this.setLightBrightness(shadersParams.lightBrightness);
-        // this.setLambertianDiffuseUse(shadersParams.useLambertianDiffuse);
-        // this.setTerrainDisplacement(shadersParams.terrainDisplacement);
-        // this.setLayerLevels(shadersParams.layers);
 
         gl.bindVertexArray(this.vao);
         gl.drawElements(gl.TRIANGLES, this.numElements, gl.UNSIGNED_SHORT, 0);
@@ -450,16 +430,6 @@ export class Renderer {
 
         this.setRenderPass(2);
         this.updateUniforms(cloudParams);
-        // this.setTerrainDisplacement(cloudParams.terrainDisplacement);
-        // this.setCloudOpacity(cloudParams.opacity);
-        // this.setCloudScale(cloudParams.scale);
-        // this.setCloudSpeed(cloudParams.speed);
-        // this.setCloudWarpIntensity(cloudParams.warpIntensity);
-        // this.setCloudWarpTime(cloudParams.warpTime);
-        // this.setCloudThreshold(cloudParams.threshold);
-        // this.setCloudAlpha(cloudParams.alpha);
-        // this.setCloudColor(cloudParams.color);
-        // this.setCloudTextureZoom(cloudParams.textureZoom);
 
         if (cloudParams.texture) {
             this.setCloudTexture(cloudParams.texture);
@@ -484,16 +454,6 @@ export class Renderer {
 
         this.setRenderPass(3);
         this.updateUniforms(cloudParams);
-        // this.setCloudOpacity(cloudParams.opacity);
-        // this.setCloudScale(cloudParams.scale);
-        // this.setCloudSpeed(cloudParams.speed);
-        // this.setCloudWarpIntensity(cloudParams.warpIntensity);
-        // this.setCloudWarpTime(cloudParams.warpTime);
-        // this.setCloudThreshold(cloudParams.threshold);
-        // this.setCloudAlpha(cloudParams.alpha);
-        // this.setCloudColor(cloudParams.color);
-        // this.setCloudTextureZoom(cloudParams.textureZoom);
-        // this.setTerrainDisplacement(cloudParams.terrainDisplacement);
 
         if (cloudParams.texture) {
             this.setCloudTexture(cloudParams.texture);
