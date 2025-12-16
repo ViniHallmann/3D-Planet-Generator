@@ -244,8 +244,8 @@ export const fragmentShaderSource = glsl`#version 300 es
             
             float alpha = u_cloudOpacity * smoothstep(0.5, 0.8, cloudNoise);
 
-            // u_cloudColor depois no lugar de vec3(1.0)
-            outColor = vec4(vec3(1.0), alpha * light);
+            //DEPOIS COLOCAR INPUT DO ALPHA NO HTML PARA CONTROLAR INTENSIDADE DAS CORES
+            outColor = vec4(u_cloudColor, alpha * light);
         } 
         
         if (u_renderPass == 3.) {
