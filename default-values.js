@@ -13,10 +13,10 @@ let cloudLayerOffset = MAX_CLOUD_OFFSET;
 let isMouseOverUI = false;
 let isModifyingTerrain = false;
 let showWireframe = false;
-let showLambertianDiffuse = false;
+let showLambertianDiffuse = true;
 
 let noiseParams = {
-    subdivisions: 1,
+    subdivisions: 6,
     octaves: 4,    
     persistence: 0.5, 
     lacunarity: 2.0 ,
