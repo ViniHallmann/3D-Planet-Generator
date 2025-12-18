@@ -237,16 +237,22 @@ export const fragmentShaderSource = glsl`#version 300 es
         ));
 
         float light;
+        light = u_lightBrightness;
 
-        if (u_lambertianDiffuse == true) {
-            light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
-        } else {
-            light = 1.0;
-        }
+        // if (u_lambertianDiffuse == true) {
+        //     light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
+        // } else {
+        //     light = 1.0;
+        // }
 
         vec3 rim = rimLight(normal, u_viewPosition, v_worldPosition);
 
         if (u_renderPass == 1.) {
+            if (u_lambertianDiffuse == true) {
+                light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
+            } else {
+                light = 1.0;
+            }
             if (u_useColor) {
                 outColor = vec4(u_color * light, 1.0);
             } else {
@@ -257,7 +263,6 @@ export const fragmentShaderSource = glsl`#version 300 es
         }
 
         if (u_renderPass == 2.) {
-
             float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
             if (cloudNoise < u_cloudThreshold) discard;
             
@@ -268,7 +273,11 @@ export const fragmentShaderSource = glsl`#version 300 es
         } 
         
         if (u_renderPass == 3.) {
-            
+            if (u_lambertianDiffuse == true) {
+                light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
+            } else {
+                light = 1.0;
+            }
             float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
             if (cloudNoise < u_cloudThreshold) discard;
 
