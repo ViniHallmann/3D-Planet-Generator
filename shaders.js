@@ -8,6 +8,7 @@ export const vertexShaderSource = glsl`#version 300 es
     
     uniform float u_time;
     uniform mat4 u_matrix;
+    uniform mat4 u_modelMatrix;
     uniform sampler2D u_noiseTexture;
     uniform sampler2D u_cloudTexture;
     uniform float u_renderPass;
@@ -21,6 +22,7 @@ export const vertexShaderSource = glsl`#version 300 es
     out vec2 v_texcoord;
     out float v_height;
     out vec3 v_modelPosition;
+    out vec3 v_worldPosition;
 
     mat2 rotate2D(float angle) {
         float s = sin(angle);
@@ -74,9 +76,13 @@ export const vertexShaderSource = glsl`#version 300 es
         }
 
         gl_Position = u_matrix * vec4(pos, 1.0);
-        v_normal = a_normal;
+        //v_normal = a_normal;
+        v_normal = mat3(u_modelMatrix) * a_normal;
+        v_modelPosition = pos;
+        v_worldPosition = (u_modelMatrix * vec4(pos, 1.0)).xyz;
         v_texcoord = a_texcoord;
-        v_modelPosition = a_position.xyz;
+        v_modelPosition = pos;
+        //v_modelPosition = a_position.xyz;
     }
 `;
 
@@ -87,6 +93,7 @@ export const fragmentShaderSource = glsl`#version 300 es
     in vec2 v_texcoord;
     in float v_height;
     in vec3 v_modelPosition;
+    in vec3 v_worldPosition;
 
     uniform float u_renderPass;
 
@@ -136,6 +143,8 @@ export const fragmentShaderSource = glsl`#version 300 es
     uniform vec3 u_cloudColor;
     uniform float u_cloudTextureZoom;
 
+    uniform vec3 u_viewPosition;
+
     //uniform float u_shadowOpacity;
     
     out vec4 outColor;
@@ -180,6 +189,13 @@ export const fragmentShaderSource = glsl`#version 300 es
         return vec3(diff * brightness);
     }
 
+    vec3 rimLight(vec3 normal, vec3 viewPos, vec3 worldPos){
+        vec3 viewDir = normalize(viewPos - worldPos);
+        float rim = 1.0 - max(dot(viewDir, normal), 0.0);
+        rim = pow(rim, 3.5);
+        return rim * vec3(0.0, 0.5, 1.0);
+    }
+
     float triplanarSample(vec3 pos, vec3 normal, float scale) {
         vec3 weights = abs(normal);
         weights = max(weights - 0.2, 0.0);
@@ -221,35 +237,47 @@ export const fragmentShaderSource = glsl`#version 300 es
         ));
 
         float light;
+        light = u_lightBrightness;
 
-        if (u_lambertianDiffuse == true) {
-            light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
-        } else {
-            light = 1.0;
-        }
+        // if (u_lambertianDiffuse == true) {
+        //     light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
+        // } else {
+        //     light = 1.0;
+        // }
+
+        vec3 rim = rimLight(normal, u_viewPosition, v_worldPosition);
 
         if (u_renderPass == 1.) {
+            if (u_lambertianDiffuse == true) {
+                light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
+            } else {
+                light = 1.0;
+            }
             if (u_useColor) {
                 outColor = vec4(u_color * light, 1.0);
             } else {
                 vec3 color = defineTerrainColor(v_height).rgb;
                 outColor = vec4(color * light, 1.0);
             }
+            outColor.rgb += rim;
         }
 
         if (u_renderPass == 2.) {
-
             float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
             if (cloudNoise < u_cloudThreshold) discard;
             
             float alpha = u_cloudOpacity * smoothstep(0.5, 0.8, cloudNoise);
 
-            // u_cloudColor depois no lugar de vec3(1.0)
-            outColor = vec4(vec3(1.0), alpha * light);
+            //DEPOIS COLOCAR INPUT DO ALPHA NO HTML PARA CONTROLAR INTENSIDADE DAS CORES
+            outColor = vec4(u_cloudColor, alpha * light);
         } 
         
         if (u_renderPass == 3.) {
-            
+            if (u_lambertianDiffuse == true) {
+                light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
+            } else {
+                light = 1.0;
+            }
             float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
             if (cloudNoise < u_cloudThreshold) discard;
 

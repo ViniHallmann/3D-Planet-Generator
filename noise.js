@@ -11,11 +11,16 @@ function seededRandom(seed) {
 }
 
 export class NoiseGenerator {
-    constructor(width, height, seed=null) {
+    constructor(width, height, seed=null, noiseType='simplex') {
         this.width = width;
         this.height = height;
         this.seed = seed !== null ? seed : Math.floor(Math.random() * 2147483647);
+        this.noiseType = noiseType;
         this.noise4D = createNoise4D(seededRandom(this.seed));
+    }
+
+    setNoiseType(noiseType) {
+        this.noiseType = noiseType;
     }
 
     getSeed() {
@@ -33,6 +38,19 @@ export class NoiseGenerator {
 
     setHeight(height) {
         this.height = height;
+    }
+
+    simplexNoise(x, y, z, w) {
+        return this.noise4D(x, y, z, w);
+    }
+
+    getNoiseValue(x, y, z, w) {
+        switch(this.noiseType) {
+            case 'simplex':
+                return this.simplexNoise(x, y, z, w);
+            default:
+                return this.simplexNoise(x, y, z, w);
+        }
     }
 
     generate(params) {
@@ -60,7 +78,7 @@ export class NoiseGenerator {
                     const z4d = Math.cos(angleY) * noiseZoom;
                     const w4d = Math.sin(angleY) * noiseZoom;
 
-                    total += this.noise4D(x4d, y4d, z4d, w4d) * amplitude;
+                    total += this.getNoiseValue(x4d, y4d, z4d, w4d) * amplitude;
 
                     maxValue += amplitude;
                     amplitude *= persistence;
@@ -89,7 +107,7 @@ export class NoiseGenerator {
 
             const nw = 0.0; 
 
-            total += this.noise4D(nx, ny, nz, nw) * amplitude;
+            total += this.getNoiseValue(nx, ny, nz, nw) * amplitude;
 
             maxValue += amplitude;
             amplitude *= persistence;
@@ -105,33 +123,33 @@ export class NoiseGenerator {
         // return Math.max(0.0, Math.min(1.0, val));
     }
 
-    modifyTerrain(data, brushX, brushY, brushSize, intensity, action) {
-        const startX = Math.max(0, brushX - brushSize);
-        const endX = Math.min(this.width - 1, brushX + brushSize);
-        const startY = Math.max(0, brushY - brushSize);
-        const endY = Math.min(this.height - 1, brushY + brushSize);
+    // modifyTerrain(data, brushX, brushY, brushSize, intensity, action) {
+    //     const startX = Math.max(0, brushX - brushSize);
+    //     const endX = Math.min(this.width - 1, brushX + brushSize);
+    //     const startY = Math.max(0, brushY - brushSize);
+    //     const endY = Math.min(this.height - 1, brushY + brushSize);
 
-        for (let y = startY; y <= endY; y++) {
-            for (let x = startX; x <= endX; x++) {
-                const dx = x - brushX;
-                const dy = y - brushY;
-                const distance = Math.sqrt(dx * dx + dy * dy);
+    //     for (let y = startY; y <= endY; y++) {
+    //         for (let x = startX; x <= endX; x++) {
+    //             const dx = x - brushX;
+    //             const dy = y - brushY;
+    //             const distance = Math.sqrt(dx * dx + dy * dy);
 
-                if (distance < brushSize) {
-                    const falloff = 1.0 - (distance / brushSize);
-                    const noiseModulation = this.noise2D(x / 50, y / 50);
-                    const modulatedIntensity = intensity + (intensity * noiseModulation * 0.5); 
+    //             if (distance < brushSize) {
+    //                 const falloff = 1.0 - (distance / brushSize);
+    //                 const noiseModulation = this.noise2D(x / 50, y / 50);
+    //                 const modulatedIntensity = intensity + (intensity * noiseModulation * 0.5); 
 
-                    const index = y * this.width + x;
-                    if (action === 'add') {
-                        data[index] += modulatedIntensity * falloff;
-                    } else if (action === 'remove') {
-                        data[index] -= modulatedIntensity * falloff;
-                    }
+    //                 const index = y * this.width + x;
+    //                 if (action === 'add') {
+    //                     data[index] += modulatedIntensity * falloff;
+    //                 } else if (action === 'remove') {
+    //                     data[index] -= modulatedIntensity * falloff;
+    //                 }
                     
-                }
-            }
-        }
-    }
+    //             }
+    //         }
+    //     }
+    // }
     
 }

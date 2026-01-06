@@ -16,12 +16,13 @@ let showWireframe = false;
 let showLambertianDiffuse = true;
 
 let noiseParams = {
-    subdivisions: 1,
+    subdivisions: 6,
     octaves: 4,    
     persistence: 0.5, 
     lacunarity: 2.0 ,
     noiseZoom: 1.0,
-    noiseResolution: 512         
+    noiseResolution: 512,
+    noiseType: 'simplex',      
 };
    
 let camera = {
@@ -48,16 +49,16 @@ let layerLevels = {
 
 // PRA FAZER DEPOIS, PRECISO MODIFICAR OS VALORES DAS CORES PARA SER O MESMO DO HTML OU VICE VERSA
 let layerColors = {
-    layer0:  [0.0, 0.0, 0.5],    
-    layer1:  [0.0, 0.5, 1.0],
-    layer2:  [0.0, 0.0, 1.0],
-    layer3:  [0.0, 1.0, 0.0],
-    layer4:  [0.0, 0.5, 0.0],
-    layer5:  [0.0, 0.5, 1.0],
-    layer6:  [0.5, 0.25, 0.0],
-    layer7:  [0.8, 0.7, 0.5],
-    layer8:  [0.5, 0.5, 0.5],
-    layer9:  [1.0, 1.0, 1.0],
+    layer0:  [0.0, 0.0, 0.502],     // #000080
+    layer1:  [0.0, 0.0, 1.0],       // #0000ff
+    layer2:  [0.0, 0.502, 1.0],     // #0080ff
+    layer3:  [0.8, 0.702, 0.502],   // #ccb380
+    layer4:  [0.2, 1.0, 0.2],       // #33ff33
+    layer5:  [0.0, 0.502, 0.0],     // #008000
+    layer6:  [0.502, 0.502, 0.502], // #808080
+    layer7:  [0.251, 0.251, 0.251], // #404040
+    layer8:  [0.702, 0.42, 0.0],    // #b36b00
+    layer9:  [1.0, 1.0, 1.0],       // #ffffff
 };
 
 let shadersParams = {
@@ -66,6 +67,9 @@ let shadersParams = {
     layers : layerLevels,
     terrainDisplacement: 0.3,
     planetScale: 0.05,
+    rimColor: [0.0, 0.5, 1.0],
+    rimSize: 2.0,
+    rimIntensity: 1.5,
 }
 
 let cloudParams = {

@@ -42,21 +42,6 @@ export class Renderer {
         );
     }
 
-    //No Renderer.js, modifique o método getLocations. Em vez de salvar propriedades soltas (this.lightSpeedLoc), itere sobre todos os uniformes ativos do programa WebGL:
-
-    // Use gl.getActiveUniform e gl.getUniformLocation para popular um dicionário: this.uniformLocations = { 'u_lightSpeed': location, ... }.
-
-    // Crie um método único updateUniforms(params).
-
-    // Este método recebe um objeto de parâmetros (ex: shadersParams).
-
-    // Ele itera sobre as chaves desse objeto (ex: lightSpeed).
-
-    // Verifica se existe uma chave correspondente no dicionário de locations (ex: u_lightSpeed).
-
-    // Se existir, verifica o tipo do valor (número, array de 3, booleano) e chama a função WebGL apropriada (uniform1f, uniform3fv, uniform1i) automaticamente.
-
-    // Remova todos os métodos manuais como setLightSpeed, setCloudOpacity, etc.
     getLocations(params) {
         const gl = this.gl;
         this.positionLoc = gl.getAttribLocation(this.program, 'a_position');
@@ -404,6 +389,11 @@ export class Renderer {
         this.gl.uniform1i(this.uniformLocations['u_useLambertianDiffuse'], bool);
     }
 
+    setViewPosition(position){
+        this.gl.useProgram(this.program);
+        this.gl.uniform3fv(this.uniformLocations['u_viewPosition'], position);
+    }
+
     resizeCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
@@ -419,11 +409,6 @@ export class Renderer {
 
         this.setRenderPass(1);
         this.updateUniforms(shadersParams);
-        // this.setLightSpeed(shadersParams.lightSpeed);
-        // this.setLightBrightness(shadersParams.lightBrightness);
-        // this.setLambertianDiffuseUse(shadersParams.useLambertianDiffuse);
-        // this.setTerrainDisplacement(shadersParams.terrainDisplacement);
-        // this.setLayerLevels(shadersParams.layers);
 
         gl.bindVertexArray(this.vao);
         gl.drawElements(gl.TRIANGLES, this.numElements, gl.UNSIGNED_SHORT, 0);
@@ -450,16 +435,6 @@ export class Renderer {
 
         this.setRenderPass(2);
         this.updateUniforms(cloudParams);
-        // this.setTerrainDisplacement(cloudParams.terrainDisplacement);
-        // this.setCloudOpacity(cloudParams.opacity);
-        // this.setCloudScale(cloudParams.scale);
-        // this.setCloudSpeed(cloudParams.speed);
-        // this.setCloudWarpIntensity(cloudParams.warpIntensity);
-        // this.setCloudWarpTime(cloudParams.warpTime);
-        // this.setCloudThreshold(cloudParams.threshold);
-        // this.setCloudAlpha(cloudParams.alpha);
-        // this.setCloudColor(cloudParams.color);
-        // this.setCloudTextureZoom(cloudParams.textureZoom);
 
         if (cloudParams.texture) {
             this.setCloudTexture(cloudParams.texture);
@@ -484,16 +459,6 @@ export class Renderer {
 
         this.setRenderPass(3);
         this.updateUniforms(cloudParams);
-        // this.setCloudOpacity(cloudParams.opacity);
-        // this.setCloudScale(cloudParams.scale);
-        // this.setCloudSpeed(cloudParams.speed);
-        // this.setCloudWarpIntensity(cloudParams.warpIntensity);
-        // this.setCloudWarpTime(cloudParams.warpTime);
-        // this.setCloudThreshold(cloudParams.threshold);
-        // this.setCloudAlpha(cloudParams.alpha);
-        // this.setCloudColor(cloudParams.color);
-        // this.setCloudTextureZoom(cloudParams.textureZoom);
-        // this.setTerrainDisplacement(cloudParams.terrainDisplacement);
 
         if (cloudParams.texture) {
             this.setCloudTexture(cloudParams.texture);
@@ -521,11 +486,14 @@ export class Renderer {
         const projectionMatrix = mat4.create();
         const mvpMatrix = mat4.create();
 
+        
+
         mat4.identity(modelMatrix);                                                             // Isso aqui faz com que a matriz modelo fique na origem do mundo 
+        if (autoRotate) { mat4.rotateY(modelMatrix, modelMatrix, time * -0.1); } 
         mat4.scale(modelMatrix, modelMatrix, [params.planetScale, params.planetScale, params.planetScale]); // Escala o planeta de acordo com o valor passado
         mat4.lookAt(viewMatrix, [cameraPos.x, cameraPos.y, cameraPos.z], [0, 0, 0], [0, 1, 0]); // Isso aqui passa os valores da camera: pos, origem do mundo que ela vai olhar, up vector
         
-        if (autoRotate) { mat4.rotateY(viewMatrix, viewMatrix, time * -0.1); } 
+        //if (autoRotate) { mat4.rotateY(viewMatrix, viewMatrix, time * -0.1); } 
 
         mat4.perspective(projectionMatrix, Math.PI / 4, this.canvas.width / this.canvas.height, 0.1, 100.0); // Adiciona ilusao de profundidade, basicamente transforma de 3D para 2D para "caber" na tela
         mat4.multiply(mvpMatrix, projectionMatrix, viewMatrix);                                              // Combina tudo em uma so coisa. ViewMatrix vira relativo a projection aqui e depois a projection vira 2D com profundidade
@@ -537,7 +505,9 @@ export class Renderer {
             lambertianDiffuse: lambertianDiffuse,
             useColor: false,
             noiseTexture: 0,                
-            cloudTexture: 1                 
+            cloudTexture: 1,
+            viewPosition: [cameraPos.x, cameraPos.y, cameraPos.z],
+            modelMatrix: modelMatrix,              
         };
 
         this.updateUniforms(frameParams);
