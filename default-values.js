@@ -4,7 +4,7 @@ const MAX_CLOUD_LAYERS = 10;
 const MAX_CLOUD_OFFSET = 0.0015;
 const MIN_PHI = 0.1;
 const MAX_PHI = Math.PI - 0.1;
-const AUTO_ROTATE = false;
+const AUTO_ROTATE = true;
 const _LEFT_BUTTOM_VALUE = 0;
 
 let numActiveLayers = MAX_LAYERS;
@@ -62,7 +62,7 @@ let layerColors = {
 };
 
 let shadersParams = {
-    lightSpeed: 0.0,
+    lightSpeed: 1.2,
     lightBrightness: 1.0,
     lightAngle: 0,
     lightPitch: 0.5,
