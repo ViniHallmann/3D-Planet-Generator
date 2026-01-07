@@ -1,6 +1,7 @@
 import { Renderer } from './renderer.js';
 import { hexToRgb, easing } from './utils.js';
 import { DEFAULT_VARIABLES_VALUES } from './default-values.js';
+import { loadOBJ } from './obj-loader.js';
 
 async function loadTexture(renderer, url) {
     return new Promise((resolve) => {
@@ -103,6 +104,7 @@ function getControlsElements() {
 }
 
 async function main() {
+    
     const canvas = getCanvasElement();
     const {
         controlsToggle, controlsPanel, controlsClose,
@@ -350,6 +352,19 @@ async function main() {
     let cloudTexture = await loadTexture(renderer, 'assets/noises/cloud2.png');
     renderer.setCloudTexture(cloudTexture);
 
+    //GAMBIARRA DO KRL PARA DE SER PREGUICOSO E MUDA ISSO AQUI
+    const planeGeometry = await loadOBJ('assets/models/satellite.obj');
+    const plane = renderer.addObject(planeGeometry, 
+        [0, 0, 0],      // posição
+        [0.05, 0.05, 0.05] // escala
+    );
+    plane.color = [0.9, 0.4, 0.1]; // Laranja mais vibrante
+    // Configurar órbita
+    plane.orbitRadius = 2;
+    plane.orbitSpeed = 0.001;
+    //plane.rotation[1] = Math.PI / 4;
+    plane.rotationOffset = [0, Math.PI/2, -Math.PI/2]; // [pitch, yaw, roll] - ajuste esses valores
+    plane.lookAtCenter = true;
     function handleZoom(event) {
         if (isMouseOverUI) return;
         event.preventDefault();
@@ -463,6 +478,9 @@ async function main() {
             };
             renderer.render(time, cameraPosition, layerParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 2.);
         }
+        renderer.objects.forEach(obj => {
+            renderer.renderObject(obj, time, shadersParams);
+        });
         
         requestAnimationFrame(handleAnimation);
     }
