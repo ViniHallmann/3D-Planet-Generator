@@ -9,6 +9,7 @@ export class Renderer {
         this.canvas = canvas;
         this.gl = canvas.getContext('webgl2');
         this.uniformLocations = {};
+        this.objects = [];
         
         if (!this.gl) {
             console.error('WebGL2 not supported in this browser.');
@@ -404,6 +405,106 @@ export class Renderer {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     }
 
+    addObject(geometry, position = [0, 0, 0], scale = [1, 1, 1]) {
+        const gl = this.gl;
+        
+        const posBuffer = this.createBuffer(gl.ARRAY_BUFFER, geometry.positions);
+        const normalBuffer = this.createBuffer(gl.ARRAY_BUFFER, geometry.normals);
+        const indexBuffer = this.createBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.indices);
+        
+        const vao = gl.createVertexArray();
+        gl.bindVertexArray(vao);
+        this.bindAttribute(posBuffer, this.positionLoc, 3);
+        this.bindAttribute(normalBuffer, this.normalLoc, 3);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bindVertexArray(null);
+        
+        const obj = {
+            vao,
+            indexCount: geometry.indices.length,
+            position,
+            scale,
+            rotation: [0, 0, 0],
+            orbitAngle: 0,       
+            orbitRadius: 0,
+            orbitSpeed: 0
+        };
+        
+        this.objects.push(obj);
+        return obj;
+    }
+
+    renderObject(obj, time, params) {
+        const gl = this.gl;
+        
+        if (obj.orbitRadius > 0) {
+            obj.orbitAngle += obj.orbitSpeed;
+            
+            obj.position[0] = Math.cos(obj.orbitAngle) * obj.orbitRadius;
+            obj.position[2] = Math.sin(obj.orbitAngle) * obj.orbitRadius;
+            
+            obj.position[1] = Math.sin(obj.orbitAngle * 2) * 0.3;
+            
+            obj.rotation[1] = obj.orbitAngle + Math.PI / 2;
+            
+            obj.rotation[0] = Math.sin(obj.orbitAngle) * 0.1;
+            obj.rotation[2] = Math.cos(obj.orbitAngle * 3) * 0.05;
+        }
+        
+        const modelMatrix = mat4.create();
+        mat4.translate(modelMatrix, modelMatrix, obj.position);
+        
+        if (obj.lookAtCenter) {
+            const toCenter = [-obj.position[0],-obj.position[1],-obj.position[2]];
+
+            const len = Math.sqrt(toCenter[0]**2 + toCenter[1]**2 + toCenter[2]**2);
+            toCenter[0] /= len;
+            toCenter[1] /= len;
+            toCenter[2] /= len;
+            
+            const yaw = Math.atan2(toCenter[0], toCenter[2]);
+            const pitch = Math.asin(-toCenter[1]);
+            
+            mat4.rotateY(modelMatrix, modelMatrix, yaw);
+            mat4.rotateX(modelMatrix, modelMatrix, pitch);
+            
+            if (obj.rotationOffset) {
+                mat4.rotateX(modelMatrix, modelMatrix, obj.rotationOffset[0]);
+                mat4.rotateY(modelMatrix, modelMatrix, obj.rotationOffset[1]);
+                mat4.rotateZ(modelMatrix, modelMatrix, obj.rotationOffset[2]);
+            }
+        } else {
+            mat4.rotateY(modelMatrix, modelMatrix, obj.rotation[1]);
+            mat4.rotateX(modelMatrix, modelMatrix, obj.rotation[0]);
+            mat4.rotateZ(modelMatrix, modelMatrix, obj.rotation[2]);
+        }
+        
+        mat4.scale(modelMatrix, modelMatrix, obj.scale);
+        
+        if (params.planetScale) {
+            mat4.scale(modelMatrix, modelMatrix, [params.planetScale, params.planetScale, params.planetScale]);
+        }
+        
+        const mvpMatrix = mat4.create();
+        mat4.multiply(mvpMatrix, this.currentViewProjection, modelMatrix);
+        
+        gl.bindVertexArray(obj.vao);
+        
+        const objectParams = {
+            matrix: mvpMatrix,
+            time: time,
+            renderPass: 1.0,
+            useColor: true,
+            color: obj.color || [0.8, 0.8, 0.8],
+            lambertianDiffuse: params.lambertianDiffuse
+        };
+        
+        this.updateUniforms(objectParams);
+        
+        gl.drawElements(gl.TRIANGLES, obj.indexCount, gl.UNSIGNED_SHORT, 0);
+        gl.bindVertexArray(null);
+    }
+
     drawPlanetPass(shadersParams, wireframe = true) {
         const gl = this.gl;
 
@@ -496,8 +597,12 @@ export class Renderer {
         //if (autoRotate) { mat4.rotateY(viewMatrix, viewMatrix, time * -0.1); } 
 
         mat4.perspective(projectionMatrix, Math.PI / 4, this.canvas.width / this.canvas.height, 0.1, 100.0); // Adiciona ilusao de profundidade, basicamente transforma de 3D para 2D para "caber" na tela
-        mat4.multiply(mvpMatrix, projectionMatrix, viewMatrix);                                              // Combina tudo em uma so coisa. ViewMatrix vira relativo a projection aqui e depois a projection vira 2D com profundidade
-        mat4.multiply(mvpMatrix, mvpMatrix, modelMatrix);                                                     // Agora a mvpMatrix tem tudo junto
+        const viewProjectionMatrix = mat4.create();
+        mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
+        //mat4.multiply(mvpMatrix, projectionMatrix, viewMatrix);                                              // Combina tudo em uma so coisa. ViewMatrix vira relativo a projection aqui e depois a projection vira 2D com profundidade
+        this.currentViewProjection = viewProjectionMatrix;
+        //mat4.multiply(mvpMatrix, mvpMatrix, modelMatrix);                                                     // Agora a mvpMatrix tem tudo junto
+        mat4.multiply(mvpMatrix, viewProjectionMatrix, modelMatrix);
 
         const frameParams = {
             time: time,
