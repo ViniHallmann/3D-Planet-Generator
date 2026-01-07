@@ -62,7 +62,7 @@ let layerColors = {
 };
 
 let shadersParams = {
-    lightSpeed: 1.2,
+    lightSpeed: 0.5,
     lightBrightness: 1.0,
     lightAngle: 0,
     lightPitch: 0.5,

@@ -353,15 +353,15 @@ async function main() {
     renderer.setCloudTexture(cloudTexture);
 
     //GAMBIARRA DO KRL PARA DE SER PREGUICOSO E MUDA ISSO AQUI
-    const planeGeometry = await loadOBJ('assets/models/satellite.obj');
+    const planeGeometry = await loadOBJ('assets/models/airplane.obj');
     const plane = renderer.addObject(planeGeometry, 
-        [0, 0, 0],      // posição
-        [0.05, 0.05, 0.05] // escala
+        [5, 0, 0],      // posição
+        [0.5, 0.5, 0.5] // escala
     );
     plane.color = [0.9, 0.4, 0.1]; // Laranja mais vibrante
     // Configurar órbita
     plane.orbitRadius = 2;
-    plane.orbitSpeed = 0.001;
+    plane.orbitSpeed = 0.02;
     //plane.rotation[1] = Math.PI / 4;
     plane.rotationOffset = [0, Math.PI/2, -Math.PI/2]; // [pitch, yaw, roll] - ajuste esses valores
     plane.lookAtCenter = true;
@@ -467,17 +467,17 @@ async function main() {
         //PLANETA
         renderer.render(time, cameraPosition, shadersParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 1.);
         //SOMBRA DAS NUVENS
-        renderer.render(time, cameraPosition, cloudShadowParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 3.);
-        //NUVENS
-        for (let i = 0; i < numActiveCloudLayers; i++) {
-            let layerOpacity = cloudParams.opacity / numActiveCloudLayers;
-            const layerParams = {
-                ...cloudParams,
-                scale: cloudParams.scale + (i * cloudLayerOffset),
-                opacity: layerOpacity,
-            };
-            renderer.render(time, cameraPosition, layerParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 2.);
-        }
+        // renderer.render(time, cameraPosition, cloudShadowParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 3.);
+        // //NUVENS
+        // for (let i = 0; i < numActiveCloudLayers; i++) {
+        //     let layerOpacity = cloudParams.opacity / numActiveCloudLayers;
+        //     const layerParams = {
+        //         ...cloudParams,
+        //         scale: cloudParams.scale + (i * cloudLayerOffset),
+        //         opacity: layerOpacity,
+        //     };
+        //     renderer.render(time, cameraPosition, layerParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 2.);
+        // }
         renderer.objects.forEach(obj => {
             renderer.renderObject(obj, time, shadersParams);
         });

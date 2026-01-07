@@ -228,7 +228,8 @@ export const fragmentShaderSource = glsl`#version 300 es
         vec3 normal = normalize(v_normal);
         // float angle = u_time * u_lightSpeed;
         // float pitch = 0.5;
-        float angle = u_lightAngle + (u_time * u_lightSpeed);
+        // float angle = u_lightAngle + (u_time * u_lightSpeed);
+        float angle = u_lightAngle;
         float pitch = u_lightPitch;
         vec3 lightDir = normalize(vec3(
             cos(angle) * cos(pitch),
