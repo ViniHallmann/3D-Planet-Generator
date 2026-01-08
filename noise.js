@@ -10,6 +10,16 @@ function seededRandom(seed) {
     };
 }
 
+// Função de interpolação suave (smoothstep)
+function fade(t) {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+}
+
+// Interpolação linear
+function lerp(a, b, t) {
+    return a + t * (b - a);
+}
+
 export class NoiseGenerator {
     constructor(width, height, seed=null, noiseType='simplex') {
         this.width = width;
@@ -17,6 +27,46 @@ export class NoiseGenerator {
         this.seed = seed !== null ? seed : Math.floor(Math.random() * 2147483647);
         this.noiseType = noiseType;
         this.noise4D = createNoise4D(seededRandom(this.seed));
+        
+        // Inicializa tabelas de permutação para Value e Perlin noise
+        this.initPermutationTable();
+        this.initGradients4D();
+    }
+
+    initPermutationTable() {
+        const random = seededRandom(this.seed);
+        this.perm = new Uint8Array(512);
+        const p = new Uint8Array(256);
+        
+        // Preenche com valores 0-255
+        for (let i = 0; i < 256; i++) {
+            p[i] = i;
+        }
+        
+        // Embaralha usando Fisher-Yates
+        for (let i = 255; i > 0; i--) {
+            const j = Math.floor(random() * (i + 1));
+            [p[i], p[j]] = [p[j], p[i]];
+        }
+        
+        // Duplica para evitar overflow
+        for (let i = 0; i < 512; i++) {
+            this.perm[i] = p[i & 255];
+        }
+    }
+
+    initGradients4D() {
+        // Gradientes 4D para Perlin noise (32 gradientes)
+        this.gradients4D = [
+            [0,1,1,1], [0,1,1,-1], [0,1,-1,1], [0,1,-1,-1],
+            [0,-1,1,1], [0,-1,1,-1], [0,-1,-1,1], [0,-1,-1,-1],
+            [1,0,1,1], [1,0,1,-1], [1,0,-1,1], [1,0,-1,-1],
+            [-1,0,1,1], [-1,0,1,-1], [-1,0,-1,1], [-1,0,-1,-1],
+            [1,1,0,1], [1,1,0,-1], [1,-1,0,1], [1,-1,0,-1],
+            [-1,1,0,1], [-1,1,0,-1], [-1,-1,0,1], [-1,-1,0,-1],
+            [1,1,1,0], [1,1,-1,0], [1,-1,1,0], [1,-1,-1,0],
+            [-1,1,1,0], [-1,1,-1,0], [-1,-1,1,0], [-1,-1,-1,0]
+        ];
     }
 
     setNoiseType(noiseType) {
@@ -30,6 +80,8 @@ export class NoiseGenerator {
     setSeed(seed) {
         this.seed = seed;
         this.noise4D = createNoise4D(seededRandom(this.seed));
+        this.initPermutationTable();
+        this.initGradients4D();
     }
 
     setWidth(width) {
@@ -40,17 +92,144 @@ export class NoiseGenerator {
         this.height = height;
     }
 
-    simplexNoise(x, y, z, w) {
-        return this.noise4D(x, y, z, w);
-    }
-
     getNoiseValue(x, y, z, w) {
         switch(this.noiseType) {
             case 'simplex':
-                return this.simplexNoise(x, y, z, w);
+                return this.noise4D(x, y, z, w);
+            case 'perlin':
+                return this.perlinNoise4D(x, y, z, w);
+            case 'value':
+                return this.valueNoise4D(x, y, z, w);
             default:
-                return this.simplexNoise(x, y, z, w);
+                return this.noise4D(x, y, z, w);
         }
+    }
+
+    // ============================================
+    // VALUE NOISE 4D
+    // ============================================
+    hash4D(x, y, z, w) {
+        const n = this.perm[(x & 255) + this.perm[(y & 255) + this.perm[(z & 255) + this.perm[w & 255]]]];
+        return (n / 255.0) * 2.0 - 1.0; // Retorna valor entre -1 e 1
+    }
+
+    valueNoise4D(x, y, z, w) {
+        // Coordenadas inteiras
+        const x0 = Math.floor(x);
+        const y0 = Math.floor(y);
+        const z0 = Math.floor(z);
+        const w0 = Math.floor(w);
+        
+        const x1 = x0 + 1;
+        const y1 = y0 + 1;
+        const z1 = z0 + 1;
+        const w1 = w0 + 1;
+        
+        // Frações suavizadas
+        const sx = fade(x - x0);
+        const sy = fade(y - y0);
+        const sz = fade(z - z0);
+        const sw = fade(w - w0);
+        
+        // Valores nos 16 cantos do hipercubo 4D
+        const n0000 = this.hash4D(x0, y0, z0, w0);
+        const n1000 = this.hash4D(x1, y0, z0, w0);
+        const n0100 = this.hash4D(x0, y1, z0, w0);
+        const n1100 = this.hash4D(x1, y1, z0, w0);
+        const n0010 = this.hash4D(x0, y0, z1, w0);
+        const n1010 = this.hash4D(x1, y0, z1, w0);
+        const n0110 = this.hash4D(x0, y1, z1, w0);
+        const n1110 = this.hash4D(x1, y1, z1, w0);
+        const n0001 = this.hash4D(x0, y0, z0, w1);
+        const n1001 = this.hash4D(x1, y0, z0, w1);
+        const n0101 = this.hash4D(x0, y1, z0, w1);
+        const n1101 = this.hash4D(x1, y1, z0, w1);
+        const n0011 = this.hash4D(x0, y0, z1, w1);
+        const n1011 = this.hash4D(x1, y0, z1, w1);
+        const n0111 = this.hash4D(x0, y1, z1, w1);
+        const n1111 = this.hash4D(x1, y1, z1, w1);
+        
+        // Interpolação trilinear em 4D
+        const nx00 = lerp(lerp(n0000, n1000, sx), lerp(n0100, n1100, sx), sy);
+        const nx10 = lerp(lerp(n0010, n1010, sx), lerp(n0110, n1110, sx), sy);
+        const nx01 = lerp(lerp(n0001, n1001, sx), lerp(n0101, n1101, sx), sy);
+        const nx11 = lerp(lerp(n0011, n1011, sx), lerp(n0111, n1111, sx), sy);
+        
+        const nxy0 = lerp(nx00, nx10, sz);
+        const nxy1 = lerp(nx01, nx11, sz);
+        
+        return lerp(nxy0, nxy1, sw);
+    }
+
+    // ============================================
+    // PERLIN NOISE 4D
+    // ============================================
+    dot4D(grad, x, y, z, w) {
+        return grad[0] * x + grad[1] * y + grad[2] * z + grad[3] * w;
+    }
+
+    getGradient4D(x, y, z, w) {
+        const hash = this.perm[(x & 255) + this.perm[(y & 255) + this.perm[(z & 255) + this.perm[w & 255]]]];
+        return this.gradients4D[hash & 31];
+    }
+
+    perlinNoise4D(x, y, z, w) {
+        // Coordenadas inteiras
+        const x0 = Math.floor(x);
+        const y0 = Math.floor(y);
+        const z0 = Math.floor(z);
+        const w0 = Math.floor(w);
+        
+        const x1 = x0 + 1;
+        const y1 = y0 + 1;
+        const z1 = z0 + 1;
+        const w1 = w0 + 1;
+        
+        // Vetores de distância
+        const dx0 = x - x0;
+        const dy0 = y - y0;
+        const dz0 = z - z0;
+        const dw0 = w - w0;
+        
+        const dx1 = x - x1;
+        const dy1 = y - y1;
+        const dz1 = z - z1;
+        const dw1 = w - w1;
+        
+        // Frações suavizadas
+        const sx = fade(dx0);
+        const sy = fade(dy0);
+        const sz = fade(dz0);
+        const sw = fade(dw0);
+        
+        // Produto escalar com gradientes nos 16 cantos
+        const n0000 = this.dot4D(this.getGradient4D(x0, y0, z0, w0), dx0, dy0, dz0, dw0);
+        const n1000 = this.dot4D(this.getGradient4D(x1, y0, z0, w0), dx1, dy0, dz0, dw0);
+        const n0100 = this.dot4D(this.getGradient4D(x0, y1, z0, w0), dx0, dy1, dz0, dw0);
+        const n1100 = this.dot4D(this.getGradient4D(x1, y1, z0, w0), dx1, dy1, dz0, dw0);
+        const n0010 = this.dot4D(this.getGradient4D(x0, y0, z1, w0), dx0, dy0, dz1, dw0);
+        const n1010 = this.dot4D(this.getGradient4D(x1, y0, z1, w0), dx1, dy0, dz1, dw0);
+        const n0110 = this.dot4D(this.getGradient4D(x0, y1, z1, w0), dx0, dy1, dz1, dw0);
+        const n1110 = this.dot4D(this.getGradient4D(x1, y1, z1, w0), dx1, dy1, dz1, dw0);
+        const n0001 = this.dot4D(this.getGradient4D(x0, y0, z0, w1), dx0, dy0, dz0, dw1);
+        const n1001 = this.dot4D(this.getGradient4D(x1, y0, z0, w1), dx1, dy0, dz0, dw1);
+        const n0101 = this.dot4D(this.getGradient4D(x0, y1, z0, w1), dx0, dy1, dz0, dw1);
+        const n1101 = this.dot4D(this.getGradient4D(x1, y1, z0, w1), dx1, dy1, dz0, dw1);
+        const n0011 = this.dot4D(this.getGradient4D(x0, y0, z1, w1), dx0, dy0, dz1, dw1);
+        const n1011 = this.dot4D(this.getGradient4D(x1, y0, z1, w1), dx1, dy0, dz1, dw1);
+        const n0111 = this.dot4D(this.getGradient4D(x0, y1, z1, w1), dx0, dy1, dz1, dw1);
+        const n1111 = this.dot4D(this.getGradient4D(x1, y1, z1, w1), dx1, dy1, dz1, dw1);
+        
+        // Interpolação
+        const nx00 = lerp(lerp(n0000, n1000, sx), lerp(n0100, n1100, sx), sy);
+        const nx10 = lerp(lerp(n0010, n1010, sx), lerp(n0110, n1110, sx), sy);
+        const nx01 = lerp(lerp(n0001, n1001, sx), lerp(n0101, n1101, sx), sy);
+        const nx11 = lerp(lerp(n0011, n1011, sx), lerp(n0111, n1111, sx), sy);
+        
+        const nxy0 = lerp(nx00, nx10, sz);
+        const nxy1 = lerp(nx01, nx11, sz);
+        
+        return lerp(nxy0, nxy1, sw);
     }
 
     generate(params) {
@@ -114,42 +293,6 @@ export class NoiseGenerator {
             frequency *= lacunarity;
         }
         return (total / maxValue + 1) / 2;
-        //FAZ com que o noise varie entre numeros mais baixo
-        //Ele acaba sempre normalizando seu valor no meio [0.5], entao esse ajuste de contraste faz com que os valores fiquem mais proximos de 0 ou 1
-        // let normalized = (total / maxValue + 1) / 2;
-        // let contrast = 1.5; 
-        // let val = (normalized - 0.5) * contrast + 0.5;
-
-        // return Math.max(0.0, Math.min(1.0, val));
     }
-
-    // modifyTerrain(data, brushX, brushY, brushSize, intensity, action) {
-    //     const startX = Math.max(0, brushX - brushSize);
-    //     const endX = Math.min(this.width - 1, brushX + brushSize);
-    //     const startY = Math.max(0, brushY - brushSize);
-    //     const endY = Math.min(this.height - 1, brushY + brushSize);
-
-    //     for (let y = startY; y <= endY; y++) {
-    //         for (let x = startX; x <= endX; x++) {
-    //             const dx = x - brushX;
-    //             const dy = y - brushY;
-    //             const distance = Math.sqrt(dx * dx + dy * dy);
-
-    //             if (distance < brushSize) {
-    //                 const falloff = 1.0 - (distance / brushSize);
-    //                 const noiseModulation = this.noise2D(x / 50, y / 50);
-    //                 const modulatedIntensity = intensity + (intensity * noiseModulation * 0.5); 
-
-    //                 const index = y * this.width + x;
-    //                 if (action === 'add') {
-    //                     data[index] += modulatedIntensity * falloff;
-    //                 } else if (action === 'remove') {
-    //                     data[index] -= modulatedIntensity * falloff;
-    //                 }
-                    
-    //             }
-    //         }
-    //     }
-    // }
     
 }

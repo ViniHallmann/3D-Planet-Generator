@@ -68,7 +68,7 @@ let shadersParams = {
     lightPitch: 0.5,
     lightDistance: 5.0,
     layers : layerLevels,
-    terrainDisplacement: 0.3,
+    terrainDisplacement: 1.0,
     planetScale: 0.05,
     rimColor: [0.0, 0.5, 1.0],
     rimSize: 2.0,

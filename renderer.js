@@ -185,34 +185,51 @@ export class Renderer {
         this.updateTriangleHeightBuffer();
     }
 
-    calculateTriangleHeights(geometry, params) {
-        const { octaves, persistence, lacunarity, noiseZoom } = params;
+    // calculateTriangleHeights(geometry, params) {
+    //     const { octaves, persistence, lacunarity, noiseZoom } = params;
 
+    //     const numVertices = geometry.positions.length / 3;
+    //     const heights = new Float32Array(numVertices);
+        
+    //     for (let i = 0; i < geometry.indices.length; i += 3) {
+    //         const idx0 = geometry.indices[i];
+    //         const idx1 = geometry.indices[i + 1];
+    //         const idx2 = geometry.indices[i + 2];
+            
+    //         const x0 = geometry.positions[idx0 * 3], y0 = geometry.positions[idx0 * 3 + 1], z0 = geometry.positions[idx0 * 3 + 2];
+    //         const x1 = geometry.positions[idx1 * 3], y1 = geometry.positions[idx1 * 3 + 1], z1 = geometry.positions[idx1 * 3 + 2];
+    //         const x2 = geometry.positions[idx2 * 3], y2 = geometry.positions[idx2 * 3 + 1], z2 = geometry.positions[idx2 * 3 + 2];
+
+    //         const centX = (x0 + x1 + x2) / 3;
+    //         const centY = (y0 + y1 + y2) / 3;
+    //         const centZ = (z0 + z1 + z2) / 3;
+
+    //         const heightValue = this.noiseGenerator.get3DNoise(centX, centY, centZ, params);
+
+    //         heights[idx0] = heightValue;
+    //         heights[idx1] = heightValue;
+    //         heights[idx2] = heightValue;
+    //     }
+        
+    //     return heights;
+    // }
+
+    calculateTriangleHeights(geometry, params) {
         const numVertices = geometry.positions.length / 3;
         const heights = new Float32Array(numVertices);
         
-        for (let i = 0; i < geometry.indices.length; i += 3) {
-            const idx0 = geometry.indices[i];
-            const idx1 = geometry.indices[i + 1];
-            const idx2 = geometry.indices[i + 2];
+        
+        for (let i = 0; i < numVertices; i++) {
+            const x = geometry.positions[i * 3];
+            const y = geometry.positions[i * 3 + 1];
+            const z = geometry.positions[i * 3 + 2];
             
-            const x0 = geometry.positions[idx0 * 3], y0 = geometry.positions[idx0 * 3 + 1], z0 = geometry.positions[idx0 * 3 + 2];
-            const x1 = geometry.positions[idx1 * 3], y1 = geometry.positions[idx1 * 3 + 1], z1 = geometry.positions[idx1 * 3 + 2];
-            const x2 = geometry.positions[idx2 * 3], y2 = geometry.positions[idx2 * 3 + 1], z2 = geometry.positions[idx2 * 3 + 2];
-
-            const centX = (x0 + x1 + x2) / 3;
-            const centY = (y0 + y1 + y2) / 3;
-            const centZ = (z0 + z1 + z2) / 3;
-
-            const heightValue = this.noiseGenerator.get3DNoise(centX, centY, centZ, params);
-
-            heights[idx0] = heightValue;
-            heights[idx1] = heightValue;
-            heights[idx2] = heightValue;
+            heights[i] = this.noiseGenerator.get3DNoise(x, y, z, params);
         }
         
         return heights;
     }
+
 
     createNoiseTexture(params) {
         const { octaves, persistence, lacunarity, noiseZoom, noiseResolution } = params;

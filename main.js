@@ -32,6 +32,7 @@ function getControlsElements() {
         controlsClose : document.getElementById('controls-close'),
         seedInput     : document.getElementById('seed-input'),
         seedRandomBtn : document.getElementById('seed-random'),
+        noiseTypeSelect: document.getElementById('noise-type'),
         subdivisionsSlider : document.getElementById('subdivisons'),
         subdivisionsValue  : document.getElementById('subdivisons-value'),
         octavesSlider : document.getElementById('octaves'),
@@ -109,6 +110,7 @@ async function main() {
     const {
         controlsToggle, controlsPanel, controlsClose,
         seedInput, seedRandomBtn,
+        noiseTypeSelect,
         subdivisionsSlider, subdivisionsValue,
         octavesSlider, octavesValue,
         persistenceSlider, persistenceValue,
@@ -262,6 +264,12 @@ async function main() {
     //     }
     // }
 
+    // Listener para o select de tipo de noise
+    noiseTypeSelect.addEventListener('change', (e) => {
+        noiseParams.noiseType = e.target.value;
+        renderer.noiseGenerator.setNoiseType(e.target.value);
+        renderer.regenerateTerrain(noiseParams);
+    });
 
     //ARRUMAR ISSO AQUI PARA FAZER O SETUP DE TODAS AS CORES NUMA FUNCAO SO!
     layer0Color.addEventListener('input', (e) => {
@@ -315,6 +323,11 @@ async function main() {
         renderer.regenerateIcosphere(value, noiseParams);
         return value;
     });
+
+    setupInputListeners(terrainDisplacement, terrainDisplacementValue, shadersParams, 'terrainDisplacement', parseFloat, (val) => val.toFixed(2), false, (value) => {
+        renderer.setTerrainDisplacement(value);
+    });
+    
     setupInputListeners(octavesSlider,      octavesValue,     noiseParams, 'octaves',     parseInt,   (val) => val.toString());
     setupInputListeners(persistenceSlider,  persistenceValue, noiseParams, 'persistence', parseFloat, (val) => val.toFixed(2));
     setupInputListeners(lacunaritySlider,   lacunarityValue,  noiseParams, 'lacunarity',  parseFloat, (val) => val.toFixed(2));
@@ -355,10 +368,10 @@ async function main() {
     //GAMBIARRA DO KRL PARA DE SER PREGUICOSO E MUDA ISSO AQUI
     const planeGeometry = await loadOBJ('assets/models/airplane.obj');
     const plane = renderer.addObject(planeGeometry, 
-        [5, 0, 0],      // posição
-        [0.5, 0.5, 0.5] // escala
+        [5, 0, 0],      
+        [0.5, 0.5, 0.5]
     );
-    plane.color = [0.9, 0.4, 0.1]; // Laranja mais vibrante
+    plane.color = [0.9, 0.4, 0.1];
     // Configurar órbita
     plane.orbitRadius = 2;
     plane.orbitSpeed = 0.02;
@@ -467,17 +480,17 @@ async function main() {
         //PLANETA
         renderer.render(time, cameraPosition, shadersParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 1.);
         //SOMBRA DAS NUVENS
-        // renderer.render(time, cameraPosition, cloudShadowParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 3.);
-        // //NUVENS
-        // for (let i = 0; i < numActiveCloudLayers; i++) {
-        //     let layerOpacity = cloudParams.opacity / numActiveCloudLayers;
-        //     const layerParams = {
-        //         ...cloudParams,
-        //         scale: cloudParams.scale + (i * cloudLayerOffset),
-        //         opacity: layerOpacity,
-        //     };
-        //     renderer.render(time, cameraPosition, layerParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 2.);
-        // }
+        renderer.render(time, cameraPosition, cloudShadowParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 3.);
+        //NUVENS
+        for (let i = 0; i < numActiveCloudLayers; i++) {
+            let layerOpacity = cloudParams.opacity / numActiveCloudLayers;
+            const layerParams = {
+                ...cloudParams,
+                scale: cloudParams.scale + (i * cloudLayerOffset),
+                opacity: layerOpacity,
+            };
+            renderer.render(time, cameraPosition, layerParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 2.);
+        }
         renderer.objects.forEach(obj => {
             renderer.renderObject(obj, time, shadersParams);
         });

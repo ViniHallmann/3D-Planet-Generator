@@ -57,9 +57,10 @@ export const vertexShaderSource = glsl`#version 300 es
 
         if (u_renderPass == 2.) {
             float displacementValue = getCloudDisplacement(a_position.xyz);
-            float totalScale = u_cloudScale + (displacementValue * u_cloudDisplacementIntensity * a_triangleHeight);
+            float cloudBaseHeight = 1.0 + u_terrainDisplacement + (u_cloudScale - 1.0);
+            float cloudVariation = displacementValue * u_cloudDisplacementIntensity * a_triangleHeight;
             
-            pos = a_position.xyz * totalScale; 
+            pos = a_position.xyz * (cloudBaseHeight + cloudVariation); 
             v_height = 0.0; 
             
             // LEMBRAR: DEPOIS TENHO Q COLOCAR U_CLOUDINTENSITY AQUI. ACHO QUE POSSO COLOCAR UM RANDOM PARA QUE AS NUVENS SE DISSIPEM E VOLTEM
@@ -69,7 +70,8 @@ export const vertexShaderSource = glsl`#version 300 es
         if (u_renderPass == 3.) { //AQUI USA U_TERRAINDISPLACEMENT POIS A SOMBRA EH PROJETADA NA TERRA
             vec3 terrainDisplacement = a_position.xyz * a_triangleHeight * u_terrainDisplacement;
             
-            vec3 shadowOffset = normalize(a_position.xyz) * 0.005; // ESSE VALOR AQUI PODE VIRAR UMA VARIAVEL DE CONTROLE MAS NAO VEJO MUITO SENTIDO AGORA
+            float shadowOffsetAmount = 0.005 + (u_terrainDisplacement);
+            vec3 shadowOffset = normalize(a_position.xyz) * shadowOffsetAmount;
             
             pos = a_position.xyz + terrainDisplacement + shadowOffset;
             v_height = 0.0;

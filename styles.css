@@ -320,3 +320,30 @@ canvas {
   outline: 2px solid #4fd1c7;
   outline-offset: 2px;
 }
+
+
+.control-group select {
+  flex: 1;
+  padding: 6px 10px;
+  background: rgba(45, 55, 72, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.control-group select:hover {
+  border-color: rgba(79, 209, 199, 0.5);
+}
+
+.control-group select:focus {
+  border-color: #4fd1c7;
+}
+
+.control-group select option {
+  background: #2d3748;
+  color: #e2e8f0;
+}
