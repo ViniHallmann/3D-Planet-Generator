@@ -44,6 +44,7 @@ function getControlsElements() {
         noiseZoomSlider: document.getElementById('noise-zoom'),
         noiseZoomValue: document.getElementById('noise-zoom-value'),
         wireframeToggle: document.getElementById('wireframe-toggle'),
+        cloudsToggle: document.getElementById('clouds-toggle'),
         lightSpeed: document.getElementById('light-speed'),
         lightSpeedValue: document.getElementById('light-speed-value'),
         lightBrightness: document.getElementById('light-brightness'),
@@ -116,7 +117,7 @@ async function main() {
         persistenceSlider, persistenceValue,
         lacunaritySlider, lacunarityValue,
         noiseZoomSlider, noiseZoomValue,
-        wireframeToggle,
+        wireframeToggle, cloudsToggle,
         lightSpeed, lightSpeedValue, lightBrightness, lightBrightnessValue, lambertianDiffuseToggle,
         cloudSpeed, cloudSpeedValue,
         cloudOpacity, cloudOpacityValue,
@@ -155,7 +156,8 @@ async function main() {
         isMouseOverUI,
         isModifyingTerrain,
         showWireframe,
-        showLambertianDiffuse
+        showLambertianDiffuse,
+        showClouds,
     } = DEFAULT_VARIABLES_VALUES;
 
     const renderer = new Renderer(canvas, noiseParams);
@@ -173,6 +175,10 @@ async function main() {
 
     lambertianDiffuseToggle.addEventListener('change', (e) => {
         showLambertianDiffuse = e.target.checked;
+    });
+
+    cloudsToggle.addEventListener('change', (e) => {
+        showClouds = e.target.checked;
     });
 
     seedInput.addEventListener('change', (e) => {
@@ -482,17 +488,19 @@ async function main() {
         }
         //PLANETA
         renderer.render(time, cameraPosition, shadersParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 1.);
-        //SOMBRA DAS NUVENS
-        renderer.render(time, cameraPosition, cloudShadowParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 3.);
-        //NUVENS
-        for (let i = 0; i < numActiveCloudLayers; i++) {
-            let layerOpacity = cloudParams.opacity / numActiveCloudLayers;
-            const layerParams = {
-                ...cloudParams,
-                scale: cloudParams.scale + (i * cloudLayerOffset),
-                opacity: layerOpacity,
-            };
-            renderer.render(time, cameraPosition, layerParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 2.);
+        if (cloudsToggle.checked){
+            //SOMBRA DAS NUVENS
+            renderer.render(time, cameraPosition, cloudShadowParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 3.);
+            //NUVENS
+            for (let i = 0; i < numActiveCloudLayers; i++) {
+                let layerOpacity = cloudParams.opacity / numActiveCloudLayers;
+                const layerParams = {
+                    ...cloudParams,
+                    scale: cloudParams.scale + (i * cloudLayerOffset),
+                    opacity: layerOpacity,
+                };
+                renderer.render(time, cameraPosition, layerParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 2.);
+            }
         }
         renderer.objects.forEach(obj => {
             renderer.renderObject(obj, time, shadersParams);

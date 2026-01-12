@@ -14,6 +14,7 @@ let isMouseOverUI = false;
 let isModifyingTerrain = false;
 let showWireframe = false;
 let showLambertianDiffuse = true;
+let showClouds = true;
 
 let noiseParams = {
     subdivisions: 6,
