@@ -77,7 +77,7 @@ let shadersParams = {
 
 let cloudParams = {
     cloudOpacity: 0.5,
-    cloudScale: 1.25,
+    cloudScale: 1.15,
     cloudWarpIntensity: 0.1,
     cloudWarpTime: 1.0,
     cloudThreshold: 0.65,
@@ -86,11 +86,12 @@ let cloudParams = {
     cloudTextureZoom: 1.10,
     cloudSpeed: 0.01,
     planetScale: 0.05,
+    terrainDisplacement: 1.0,
 };
 
 let cloudShadowParams = {
     cloudOpacity: 0.35,
-    cloudScale: 1.25,
+    cloudScale: 1.15,
     cloudWarpIntensity: 0.1,
     cloudWarpTime: 1.0,
     cloudThreshold: 0.65,
@@ -99,6 +100,7 @@ let cloudShadowParams = {
     terrainDisplacement: 0.3,
     cloudTextureZoom: 1.10,
     planetScale: 0.05,
+    terrainDisplacement: 1.0,
 };
 
 const DEFAULT_VARIABLES_VALUES = {

@@ -325,6 +325,9 @@ async function main() {
     });
 
     setupInputListeners(terrainDisplacement, terrainDisplacementValue, shadersParams, 'terrainDisplacement', parseFloat, (val) => val.toFixed(2), false, (value) => {
+        shadersParams.terrainDisplacement = value;
+        cloudParams.terrainDisplacement = value;
+        cloudShadowParams.terrainDisplacement = value;
         renderer.setTerrainDisplacement(value);
     });
     
