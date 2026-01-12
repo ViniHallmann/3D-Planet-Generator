@@ -1,4 +1,4 @@
-function createIcosphere(subdivisions = 2) {
+export function createIcosphere(subdivisions = 2) {
     const t = (1.0 + Math.sqrt(5.0)) / 2.0;
     
     let positions = [
@@ -93,7 +93,7 @@ function createIcosphere(subdivisions = 2) {
     };
 }
 
-function createEdgeIndices(triangleIndices) {
+export function createEdgeIndices(triangleIndices) {
     const edges = new Set();
     const edgeIndices = [];
 
@@ -118,5 +118,3 @@ function createEdgeIndices(triangleIndices) {
     
     return new Uint16Array(edgeIndices);
 }
-
-export { createIcosphere, createEdgeIndices };

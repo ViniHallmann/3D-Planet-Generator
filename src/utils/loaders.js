@@ -1,11 +1,11 @@
-async function loadOBJ(url) {
+export async function loadOBJ(url) {
     const response = await fetch(url);
     const text = await response.text();
     
     const positions = [];
     const normals = [];
     const indices = [];
-    const vertices = [[-1]]; // Index 0 vazio (OBJ começa em 1)
+    const vertices = [[-1]];
     const normalsData = [[-1]];
     
     text.split('\n').forEach(line => {
@@ -24,7 +24,6 @@ async function loadOBJ(url) {
                 parseFloat(parts[3])
             ]);
         } else if (parts[0] === 'f') {
-            // Suporta vários formatos: f v v v, f v/vt v/vt v/vt, f v/vt/vn v/vt/vn v/vt/vn, f v//vn v//vn v//vn
             for (let i = 1; i <= 3; i++) {
                 const vertexData = parts[i].split('/');
                 const vIdx = parseInt(vertexData[0]);
@@ -36,7 +35,6 @@ async function loadOBJ(url) {
                     if (nIdx > 0 && normalsData[nIdx]) {
                         normals.push(...normalsData[nIdx]);
                     } else {
-                        // Normal padrão se não houver
                         normals.push(0, 1, 0);
                     }
                     
@@ -46,11 +44,6 @@ async function loadOBJ(url) {
         }
     });
     
-    console.log('OBJ carregado:');
-    console.log('- Vértices:', positions.length / 3);
-    console.log('- Normais:', normals.length / 3);
-    console.log('- Índices:', indices.length);
-    
     return {
         positions: new Float32Array(positions),
         normals: new Float32Array(normals),
@@ -58,4 +51,20 @@ async function loadOBJ(url) {
     };
 }
 
-export { loadOBJ };
+export async function loadTexture(gl, url) {
+    return new Promise((resolve) => {
+        const texture = gl.createTexture();
+        const image = new Image();
+        image.onload = () => {
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            resolve(texture);
+        };
+        image.src = url;
+    });
+}
