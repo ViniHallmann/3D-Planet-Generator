@@ -1,4 +1,4 @@
-import { lerp, fade } from '../../utils/math.js';
+import { fade, lerp } from '../noise.js';
 
 export class ValueStrategy {
     constructor(permTable) {

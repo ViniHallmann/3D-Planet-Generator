@@ -56,6 +56,18 @@ export const fragmentShaderSource = glsl`#version 300 es
     uniform float u_terrainDisplacement;
     uniform vec3 u_viewPosition;
 
+    // uniform float u_waterLevel;
+    // uniform float u_waveSpeed;
+    // uniform float u_waveAmplitude;
+    // uniform float u_waveFrequency;
+    // uniform float u_waveAngle;
+    // uniform float u_foamSpeed;
+    // uniform float u_foamFrequency;
+    // uniform float u_foamIntensity;
+    // uniform vec3 u_waterShallowColor;
+    // uniform vec3 u_waterDeepColor;
+    // uniform bool u_enableWaterEffects;
+
     out vec4 outColor;
 
     vec4 getLayer0Color(float height) { return vec4(u_layer0Color, 1.0); }
@@ -133,7 +145,7 @@ export const fragmentShaderSource = glsl`#version 300 es
         float light = u_lightBrightness;
         vec3 rim = rimLight(normal, u_viewPosition, v_worldPosition);
 
-        // Pass 1: Terreno
+        // Terreno
         if (u_renderPass == 1.) {
             if (u_lambertianDiffuse == true) {
                 light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
@@ -146,10 +158,11 @@ export const fragmentShaderSource = glsl`#version 300 es
                 vec3 color = defineTerrainColor(v_height).rgb;
                 outColor = vec4(color * light, 1.0);
             }
+        
             outColor.rgb += rim;
         }
 
-        // Pass 2: Nuvens
+        // Nuvens
         if (u_renderPass == 2.) {
             float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
             if (cloudNoise < u_cloudThreshold) discard;
@@ -158,7 +171,7 @@ export const fragmentShaderSource = glsl`#version 300 es
             outColor = vec4(u_cloudColor, alpha * light);
         } 
         
-        // Pass 3: Sombras das Nuvens
+        // Sombras das Nuvens
         if (u_renderPass == 3.) {
             float terrainHeight = length(v_modelPosition);
             float terrainInfluence = 0.5;

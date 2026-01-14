@@ -15,7 +15,7 @@ export const easing = {
     }
 };
 
-const mat4 = {
+export const mat4 = {
     create() {
         return new Float32Array([
             1, 0, 0, 0,

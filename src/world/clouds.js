@@ -1,4 +1,4 @@
-import { textureManager } from '../rendering/textures.js';
+import { textureManager } from '../rendering/textureManager.js';
 
 export async function initClouds(renderer) {
     await textureManager.load('cloud', 'assets/noises/cloud2.png');

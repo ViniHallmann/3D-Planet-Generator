@@ -3,8 +3,8 @@ import { fragmentShaderSource } from './shaders/fragment.glsl.js';
 import { createIcosphere } from '../geometry/geometry.js';
 import { mat4 } from '../utils/math.js';
 import { NoiseGenerator } from '../Noise/noise.js';
-import { textureManager } from './textures.js';
-import { createShader, createProgram } from './webgl.js';
+import { textureManager } from './textureManager.js';
+import { createShader, createProgram } from '../utils/webgl.js';
 
 export class Renderer {
     constructor(canvas, noiseParams) {
