@@ -35,7 +35,6 @@ export const vertexShaderSource = glsl`#version 300 es
         weights = max(weights - 0.2, 0.0);
         weights /= dot(weights, vec3(1.0));
 
-        //float speed = 0.1; 
         vec3 p = pos;
         p.xz = rotate2D(u_time * u_cloudSpeed) * p.xz; 
 
@@ -80,7 +79,6 @@ export const vertexShaderSource = glsl`#version 300 es
         }
 
         gl_Position = u_matrix * vec4(pos, 1.0);
-        //v_normal = a_normal;
         v_normal = mat3(u_modelMatrix) * a_normal;
         v_modelPosition = pos;
         v_worldPosition = (u_modelMatrix * vec4(pos, 1.0)).xyz;
@@ -166,7 +164,18 @@ export const fragmentShaderSource = glsl`#version 300 es
     vec4 getLayer8Color(float height) { return vec4(u_layer8Color, 1.0); }
     vec4 getLayer9Color(float height) { return vec4(u_layer9Color, 1.0); }
 
+    float hash(vec2 p) {
+        return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+    }
     vec4 defineTerrainColor(float height) {
+
+        //REFERENCIA DO CODIGO DO SLOPE: https://www.youtube.com/watch?v=6bnFfE82AJg&t=60s
+        float flatness = dot(normalize(v_normal), normalize(v_modelPosition));
+        // TERMINAR O RESTO DEPOIS
+        
+        //REFERENCIA CODIGO VARIACAO HEIGHT VALUE: https://www.youtube.com/watch?v=fZh2p0odPyQ&t=175s
+        height += (hash(v_modelPosition.xz * 50.) * 2.0 - 1.0) * 0.0025;
+
         // if (height < u_layer0Level)      return getLayer0Color(height);
         // else if (height < u_layer1Level) return getLayer1Color(height);
         // else if (height < u_layer2Level) return getLayer2Color(height);
@@ -232,9 +241,6 @@ export const fragmentShaderSource = glsl`#version 300 es
 
     void main() {
         vec3 normal = normalize(v_normal);
-        // float angle = u_time * u_lightSpeed;
-        // float pitch = 0.5;
-        // float angle = u_lightAngle + (u_time * u_lightSpeed);
         float angle = u_lightAngle;
         float pitch = u_lightPitch;
         vec3 lightDir = normalize(vec3(
@@ -265,6 +271,30 @@ export const fragmentShaderSource = glsl`#version 300 es
             } else {
                 vec3 color = defineTerrainColor(v_height).rgb;
                 outColor = vec4(color * light, 1.0);
+            }
+
+            //REFERENCIA DESSA PARTE DO CODIGO https://www.youtube.com/watch?v=6bnFfE82AJg
+            //DEPOIS TRANSFORMAR EM FUNCAO E ADICIONAR VARIAVEIS PARA CONTROLAR AS CORES E NIVEIS
+            //ADICIONAR TAMBEM ONDE FICA A LINHA DA AGUA E AREIA
+            if (v_height >= u_layer1Level && v_height < u_layer2Level) {
+                float distanceToSand = u_layer2Level - v_height;
+                float maxTransparencyDepth = u_layer3Level - u_layer2Level;
+                
+                float normalizeDepth = clamp(distanceToSand / maxTransparencyDepth, 0.0, 1.0);
+                float waterLerp = pow(1.0 - normalizeDepth, 2.0);
+                
+                vec3 sandColor = u_layer3Color;
+                outColor.rgb = mix(outColor.rgb, sandColor, waterLerp);
+                
+                float waveZone = 0.02;
+                float distanceFromSand = v_height - u_layer2Level;
+                
+                if (distanceToSand < waveZone) {
+                    float waveIntensity = 1.0 - (distanceToSand / waveZone);
+                    float wave = sin(u_time * 2.0 + distanceToSand * 150.0) * 0.5 + 0.5;
+                    wave *= waveIntensity;
+                    outColor.rgb += wave / 4.0 ;
+                }
             }
             outColor.rgb += rim;
         }
