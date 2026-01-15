@@ -1,4 +1,4 @@
-import { vertexShaderSource, fragmentShaderSource } from './shaders.js';
+import { vertexShaderSource, fragmentShaderSource, shadowVertexShaderSource, shadowFragmentShaderSource } from './shaders.js';
 import { createShader, createProgram } from './webgl-utils.js';
 import { createIcosphere } from './geometry.js';
 import { mat4 } from './math-utils.js';
@@ -23,6 +23,7 @@ export class Renderer {
         this.initializeNoise(noiseParams);
         this.createBuffers(this.geometry);
         this.createNoiseTexture(noiseParams);
+        this.initShadowMap(1024);
         
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
@@ -40,6 +41,12 @@ export class Renderer {
             this.gl,
             createShader(this.gl, this.gl.VERTEX_SHADER, vertexShaderSource),
             createShader(this.gl, this.gl.FRAGMENT_SHADER, fragmentShaderSource)
+        );
+
+        this.shadowProgram = createProgram(
+            this.gl,
+            createShader(this.gl, this.gl.VERTEX_SHADER, shadowVertexShaderSource),
+            createShader(this.gl, this.gl.FRAGMENT_SHADER, shadowFragmentShaderSource)
         );
     }
 
@@ -94,6 +101,32 @@ export class Renderer {
     initializeNoise(noiseParams) {
         this.noiseGenerator = new NoiseGenerator(512, 512);
         this.triangleHeights = this.calculateTriangleHeights(this.geometry, noiseParams);
+    }
+
+    initShadowMap(resolution = 2048) {
+        const gl = this.gl;
+        
+        this.shadowMapSize = resolution;
+        
+        this.shadowFramebuffer = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadowFramebuffer);
+        
+        this.shadowDepthTexture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.shadowDepthTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT32F, resolution, resolution, 0, gl.DEPTH_COMPONENT, gl.FLOAT, null);
+        
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, this.shadowDepthTexture, 0);
+        
+        if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+            console.error('Shadow framebuffer não está completo!');
+        }
+        
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 
     createBuffers(geometry) {
@@ -184,35 +217,6 @@ export class Renderer {
         this.triangleHeights = this.calculateTriangleHeights(this.geometry, noiseParams);
         this.updateTriangleHeightBuffer();
     }
-
-    // calculateTriangleHeights(geometry, params) {
-    //     const { octaves, persistence, lacunarity, noiseZoom } = params;
-
-    //     const numVertices = geometry.positions.length / 3;
-    //     const heights = new Float32Array(numVertices);
-        
-    //     for (let i = 0; i < geometry.indices.length; i += 3) {
-    //         const idx0 = geometry.indices[i];
-    //         const idx1 = geometry.indices[i + 1];
-    //         const idx2 = geometry.indices[i + 2];
-            
-    //         const x0 = geometry.positions[idx0 * 3], y0 = geometry.positions[idx0 * 3 + 1], z0 = geometry.positions[idx0 * 3 + 2];
-    //         const x1 = geometry.positions[idx1 * 3], y1 = geometry.positions[idx1 * 3 + 1], z1 = geometry.positions[idx1 * 3 + 2];
-    //         const x2 = geometry.positions[idx2 * 3], y2 = geometry.positions[idx2 * 3 + 1], z2 = geometry.positions[idx2 * 3 + 2];
-
-    //         const centX = (x0 + x1 + x2) / 3;
-    //         const centY = (y0 + y1 + y2) / 3;
-    //         const centZ = (z0 + z1 + z2) / 3;
-
-    //         const heightValue = this.noiseGenerator.get3DNoise(centX, centY, centZ, params);
-
-    //         heights[idx0] = heightValue;
-    //         heights[idx1] = heightValue;
-    //         heights[idx2] = heightValue;
-    //     }
-        
-    //     return heights;
-    // }
 
     calculateTriangleHeights(geometry, params) {
         const numVertices = geometry.positions.length / 3;
@@ -428,11 +432,13 @@ export class Renderer {
         const posBuffer = this.createBuffer(gl.ARRAY_BUFFER, geometry.positions);
         const normalBuffer = this.createBuffer(gl.ARRAY_BUFFER, geometry.normals);
         const indexBuffer = this.createBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.indices);
-        
+        const uvBuffer = this.createBuffer(gl.ARRAY_BUFFER, geometry.uvs);
+
         const vao = gl.createVertexArray();
         gl.bindVertexArray(vao);
         this.bindAttribute(posBuffer, this.positionLoc, 3);
         this.bindAttribute(normalBuffer, this.normalLoc, 3);
+        this.bindAttribute(uvBuffer, this.uvLoc, 2);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
         gl.bindVertexArray(null);
         
@@ -444,7 +450,8 @@ export class Renderer {
             rotation: [0, 0, 0],
             orbitAngle: 0,       
             orbitRadius: 0,
-            orbitSpeed: 0
+            orbitSpeed: 0,
+            texture: null,
         };
         
         this.objects.push(obj);
@@ -506,12 +513,17 @@ export class Renderer {
         mat4.multiply(mvpMatrix, this.currentViewProjection, modelMatrix);
         
         gl.bindVertexArray(obj.vao);
+
+        gl.activeTexture(gl.TEXTURE3);
+        gl.bindTexture(gl.TEXTURE_2D, obj.texture);
+        gl.uniform1i(this.uniformLocations['u_objectTexture'], 3);
         
         const objectParams = {
             matrix: mvpMatrix,
+            modelMatrix: modelMatrix,
             time: time,
-            renderPass: 1.0,
-            useColor: true,
+            renderPass: 4.0,
+            useColor: !obj.texture,
             color: obj.color || [0.8, 0.8, 0.8],
             lambertianDiffuse: params.lambertianDiffuse
         };
@@ -520,6 +532,112 @@ export class Renderer {
         
         gl.drawElements(gl.TRIANGLES, obj.indexCount, gl.UNSIGNED_SHORT, 0);
         gl.bindVertexArray(null);
+    }
+
+    getObjectModelMatrix(obj, time, params) {
+        const modelMatrix = mat4.create();
+        mat4.translate(modelMatrix, modelMatrix, obj.position);
+        
+        if (obj.lookAtCenter) {
+            const toCenter = [-obj.position[0], -obj.position[1], -obj.position[2]];
+            const len = Math.sqrt(toCenter[0]**2 + toCenter[1]**2 + toCenter[2]**2);
+            toCenter[0] /= len;
+            toCenter[1] /= len;
+            toCenter[2] /= len;
+            
+            const yaw = Math.atan2(toCenter[0], toCenter[2]);
+            const pitch = Math.asin(-toCenter[1]);
+            
+            mat4.rotateY(modelMatrix, modelMatrix, yaw);
+            mat4.rotateX(modelMatrix, modelMatrix, pitch);
+            
+            if (obj.rotationOffset) {
+                mat4.rotateX(modelMatrix, modelMatrix, obj.rotationOffset[0]);
+                mat4.rotateY(modelMatrix, modelMatrix, obj.rotationOffset[1]);
+                mat4.rotateZ(modelMatrix, modelMatrix, obj.rotationOffset[2]);
+            }
+        } else {
+            mat4.rotateY(modelMatrix, modelMatrix, obj.rotation[1]);
+            mat4.rotateX(modelMatrix, modelMatrix, obj.rotation[0]);
+            mat4.rotateZ(modelMatrix, modelMatrix, obj.rotation[2]);
+        }
+        
+        mat4.scale(modelMatrix, modelMatrix, obj.scale);
+        
+        if (params.planetScale) {
+            mat4.scale(modelMatrix, modelMatrix, [params.planetScale, params.planetScale, params.planetScale]);
+        }
+        
+        return modelMatrix;
+    }
+
+    calculateLightSpaceMatrix(lightAngle, lightPitch, planetScale = 1.0) {
+        const lightDir = [
+            Math.cos(lightAngle) * Math.cos(lightPitch),
+            Math.sin(lightPitch),
+            Math.sin(lightAngle) * Math.cos(lightPitch)
+        ];
+        
+        //DEPOIS COLOCAR VARIAVEL PARA DISTANCIA DA LUZ
+        const lightDistance = 10.0;
+        const lightPos = [
+            lightDir[0] * lightDistance,
+            lightDir[1] * lightDistance,
+            lightDir[2] * lightDistance
+        ];
+        
+        const lightViewMatrix = mat4.create();
+        mat4.lookAt(lightViewMatrix, lightPos, [0, 0, 0], [0, 1, 0]);
+        
+        const orthoSize = 3.0 * planetScale;
+        const lightProjectionMatrix = mat4.create();
+        mat4.orthogonal(
+            lightProjectionMatrix,
+            -orthoSize, orthoSize,    // left, right
+            -orthoSize, orthoSize,    // bottom, top
+            0.1, 20.0                  // near, far
+        );
+        
+        const lightSpaceMatrix = mat4.create();
+        mat4.multiply(lightSpaceMatrix, lightProjectionMatrix, lightViewMatrix);
+        
+        return lightSpaceMatrix;
+    }
+
+    renderShadowPass(time, params, autoRotate, planetRotationMatrix) {
+        const gl = this.gl;
+        
+        gl.useProgram(this.shadowProgram);
+        
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadowFramebuffer);
+        gl.viewport(0, 0, this.shadowMapSize, this.shadowMapSize);
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+        
+        const lightSpaceMatrix = this.calculateLightSpaceMatrix(
+            params.lightAngle || 0,
+            params.lightPitch || 0.5,
+            params.planetScale || 1.0
+        );
+        this.currentLightSpaceMatrix = lightSpaceMatrix;
+        
+        this.objects.forEach(obj => {
+            const modelMatrix = this.getObjectModelMatrix(obj, time, params);
+            
+            gl.uniformMatrix4fv(
+                gl.getUniformLocation(this.shadowProgram, 'u_lightSpaceMatrix'),
+                false, lightSpaceMatrix
+            );
+            gl.uniformMatrix4fv(
+                gl.getUniformLocation(this.shadowProgram, 'u_modelMatrix'),
+                false, modelMatrix
+            );
+            
+            gl.bindVertexArray(obj.vao);
+            gl.drawElements(gl.TRIANGLES, obj.indexCount, gl.UNSIGNED_SHORT, 0);
+        });
+        
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     }
 
     drawPlanetPass(shadersParams, wireframe = true) {
@@ -636,6 +754,17 @@ export class Renderer {
 
         this.updateUniforms(frameParams);
         this.setNoiseTexture();
+
+        if (this.currentLightSpaceMatrix) {
+            gl.uniformMatrix4fv(this.uniformLocations['u_lightSpaceMatrix'], false, this.currentLightSpaceMatrix);
+            gl.uniform1f(this.uniformLocations['u_useShadows'], 1.0);
+            
+            gl.activeTexture(gl.TEXTURE2);
+            gl.bindTexture(gl.TEXTURE_2D, this.shadowDepthTexture);
+            gl.uniform1i(this.uniformLocations['u_shadowMap'], 2);
+        } else {
+            gl.uniform1f(this.uniformLocations['u_useShadows'], 0.0);
+        }
 
         if (renderPass === 1) {
             this.drawPlanetPass(params, wireframe);

@@ -9,13 +9,19 @@ async function loadTexture(renderer, url) {
         const texture = renderer.gl.createTexture();
         const image = new Image();
         image.onload = () => {
-            renderer.gl.bindTexture(renderer.gl.TEXTURE_2D, texture);
-            renderer.gl.texImage2D(renderer.gl.TEXTURE_2D, 0, renderer.gl.RGBA, renderer.gl.RGBA, renderer.gl.UNSIGNED_BYTE, image);
-            renderer.gl.texParameteri(renderer.gl.TEXTURE_2D, renderer.gl.TEXTURE_WRAP_S, renderer.gl.REPEAT);
-            renderer.gl.texParameteri(renderer.gl.TEXTURE_2D, renderer.gl.TEXTURE_WRAP_T, renderer.gl.REPEAT);
-            renderer.gl.texParameteri(renderer.gl.TEXTURE_2D, renderer.gl.TEXTURE_MIN_FILTER, renderer.gl.LINEAR);
-            renderer.gl.texParameteri(renderer.gl.TEXTURE_2D, renderer.gl.TEXTURE_MAG_FILTER, renderer.gl.LINEAR);
-            renderer.gl.generateMipmap(renderer.gl.TEXTURE_2D);
+            const gl = renderer.gl;
+            const previousTexture = gl.getParameter(gl.TEXTURE_BINDING_2D);
+            
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            
+            gl.bindTexture(gl.TEXTURE_2D, previousTexture);
+            
             resolve(texture);
         };
         image.src = url;
@@ -384,6 +390,10 @@ async function main() {
     //GAMBIARRA DO KRL PARA DE SER PREGUICOSO E MUDA ISSO AQUI
     const planeGeometry = await loadOBJ('assets/models/airplane.obj');
     const plane = renderer.addObject(planeGeometry, [0, 1.85, 0], [0.025, 0.025, 0.025]);
+    
+    const planeTexture = await loadTexture(renderer, 'assets/textures/airplane.png');
+    plane.texture = planeTexture;
+    
     plane.color = [0.9, 0.4, 0.1];
     plane.lookAtCenter = true;
     plane.orbitRadius = 0;
@@ -556,6 +566,7 @@ async function main() {
         
         renderer.clearScreen();
         
+        renderer.renderShadowPass(time, cameraPosition, shadersParams, AUTO_ROTATE, rotationMatrixToUse);
         //PLANETA
         renderer.render(time, cameraPosition, shadersParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 1., rotationMatrixToUse);
         if (cloudsToggle.checked){
