@@ -481,6 +481,7 @@ async function main() {
             const nx = ringPosition[0] / orbitRadius;
             const ny = ringPosition[1] / orbitRadius;
             const nz = ringPosition[2] / orbitRadius;
+
             const rotX = Math.asin(-ny);
             const rotY = Math.atan2(nx, nz);
             
@@ -497,6 +498,7 @@ async function main() {
             if (tooltip) {
                 tooltip.classList.toggle('hidden', topDownMode);
             }
+            
             
             if (topDownMode) {
                 mat4.identity(planetRotationMatrix);
@@ -694,7 +696,7 @@ async function main() {
         shadersParams.lightAngle = time * shadersParams.lightSpeed;
         renderer.clearScreen();
         
-        renderer.renderShadowPass(time, cameraPosition, shadersParams, AUTO_ROTATE, rotationMatrixToUse);
+        renderer.renderShadowPass(time, shadersParams, AUTO_ROTATE, rotationMatrixToUse);
         //PLANETA
         renderer.render(time, cameraPosition, shadersParams, showWireframe, showLambertianDiffuse, AUTO_ROTATE, 1., rotationMatrixToUse);
         if (cloudsToggle.checked){

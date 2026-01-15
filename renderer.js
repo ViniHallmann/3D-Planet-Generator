@@ -574,7 +574,7 @@ export class Renderer {
         return modelMatrix;
     }
 
-    calculateLightSpaceMatrix(lightAngle, lightPitch, planetScale = 1.0) {
+    calculateLightSpaceMatrix(lightAngle, lightPitch, planetScale = 1.0, planetRotationMatrix = null) {
         const lightDir = [
             Math.cos(lightAngle) * Math.cos(lightPitch),
             Math.sin(lightPitch),
@@ -591,6 +591,10 @@ export class Renderer {
         
         const lightViewMatrix = mat4.create();
         mat4.lookAt(lightViewMatrix, lightPos, [0, 0, 0], [0, 1, 0]);
+
+        if (planetRotationMatrix) {
+            mat4.multiply(lightViewMatrix, lightViewMatrix, planetRotationMatrix);
+        }
         
         const orthoSize = 3.0 * planetScale;
         const lightProjectionMatrix = mat4.create();
@@ -619,12 +623,27 @@ export class Renderer {
         const lightSpaceMatrix = this.calculateLightSpaceMatrix(
             params.lightAngle || 0,
             params.lightPitch || 0.5,
-            params.planetScale || 1.0
+            params.planetScale || 1.0,
+            planetRotationMatrix
         );
         this.currentLightSpaceMatrix = lightSpaceMatrix;
         
         this.objects.forEach(obj => {
             const modelMatrix = this.getObjectModelMatrix(obj, time, params);
+
+            if (obj.rotateWithPlanet && planetRotationMatrix) {
+                const rotatedModel = mat4.create();
+                mat4.multiply(rotatedModel, planetRotationMatrix, modelMatrix);
+                gl.uniformMatrix4fv(
+                    gl.getUniformLocation(this.shadowProgram, 'u_modelMatrix'),
+                    false, rotatedModel
+                );
+            } else {
+                gl.uniformMatrix4fv(
+                    gl.getUniformLocation(this.shadowProgram, 'u_modelMatrix'),
+                    false, modelMatrix
+                );
+            }
             
             gl.uniformMatrix4fv(
                 gl.getUniformLocation(this.shadowProgram, 'u_lightSpaceMatrix'),
