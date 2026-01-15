@@ -1,5 +1,4 @@
-const glsl = x => x;
-export const vertexShaderSource = glsl`#version 300 es
+export const vertexShaderSource = `#version 300 es
     in vec4 a_position;
     in vec3 a_normal;
     in vec2 a_texcoord;

@@ -82,16 +82,19 @@ export class Engine {
 
         this.renderer.clearScreen();
 
-        // Planeta
+        // Pass 1: Planeta
+        // --- CORREÇÃO: Passando os objetos de configuração para o renderer ---
         this.renderer.render(
             time, 
             cameraPos, 
             this.settings.shaders, 
             1, 
-            planetMatrix
+            planetMatrix,
+            this.settings.layerLevels, // ESSENCIAL PARA AS CORES
+            this.settings.layerColors  // ESSENCIAL PARA AS CORES
         );
 
-        // Nuvens
+        // Pass 2 e 3: Nuvens
         if (this.settings.app.showClouds) {
             // Sombra
             this.renderer.render(

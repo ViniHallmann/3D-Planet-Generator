@@ -77,9 +77,58 @@ export class Renderer {
                     gl.uniformMatrix4fv(location, false, value);
                 }
             } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                this.updateUniforms(value);
+                if (key !== 'layerLevels' && key !== 'layerColors') {
+                    this.updateUniforms(value);
+                }
             }
         }
+    }
+
+    // --- CORREÇÃO AQUI: Usando os nomes exatos do seu defaults.js ---
+    setLayerLevels(layers) {
+        const gl = this.gl;
+        // Agora busca por layer0Level, layer1Level, etc.
+        if(layers.layer0Level !== undefined) gl.uniform1f(this.uniformLocations['u_layer0Level'], layers.layer0Level);
+        if(layers.layer1Level !== undefined) gl.uniform1f(this.uniformLocations['u_layer1Level'], layers.layer1Level);
+        if(layers.layer2Level !== undefined) gl.uniform1f(this.uniformLocations['u_layer2Level'], layers.layer2Level);
+        if(layers.layer3Level !== undefined) gl.uniform1f(this.uniformLocations['u_layer3Level'], layers.layer3Level);
+        if(layers.layer4Level !== undefined) gl.uniform1f(this.uniformLocations['u_layer4Level'], layers.layer4Level);
+        if(layers.layer5Level !== undefined) gl.uniform1f(this.uniformLocations['u_layer5Level'], layers.layer5Level);
+        if(layers.layer6Level !== undefined) gl.uniform1f(this.uniformLocations['u_layer6Level'], layers.layer6Level);
+        if(layers.layer7Level !== undefined) gl.uniform1f(this.uniformLocations['u_layer7Level'], layers.layer7Level);
+        if(layers.layer8Level !== undefined) gl.uniform1f(this.uniformLocations['u_layer8Level'], layers.layer8Level);
+        if(layers.layer9Level !== undefined) gl.uniform1f(this.uniformLocations['u_layer9Level'], layers.layer9Level);
+    }
+
+    setLayerColors(colors) {
+        const gl = this.gl;
+        // Agora busca por layer0Color, layer1Color, etc.
+        if(colors.layer0Color) gl.uniform3fv(this.uniformLocations['u_layer0Color'], colors.layer0Color);
+        if(colors.layer1Color) gl.uniform3fv(this.uniformLocations['u_layer1Color'], colors.layer1Color);
+        if(colors.layer2Color) gl.uniform3fv(this.uniformLocations['u_layer2Color'], colors.layer2Color);
+        if(colors.layer3Color) gl.uniform3fv(this.uniformLocations['u_layer3Color'], colors.layer3Color);
+        if(colors.layer4Color) gl.uniform3fv(this.uniformLocations['u_layer4Color'], colors.layer4Color);
+        if(colors.layer5Color) gl.uniform3fv(this.uniformLocations['u_layer5Color'], colors.layer5Color);
+        if(colors.layer6Color) gl.uniform3fv(this.uniformLocations['u_layer6Color'], colors.layer6Color);
+        if(colors.layer7Color) gl.uniform3fv(this.uniformLocations['u_layer7Color'], colors.layer7Color);
+        if(colors.layer8Color) gl.uniform3fv(this.uniformLocations['u_layer8Color'], colors.layer8Color);
+        if(colors.layer9Color) gl.uniform3fv(this.uniformLocations['u_layer9Color'], colors.layer9Color);
+    }
+
+    updateCloudUniforms(params) {
+        const gl = this.gl;
+        // Mapeamento de nuvens (opacity -> u_cloudOpacity)
+        // Atenção: Seu defaults tem chaves 'cloudOpacity' também, mas a UI talvez mande 'opacity'.
+        // Este bloco garante que funcione em ambos os casos.
+        const p = params;
+        if(p.opacity !== undefined) gl.uniform1f(this.uniformLocations['u_cloudOpacity'], p.opacity);
+        if(p.cloudOpacity !== undefined) gl.uniform1f(this.uniformLocations['u_cloudOpacity'], p.cloudOpacity);
+        
+        if(p.scale !== undefined) gl.uniform1f(this.uniformLocations['u_cloudScale'], p.scale);
+        if(p.cloudScale !== undefined) gl.uniform1f(this.uniformLocations['u_cloudScale'], p.cloudScale);
+
+        // ... mapeamento genérico para garantir ...
+        this.updateUniforms(params);
     }
 
     initializeGeometry(subdivisions) {
@@ -265,7 +314,7 @@ export class Renderer {
             matrix: mvpMatrix,
             time: time,
             renderPass: 1.0,
-            useColor: true,
+            useColor: true, 
             color: obj.color,
             lambertianDiffuse: params.showLambertianDiffuse
         };
@@ -275,9 +324,13 @@ export class Renderer {
         gl.bindVertexArray(null);
     }
 
-    render(time, cameraPos, params, renderPass, planetRotationMatrix = null) {
+    render(time, cameraPos, params, renderPass, planetRotationMatrix = null, layers = null, colors = null) {
         const gl = this.gl;
         gl.useProgram(this.program);
+
+        // Aplica cores e níveis se forem passados
+        if (layers) this.setLayerLevels(layers);
+        if (colors) this.setLayerColors(colors);
 
         const modelMatrix = mat4.create();
         const viewMatrix = mat4.create();
@@ -311,10 +364,17 @@ export class Renderer {
             modelMatrix: modelMatrix,
             viewPosition: [cameraPos.x, cameraPos.y, cameraPos.z],
             renderPass: renderPass,
-            ...params
+            // IMPORTANTE: Reseta useColor para o planeta não ficar laranja
+            useColor: false, 
+            ...params 
         };
 
-        this.updateUniforms(frameParams);
+        if (renderPass === 2 || renderPass === 3) {
+            this.updateCloudUniforms(params); 
+        } else {
+            this.updateUniforms(frameParams);
+        }
+
         this.setNoiseTexture();
 
         if (renderPass === 2 || renderPass === 3) {
@@ -335,11 +395,9 @@ export class Renderer {
             gl.depthMask(true);
         }
 
-        // Icosfera
         gl.bindVertexArray(this.vao);
         gl.drawElements(gl.TRIANGLES, this.numElements, gl.UNSIGNED_SHORT, 0);
 
-        // Wireframe
         if (renderPass === 1 && params.showWireframe) {
             gl.enable(gl.POLYGON_OFFSET_FILL);
             gl.polygonOffset(1, 1);
@@ -350,7 +408,6 @@ export class Renderer {
             gl.drawElements(gl.LINES, this.numElementsLines, gl.UNSIGNED_SHORT, 0);
             
             gl.disable(gl.POLYGON_OFFSET_FILL);
-
             this.updateUniforms({ useColor: false });
         }
         

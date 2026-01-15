@@ -1,4 +1,95 @@
 const glsl = x => x;
+
+export const vertexShaderSource = glsl`#version 300 es
+    in vec4 a_position;
+    in vec3 a_normal;
+    in vec2 a_texcoord;
+    in float a_triangleHeight;
+    
+    uniform float u_time;
+    uniform mat4 u_matrix;
+    uniform mat4 u_modelMatrix;
+    uniform sampler2D u_noiseTexture;
+    uniform sampler2D u_cloudTexture;
+    uniform float u_renderPass;
+
+    uniform float u_cloudScale;
+    uniform float u_terrainDisplacement;      
+    uniform float u_cloudDisplacementIntensity;
+    uniform float u_cloudSpeed;
+
+    out vec3 v_normal;
+    out vec2 v_texcoord;
+    out float v_height;
+    out vec3 v_modelPosition;
+    out vec3 v_worldPosition;
+
+    mat2 rotate2D(float angle) {
+        float s = sin(angle);
+        float c = cos(angle);
+        return mat2(c, -s, s, c);
+    }
+
+    float getCloudDisplacement(vec3 pos) {
+        vec3 weights = abs(normalize(pos));
+        weights = max(weights - 0.2, 0.0);
+        weights /= dot(weights, vec3(1.0));
+
+        //float speed = 0.1; 
+        vec3 p = pos;
+        p.xz = rotate2D(u_time * u_cloudSpeed) * p.xz; 
+
+        float x = texture(u_cloudTexture, p.yz).r;
+        float y = texture(u_cloudTexture, p.zx).r;
+        float z = texture(u_cloudTexture, p.xy).r;
+
+        return x * weights.x + y * weights.y + z * weights.z;
+    }
+
+    void main() {
+        vec3 pos;
+
+        if (u_renderPass == 1.) {
+            vec3 displacement = a_position.xyz * a_triangleHeight * u_terrainDisplacement;
+            pos = a_position.xyz + displacement;
+            v_height = a_triangleHeight;
+        }
+
+        if (u_renderPass == 2.) {
+            float displacementValue = getCloudDisplacement(a_position.xyz);
+            // float cloudBaseHeight = 0.8 + u_terrainDisplacement + (u_cloudScale - 1.0);
+            // float cloudVariation = displacementValue * u_cloudDisplacementIntensity * a_triangleHeight;
+            
+            float terrainInfluence = 0.5;
+            
+            float cloudBaseHeight = 1.0 + (u_terrainDisplacement * terrainInfluence) + (u_cloudScale - 1.0);
+            float cloudVariation = displacementValue * u_cloudDisplacementIntensity * a_triangleHeight;
+
+            pos = a_position.xyz * (cloudBaseHeight + cloudVariation); 
+            v_height = 0.0; 
+            
+            
+        }
+
+        if (u_renderPass == 3.) { //AQUI USA U_TERRAINDISPLACEMENT POIS A SOMBRA EH PROJETADA NA TERRA
+            vec3 terrainDisplacement = a_position.xyz * a_triangleHeight * u_terrainDisplacement;
+            
+            vec3 shadowOffset = normalize(a_position.xyz) * 0.002;
+            pos = a_position.xyz + terrainDisplacement + shadowOffset;
+            v_height = 0.0;
+        }
+
+        gl_Position = u_matrix * vec4(pos, 1.0);
+        //v_normal = a_normal;
+        v_normal = mat3(u_modelMatrix) * a_normal;
+        v_modelPosition = pos;
+        v_worldPosition = (u_modelMatrix * vec4(pos, 1.0)).xyz;
+        v_texcoord = a_texcoord;
+        v_modelPosition = pos;
+        //v_modelPosition = a_position.xyz;
+    }
+`;
+
 export const fragmentShaderSource = glsl`#version 300 es
     precision highp float;
 
@@ -20,7 +111,8 @@ export const fragmentShaderSource = glsl`#version 300 es
     uniform float u_layer7Level;
     uniform float u_layer8Level; 
     uniform float u_layer9Level; 
-    
+    uniform float u_layer10Level; 
+
     uniform vec3 u_layer0Color;
     uniform vec3 u_layer1Color;
     uniform vec3 u_layer2Color;
@@ -47,27 +139,20 @@ export const fragmentShaderSource = glsl`#version 300 es
 
     uniform float u_cloudOpacity;
     uniform float u_cloudScale;
+    uniform float u_cloudSpeed;
     uniform float u_cloudWarpIntensity;
     uniform float u_cloudWarpTime;
     uniform float u_cloudThreshold;
+    uniform float u_cloudAlpha;
     uniform vec3 u_cloudColor;
     uniform float u_cloudTextureZoom;
 
     uniform float u_terrainDisplacement;
+
     uniform vec3 u_viewPosition;
 
-    // uniform float u_waterLevel;
-    // uniform float u_waveSpeed;
-    // uniform float u_waveAmplitude;
-    // uniform float u_waveFrequency;
-    // uniform float u_waveAngle;
-    // uniform float u_foamSpeed;
-    // uniform float u_foamFrequency;
-    // uniform float u_foamIntensity;
-    // uniform vec3 u_waterShallowColor;
-    // uniform vec3 u_waterDeepColor;
-    // uniform bool u_enableWaterEffects;
-
+    //uniform float u_shadowOpacity;
+    
     out vec4 outColor;
 
     vec4 getLayer0Color(float height) { return vec4(u_layer0Color, 1.0); }
@@ -82,6 +167,17 @@ export const fragmentShaderSource = glsl`#version 300 es
     vec4 getLayer9Color(float height) { return vec4(u_layer9Color, 1.0); }
 
     vec4 defineTerrainColor(float height) {
+        // if (height < u_layer0Level)      return getLayer0Color(height);
+        // else if (height < u_layer1Level) return getLayer1Color(height);
+        // else if (height < u_layer2Level) return getLayer2Color(height);
+        // else if (height < u_layer3Level) return getLayer3Color(height);
+        // else if (height < u_layer4Level) return getLayer4Color(height);
+        // else if (height < u_layer5Level) return getLayer5Color(height);
+        // else if (height < u_layer6Level) return getLayer6Color(height);
+        // else if (height < u_layer7Level) return getLayer7Color(height);
+        // else if (height < u_layer8Level) return getLayer8Color(height);
+        // else return getLayer9Color(height);
+
         if (height < u_layer0Level)      return mix(getLayer0Color(height), getLayer1Color(height), smoothstep(u_layer0Level - 0.05, u_layer0Level + 0.05, height));
         else if (height < u_layer1Level) return mix(getLayer1Color(height), getLayer2Color(height), smoothstep(u_layer1Level - 0.05, u_layer1Level + 0.05, height));
         else if (height < u_layer2Level) return mix(getLayer2Color(height), getLayer3Color(height), smoothstep(u_layer2Level - 0.05, u_layer2Level + 0.05, height));
@@ -111,6 +207,7 @@ export const fragmentShaderSource = glsl`#version 300 es
         weights = max(weights - 0.2, 0.0);
         weights /= dot(weights, vec3(1.0));
 
+
         float warpTime = u_time * u_cloudWarpTime * 0.1;
         vec3 warpOffset = vec3(warpTime, warpTime * 0.5, -warpTime);
         vec3 warpPos = (pos * scale * 0.5) + warpOffset;
@@ -123,6 +220,7 @@ export const fragmentShaderSource = glsl`#version 300 es
         float flowTime = u_time * 0.02;
         vec3 flowOffset = vec3(flowTime, 0.0, flowTime * 0.2);
         
+        // float warpIntensity = 0.4;
         vec3 mainPos = (pos * scale) + flowOffset + (vec3(warpVal) * u_cloudWarpIntensity);
 
         float x = texture(u_cloudTexture, mainPos.yz).r;
@@ -134,6 +232,9 @@ export const fragmentShaderSource = glsl`#version 300 es
 
     void main() {
         vec3 normal = normalize(v_normal);
+        // float angle = u_time * u_lightSpeed;
+        // float pitch = 0.5;
+        // float angle = u_lightAngle + (u_time * u_lightSpeed);
         float angle = u_lightAngle;
         float pitch = u_lightPitch;
         vec3 lightDir = normalize(vec3(
@@ -142,10 +243,17 @@ export const fragmentShaderSource = glsl`#version 300 es
             sin(angle) * cos(pitch)
         ));
 
-        float light = u_lightBrightness;
+        float light;
+        light = u_lightBrightness;
+
+        // if (u_lambertianDiffuse == true) {
+        //     light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
+        // } else {
+        //     light = 1.0;
+        // }
+
         vec3 rim = rimLight(normal, u_viewPosition, v_worldPosition);
 
-        // Terreno
         if (u_renderPass == 1.) {
             if (u_lambertianDiffuse == true) {
                 light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
@@ -158,21 +266,25 @@ export const fragmentShaderSource = glsl`#version 300 es
                 vec3 color = defineTerrainColor(v_height).rgb;
                 outColor = vec4(color * light, 1.0);
             }
-        
             outColor.rgb += rim;
         }
 
-        // Nuvens
         if (u_renderPass == 2.) {
             float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
             if (cloudNoise < u_cloudThreshold) discard;
             
             float alpha = u_cloudOpacity * smoothstep(0.5, 0.8, cloudNoise);
+
+            //DEPOIS COLOCAR INPUT DO ALPHA NO HTML PARA CONTROLAR INTENSIDADE DAS CORES
             outColor = vec4(u_cloudColor, alpha * light);
         } 
         
-        // Sombras das Nuvens
         if (u_renderPass == 3.) {
+            if (u_lambertianDiffuse == true) {
+                light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
+            } else {
+                light = 1.0;
+            }
             float terrainHeight = length(v_modelPosition);
             float terrainInfluence = 0.5;
             float cloudHeight = 1.0 + (u_terrainDisplacement * terrainInfluence) + (u_cloudScale - 1.0);
@@ -182,7 +294,9 @@ export const fragmentShaderSource = glsl`#version 300 es
             float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
             if (cloudNoise < u_cloudThreshold) discard;
 
-            float alpha = 0.85; 
+            float alpha = smoothstep(0.65, 0.8, cloudNoise);
+            
+            alpha = 0.85; 
             outColor = vec4(vec3(0.0), alpha * light);
         }
     }
