@@ -283,7 +283,7 @@ export const fragmentShaderSource = glsl`#version 300 es
                 float normalizeDepth = clamp(distanceToSand / maxTransparencyDepth, 0.0, 1.0);
                 float waterLerp = pow(1.0 - normalizeDepth, 2.0);
                 
-                vec3 sandColor = u_layer3Color;
+                vec3 sandColor = u_layer3Color * light;
                 outColor.rgb = mix(outColor.rgb, sandColor, waterLerp);
                 
                 float waveZone = 0.02;
@@ -293,7 +293,7 @@ export const fragmentShaderSource = glsl`#version 300 es
                     float waveIntensity = 1.0 - (distanceToSand / waveZone);
                     float wave = sin(u_time * 2.0 + distanceToSand * 150.0) * 0.5 + 0.5;
                     wave *= waveIntensity;
-                    outColor.rgb += wave / 4.0 ;
+                    outColor.rgb += wave / 4.0 * light;
                 }
             }
             outColor.rgb += rim;
