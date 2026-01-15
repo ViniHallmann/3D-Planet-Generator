@@ -3,6 +3,9 @@ import { hexToRgb, easing } from './utils.js';
 import { DEFAULT_VARIABLES_VALUES } from './default-values.js';
 import { loadOBJ } from './obj-loader.js';
 import { mat4 } from './math-utils.js';
+import { createTorus } from './geometry.js';
+import { RingManager } from './ring.js';
+import { Raycaster } from './raycasting.js';
 
 async function loadTexture(renderer, url) {
     return new Promise((resolve) => {
@@ -398,7 +401,7 @@ async function main() {
     plane.orbitRadius = 0;
 
     const orbitConfig = {
-        angle: Math.random() * Math.PI * 2,
+        angle: 0,
         inclination: (Math.random() - 0.5) * 0.5,
         speed: 0.005 + Math.random() * 0.01,
         radius: 1.85,
@@ -426,9 +429,74 @@ async function main() {
     let rotationVelocityX = 0;
     let rotationVelocityY = 0;
 
+    const ringManager = new RingManager();
+    const raycaster = new Raycaster(canvas, camera);
+    const torusGeometry = createTorus(0.12, 0.02, 24, 12);
+    const ringObjects = [];
+
+    function addRingToScene(ring) {
+        const ringObj = renderer.addObject(torusGeometry, ring.position, [1, 1, 1]);
+        ringObj.color = ring.color;
+        ringObj.ringReference = ring;
+        ringObj.rotateWithPlanet = true;
+        ringObjects.push(ringObj);
+        return ringObj;
+    }
+
+    canvas.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        if (isMouseOverUI) return;
+        
+        const cameraPos = {
+            x: camera.radius * Math.sin(camera.phi) * Math.cos(camera.theta),
+            y: camera.radius * Math.cos(camera.phi),
+            z: camera.radius * Math.sin(camera.phi) * Math.sin(camera.theta)
+        };
+        
+        const aspect = canvas.width / canvas.height;
+        const projectionMatrix = mat4.create();
+        mat4.perspective(projectionMatrix, Math.PI / 4, aspect, 0.1, 100);
+        
+        const viewMatrix = mat4.create();
+        mat4.lookAt(viewMatrix, 
+            [cameraPos.x, cameraPos.y, cameraPos.z],
+            [0, 0, 0],
+            [0, 1, 0]
+        );
+        
+        const ray = raycaster.createRay(e.clientX, e.clientY, cameraPos, projectionMatrix, viewMatrix);        
+        const planetRadius = 1.5 + (shadersParams.terrainDisplacement * 0.3);
+        const result = raycaster.intersectSphere(ray, [0, 0, 0], planetRadius);
+        
+        if (result.hit) {
+            const len = Math.sqrt(result.point[0]**2 + result.point[1]**2 + result.point[2]**2);
+            
+            const orbitRadius = 1.85;
+            const ringPosition = [(result.point[0] / len) * orbitRadius,(result.point[1] / len) * orbitRadius,(result.point[2] / len) * orbitRadius];
+            
+            const ring = ringManager.addRing(ringPosition);
+            const ringObj = addRingToScene(ring);
+            
+            // MODULARIZAR DEPOIS
+            const nx = ringPosition[0] / orbitRadius;
+            const ny = ringPosition[1] / orbitRadius;
+            const nz = ringPosition[2] / orbitRadius;
+            const rotX = Math.asin(-ny);
+            const rotY = Math.atan2(nx, nz);
+            
+            ringObj.rotation = [rotX, rotY, 0];
+            
+            console.log('Ring criado em:', ringPosition);
+        }
+    });
+
     window.addEventListener('keydown', (e) => {
         if (e.key.toLowerCase() === 'c') {
             topDownMode = !topDownMode;
+            const tooltip = document.getElementById('controls-tooltip');
+            if (tooltip) {
+                tooltip.classList.toggle('hidden', topDownMode);
+            }
             
             if (topDownMode) {
                 mat4.identity(planetRotationMatrix);
@@ -568,6 +636,21 @@ async function main() {
         const time = performance.now() / 1000;
 
         updatePlanetPhysics();
+        ringManager.cleanup();
+        
+        // TRANSFORMAR EM UMA FUNCAO DEPOIS
+        for (let i = ringObjects.length - 1; i >= 0; i--) {
+            const obj = ringObjects[i];
+            if (obj.ringReference && obj.ringReference.collected) {
+                const rendererIndex = renderer.objects.indexOf(obj);
+                if (rendererIndex > -1) renderer.objects.splice(rendererIndex, 1);
+                ringObjects.splice(i, 1);
+            }
+        }
+        
+        if (plane && plane.position) {
+            ringManager.checkCollisions(plane.position, 0.05, planetRotationMatrix);
+        }
         let cameraPosition; 
 
         if (topDownMode) {
@@ -629,7 +712,7 @@ async function main() {
             }
         }
         renderer.objects.forEach(obj => {
-            renderer.renderObject(obj, time, shadersParams);
+            renderer.renderObject(obj, time, shadersParams, rotationMatrixToUse);
         });
         
         requestAnimationFrame(handleAnimation);
