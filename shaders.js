@@ -373,8 +373,12 @@ export const fragmentShaderSource = glsl`#version 300 es
                 light = max(dot(normalize(v_normal), lightDir), 0.0) * u_lightBrightness;
             }
             
-            vec3 texColor = texture(u_objectTexture, v_texcoord).rgb;
-            outColor = vec4(texColor * light, 1.0);
+            if (u_useColor) {
+                outColor = vec4(u_color * light, 1.0);
+            } else {
+                vec3 texColor = texture(u_objectTexture, v_texcoord).rgb;
+                outColor = vec4(texColor * light, 1.0);
+            }
         }
     }
 `;
