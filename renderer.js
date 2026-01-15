@@ -458,7 +458,7 @@ export class Renderer {
         return obj;
     }
 
-    renderObject(obj, time, params) {
+    renderObject(obj, time, params, planetRotationMatrix = null) {
         const gl = this.gl;
         
         if (obj.orbitRadius > 0) {
@@ -476,6 +476,9 @@ export class Renderer {
         }
         
         const modelMatrix = mat4.create();
+        if (obj.rotateWithPlanet && planetRotationMatrix) {
+            mat4.multiply(modelMatrix, modelMatrix, planetRotationMatrix);
+        }
         mat4.translate(modelMatrix, modelMatrix, obj.position);
         
         if (obj.lookAtCenter) {

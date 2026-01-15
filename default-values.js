@@ -17,8 +17,8 @@ let numActiveCloudLayers = MAX_CLOUD_LAYERS;
 let cloudLayerOffset = MAX_CLOUD_OFFSET;
 let isMouseOverUI = false;
 let showWireframe = false;
-let showLambertianDiffuse = true;
-let showClouds = true;
+let showLambertianDiffuse = false;
+let showClouds = false;
 let topDownMode = false;
 
 let noiseParams = {
@@ -74,7 +74,7 @@ let shadersParams = {
     lightPitch: 0.5,
     lightDistance: 5.0,
     layers : layerLevels,
-    terrainDisplacement: 1.0,
+    terrainDisplacement: 0.0,
     planetScale: 0.05,
     rimColor: [0.0, 0.5, 1.0],
     rimSize: 2.0,
@@ -92,7 +92,7 @@ let cloudParams = {
     cloudTextureZoom: 1.10,
     cloudSpeed: 0.01,
     planetScale: 0.05,
-    terrainDisplacement: 1.0,
+    terrainDisplacement: 0.0,
 };
 
 let cloudShadowParams = {
@@ -106,7 +106,7 @@ let cloudShadowParams = {
     terrainDisplacement: 0.3,
     cloudTextureZoom: 1.10,
     planetScale: 0.05,
-    terrainDisplacement: 1.0,
+    terrainDisplacement: 0.0,
 };
 
 const DEFAULT_VARIABLES_VALUES = {
