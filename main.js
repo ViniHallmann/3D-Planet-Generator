@@ -387,9 +387,8 @@ async function main() {
     let cloudTexture = await loadTexture(renderer, 'assets/noises/cloud2.png');
     renderer.setCloudTexture(cloudTexture);
 
-    //GAMBIARRA DO KRL PARA DE SER PREGUICOSO E MUDA ISSO AQUI
     const planeGeometry = await loadOBJ('assets/models/airplane.obj');
-    const plane = renderer.addObject(planeGeometry, [0, 1.85, 0], [0.025, 0.025, 0.025]);
+    const plane = renderer.addObject(planeGeometry, [0, 1, 0], [0.025, 0.025, 0.025]);
     
     const planeTexture = await loadTexture(renderer, 'assets/textures/airplane.png');
     plane.texture = planeTexture;
@@ -397,6 +396,17 @@ async function main() {
     plane.color = [0.9, 0.4, 0.1];
     plane.lookAtCenter = true;
     plane.orbitRadius = 0;
+
+    const orbitConfig = {
+        angle: Math.random() * Math.PI * 2,
+        inclination: (Math.random() - 0.5) * 0.5,
+        speed: 0.005 + Math.random() * 0.01,
+        radius: 1.85,
+        wobble: Math.random() * Math.PI * 2,
+        wobbleSpeed: 0.02 + Math.random() * 0.02,
+        wobbleAmount: 0.1 + Math.random() * 0.1,  
+    };
+
     const baseRotationOffset = [-Math.PI/2, Math.PI/2, 0];
     plane.rotationOffset = [...baseRotationOffset];
     
@@ -421,14 +431,48 @@ async function main() {
             topDownMode = !topDownMode;
             
             if (topDownMode) {
-                plane.position = [0, 1.85, 0]; 
-                plane.rotationOffset = [0, 0, 0];
+                mat4.identity(planetRotationMatrix);
+
+                const orbitDirection = orbitConfig.angle + Math.PI / 2;
+                plane.rotationOffset = [
+                    baseRotationOffset[0],
+                    baseRotationOffset[1] + orbitDirection,
+                    baseRotationOffset[2]
+                ];
+            } else {
+                orbitConfig.angle = Math.atan2(plane.position[2], plane.position[0]);
+                plane.rotationOffset = [...baseRotationOffset];
             }
         }
     });
 
+    function updateOrbit() {
+        if (topDownMode) return;
+        orbitConfig.angle += orbitConfig.speed;
+        orbitConfig.wobble += orbitConfig.wobbleSpeed;
+        
+        const baseY = Math.sin(orbitConfig.inclination) * orbitConfig.radius;
+        const horizontalRadius = Math.cos(orbitConfig.inclination) * orbitConfig.radius;
+        
+        const wobbleY = Math.sin(orbitConfig.wobble) * orbitConfig.wobbleAmount;
+        
+        plane.position[0] = Math.cos(orbitConfig.angle) * horizontalRadius;
+        plane.position[1] = baseY + wobbleY + orbitConfig.radius * 0.1;
+        plane.position[2] = Math.sin(orbitConfig.angle) * horizontalRadius;
+
+        const bankAngle = Math.sin(orbitConfig.wobble * 2) * 0.1;
+        plane.rotationOffset = [
+            baseRotationOffset[0] + bankAngle,
+            baseRotationOffset[1] + Math.PI/2,
+            baseRotationOffset[2]
+        ];
+    }
+
     function updatePlanetPhysics() {
-        if (!topDownMode) return;
+        if (!topDownMode) {
+            updateOrbit();
+            return;
+        }
 
         if (keys.w) rotationVelocityX += MOVE_ACCELERATION;
         if (keys.s) rotationVelocityX -= MOVE_ACCELERATION;
@@ -563,7 +607,8 @@ async function main() {
                 cloudShadowParams.planetScale = animation.targetScale;
             }
         }
-        
+
+        shadersParams.lightAngle = time * shadersParams.lightSpeed;
         renderer.clearScreen();
         
         renderer.renderShadowPass(time, cameraPosition, shadersParams, AUTO_ROTATE, rotationMatrixToUse);
