@@ -78,6 +78,11 @@ export const vertexShaderSource = glsl`#version 300 es
             v_height = 0.0;
         }
 
+        if (u_renderPass == 4.) {
+            pos = a_position.xyz;
+            v_height = 0.0;
+        }
+
         gl_Position = u_matrix * vec4(pos, 1.0);
         v_normal = mat3(u_modelMatrix) * a_normal;
         v_modelPosition = pos;
@@ -127,6 +132,7 @@ export const fragmentShaderSource = glsl`#version 300 es
 
     uniform sampler2D u_noiseTexture;
     uniform sampler2D u_cloudTexture;
+    uniform sampler2D u_objectTexture;
 
     uniform float u_time;
     uniform float u_lightSpeed;      
@@ -149,7 +155,9 @@ export const fragmentShaderSource = glsl`#version 300 es
 
     uniform vec3 u_viewPosition;
 
-    //uniform float u_shadowOpacity;
+    uniform float u_useShadows;
+    uniform sampler2D u_shadowMap;
+    uniform mat4 u_lightSpaceMatrix;
     
     out vec4 outColor;
 
@@ -174,7 +182,7 @@ export const fragmentShaderSource = glsl`#version 300 es
         // TERMINAR O RESTO DEPOIS
         
         //REFERENCIA CODIGO VARIACAO HEIGHT VALUE: https://www.youtube.com/watch?v=fZh2p0odPyQ&t=175s
-        height += (hash(v_modelPosition.xz * 50.) * 2.0 - 1.0) * 0.0025;
+        //height += (hash(v_modelPosition.xz * 50.) * 2.0 - 1.0) * 0.0025;
 
         // if (height < u_layer0Level)      return getLayer0Color(height);
         // else if (height < u_layer1Level) return getLayer1Color(height);
@@ -239,6 +247,28 @@ export const fragmentShaderSource = glsl`#version 300 es
         return x * weights.x + y * weights.y + z * weights.z;
     }
 
+    float calculateShadow(vec3 worldPos) {
+        if (u_useShadows < 0.5) return 1.0;
+        
+        vec4 lightSpacePos = u_lightSpaceMatrix * vec4(worldPos, 1.0);
+        vec3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
+        projCoords = projCoords * 0.5 + 0.5;
+        
+        // VERIFICAR SE TA FORA DO FRUSTRUM
+        if (projCoords.x < 0.0 || projCoords.x > 1.0 ||
+            projCoords.y < 0.0 || projCoords.y > 1.0 ||
+            projCoords.z > 1.0) {
+            return 1.0;
+        }
+        
+        float closestDepth = texture(u_shadowMap, projCoords.xy).r;
+        float currentDepth = projCoords.z;
+        float bias = 0.005;
+        float shadow = currentDepth - bias > closestDepth ? 0.3 : 1.0;
+        
+        return shadow;
+    }
+
     void main() {
         vec3 normal = normalize(v_normal);
         float angle = u_lightAngle;
@@ -252,6 +282,8 @@ export const fragmentShaderSource = glsl`#version 300 es
         float light;
         light = u_lightBrightness;
 
+        float shadow = calculateShadow(v_worldPosition);
+
         // if (u_lambertianDiffuse == true) {
         //     light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
         // } else {
@@ -262,7 +294,7 @@ export const fragmentShaderSource = glsl`#version 300 es
 
         if (u_renderPass == 1.) {
             if (u_lambertianDiffuse == true) {
-                light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
+                light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r * shadow;
             } else {
                 light = 1.0;
             }
@@ -329,5 +361,42 @@ export const fragmentShaderSource = glsl`#version 300 es
             alpha = 0.85; 
             outColor = vec4(vec3(0.0), alpha * light);
         }
+
+        if (u_renderPass == 4.) {
+            float light = u_lightBrightness;
+            if (u_lambertianDiffuse) {
+                vec3 lightDir = normalize(vec3(
+                    cos(u_lightAngle) * cos(u_lightPitch),
+                    sin(u_lightPitch),
+                    sin(u_lightAngle) * cos(u_lightPitch)
+                ));
+                light = max(dot(normalize(v_normal), lightDir), 0.0) * u_lightBrightness;
+            }
+            
+            vec3 texColor = texture(u_objectTexture, v_texcoord).rgb;
+            outColor = vec4(texColor * light, 1.0);
+        }
+    }
+`;
+
+export const shadowVertexShaderSource = glsl`#version 300 es
+    in vec4 a_position;
+    in vec3 a_normal;
+    
+    uniform mat4 u_lightSpaceMatrix;
+    uniform mat4 u_modelMatrix;
+    
+    void main() {
+        gl_Position = u_lightSpaceMatrix * u_modelMatrix * a_position;
+    }
+`;
+
+export const shadowFragmentShaderSource = glsl`#version 300 es
+    precision highp float;
+    
+    out vec4 outColor;
+    
+    void main() {
+        outColor = vec4(1.0);
     }
 `;
