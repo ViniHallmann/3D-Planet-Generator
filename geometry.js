@@ -119,4 +119,59 @@ function createEdgeIndices(triangleIndices) {
     return new Uint16Array(edgeIndices);
 }
 
-export { createIcosphere, createEdgeIndices };
+function createTorus(ringRadius = 0.15, tubeRadius = 0.02, segments = 24, tubeSegments = 12) {
+    const positions = [];
+    const normals = [];
+    const indices = [];
+    const uvs = [];
+
+    for (let i = 0; i <= segments; i++) {
+        const u = (i / segments) * Math.PI * 2;
+        const cosU = Math.cos(u);
+        const sinU = Math.sin(u);
+
+        for (let j = 0; j <= tubeSegments; j++) {
+            const v = (j / tubeSegments) * Math.PI * 2;
+            const cosV = Math.cos(v);
+            const sinV = Math.sin(v);
+
+            // Posição do vértice
+            const x = (ringRadius + tubeRadius * cosV) * cosU;
+            const y = tubeRadius * sinV;
+            const z = (ringRadius + tubeRadius * cosV) * sinU;
+
+            positions.push(x, y, z);
+
+            // Normal
+            const nx = cosV * cosU;
+            const ny = sinV;
+            const nz = cosV * sinU;
+            normals.push(nx, ny, nz);
+
+            // UV
+            uvs.push(i / segments, j / tubeSegments);
+        }
+    }
+
+    // Índices
+    for (let i = 0; i < segments; i++) {
+        for (let j = 0; j < tubeSegments; j++) {
+            const a = i * (tubeSegments + 1) + j;
+            const b = a + tubeSegments + 1;
+            const c = a + 1;
+            const d = b + 1;
+
+            indices.push(a, b, c);
+            indices.push(c, b, d);
+        }
+    }
+
+    return {
+        positions: new Float32Array(positions),
+        normals: new Float32Array(normals),
+        uvs: new Float32Array(uvs),
+        indices: new Uint16Array(indices)
+    };
+}
+
+export { createIcosphere, createEdgeIndices, createTorus };
