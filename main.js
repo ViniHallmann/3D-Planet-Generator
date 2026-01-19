@@ -3,7 +3,6 @@ import { hexToRgb, easing } from './utils.js';
 import { DEFAULT_VARIABLES_VALUES } from './default-values.js';
 import { loadOBJ } from './obj-loader.js';
 import { mat4 } from './math-utils.js';
-import { createTorus } from './geometry.js';
 import { RingManager } from './ring.js';
 import { Raycaster } from './raycasting.js';
 
@@ -440,6 +439,7 @@ async function main() {
         ringObj.color = ring.color;
         ringObj.ringReference = ring;
         ringObj.rotateWithPlanet = true;
+        ringObj.scale = [0.1, 0.1, 0.1];
         ringObjects.push(ringObj);
         return ringObj;
     }
@@ -652,11 +652,16 @@ async function main() {
                 if (rendererIndex > -1) renderer.objects.splice(rendererIndex, 1);
                 ringObjects.splice(i, 1);
             }
+            
+            //obj.scale = [0.12 + Math.sin(time * 3) * 0.02, 0.12 + Math.sin(time * 3) * 0.02, 0.12];
+
         }
+
         
         if (plane && plane.position) {
             ringManager.checkCollisions(plane.position, 0.05, planetRotationMatrix);
         }
+
         let cameraPosition; 
 
         if (topDownMode) {
