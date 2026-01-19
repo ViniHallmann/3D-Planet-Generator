@@ -431,17 +431,20 @@ async function main() {
 
     const ringManager = new RingManager();
     const raycaster = new Raycaster(canvas, camera);
-    const torusGeometry = createTorus(0.12, 0.02, 24, 12);
+    const ringGeometry = await loadOBJ('assets/models/torus.obj');
+    // const torusGeometry = createTorus(0.12, 0.02, 24, 12);
     const ringObjects = [];
 
     function addRingToScene(ring) {
-        const ringObj = renderer.addObject(torusGeometry, ring.position, [1, 1, 1]);
+        const ringObj = renderer.addObject(ringGeometry, ring.position, [0.1, 0.1, 0.1]);
         ringObj.color = ring.color;
         ringObj.ringReference = ring;
         ringObj.rotateWithPlanet = true;
         ringObjects.push(ringObj);
         return ringObj;
     }
+
+    
 
     canvas.addEventListener('contextmenu', (e) => {
         e.preventDefault();
@@ -476,6 +479,7 @@ async function main() {
             
             const ring = ringManager.addRing(ringPosition);
             const ringObj = addRingToScene(ring);
+
             
             // MODULARIZAR DEPOIS
             const nx = ringPosition[0] / orbitRadius;
