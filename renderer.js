@@ -1,8 +1,11 @@
 import { vertexShaderSource, fragmentShaderSource, shadowVertexShaderSource, shadowFragmentShaderSource } from './shaders.js';
-import { createShader, createProgram } from './webgl-utils.js';
+//import { createShader, createProgram } from './webgl-utils.js';
+import { createShader, createProgram } from './src/utils/wgl.js';
 import { createIcosphere } from './geometry.js';
-import { mat4 } from './math-utils.js';
+//import { mat4 } from './math-utils.js';
+import { mat4 } from './src/utils/math.js';
 import { NoiseGenerator } from './noise.js';
+import {checkGLSupport} from './src/utils/utils.js';
 
 export class Renderer {
     constructor(canvas, noiseParams) {
@@ -11,10 +14,7 @@ export class Renderer {
         this.uniformLocations = {};
         this.objects = [];
         
-        if (!this.gl) {
-            console.error('WebGL2 not supported in this browser.');
-            return;
-        }
+        if (!checkGLSupport(this.gl)) return;
 
         this.initializeWebGL();
         this.createShaderProgram();

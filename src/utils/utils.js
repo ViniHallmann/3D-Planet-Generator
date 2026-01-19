@@ -22,3 +22,11 @@ export const easing = {
     }
     
 };
+
+export function checkGLSupport(gl) {
+    if (!gl) {
+        alert("Unable to initialize WebGL. Your browser or machine may not support it.");
+        return false;
+    }
+    return true;
+}
