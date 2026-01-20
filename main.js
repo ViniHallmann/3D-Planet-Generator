@@ -26,14 +26,14 @@ async function main() {
     const ringManager   = new RingManager();
     const raycaster     = new Raycaster(canvas, state.camera);
 
-    let cloudTexture = await loadTexture(renderer, 'assets/noises/cloud2.png');
+    let cloudTexture = await loadTexture(renderer, './src/assets/noises/cloud2.png');
 
     setupRendererSettings(state, renderer, cloudTexture);
     setupControls(state, renderer);
 
-    const ringGeometry = await loadOBJ('assets/models/torus.obj');
-    const planeGeometry = await loadOBJ('assets/models/airplane.obj');
-    const planeTexture  = await loadTexture(renderer, 'assets/textures/airplane.png');
+    const ringGeometry = await loadOBJ('src/assets/models/torus.obj');
+    const planeGeometry = await loadOBJ('src/assets/models/airplane.obj');
+    const planeTexture  = await loadTexture(renderer, 'src/assets/textures/airplane.png');
 
     const plane = renderer.addObject(planeGeometry, [0, 1, 0], [0.025, 0.025, 0.025]);
     plane.texture = planeTexture;
