@@ -1,24 +1,25 @@
 import { createNoise4D } from 'https://cdn.skypack.dev/simplex-noise';
+import { seededRandom, fade, lerp } from '../utils/noise.js';
 
-//ALGORITMO Mulberry32
-function seededRandom(seed) {
-    return function() {
-        seed = (seed + 0x6D2B79F5) | 0;
-        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-}
+// //ALGORITMO Mulberry32
+// function seededRandom(seed) {
+//     return function() {
+//         seed = (seed + 0x6D2B79F5) | 0;
+//         let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+//         t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+//         return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+//     };
+// }
 
-// Função de interpolação suave (smoothstep)
-function fade(t) {
-    return t * t * t * (t * (t * 6 - 15) + 10);
-}
+// // Função de interpolação suave (smoothstep)
+// function fade(t) {
+//     return t * t * t * (t * (t * 6 - 15) + 10);
+// }
 
-// Interpolação linear
-function lerp(a, b, t) {
-    return a + t * (b - a);
-}
+// // Interpolação linear
+// function lerp(a, b, t) {
+//     return a + t * (b - a);
+// }
 
 export class NoiseGenerator {
     constructor(width, height, seed=null, noiseType='simplex') {

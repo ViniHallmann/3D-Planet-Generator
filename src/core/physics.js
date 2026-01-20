@@ -1,4 +1,4 @@
-import { mat4 } from '../../math-utils.js';
+import { mat4 } from '../utils/math.js'
 
 export class Physics {
     constructor() {

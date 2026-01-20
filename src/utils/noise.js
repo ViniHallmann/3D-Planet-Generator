@@ -1,5 +1,5 @@
 //ALGORITMO Mulberry32
-function seededRandom(seed) {
+export function seededRandom(seed) {
     return function() {
         seed = (seed + 0x6D2B79F5) | 0;
         let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
@@ -8,11 +8,11 @@ function seededRandom(seed) {
     };
 }
 
-function fade(t){
+export function fade(t){
     return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
-function lerp(a, b, t){
+export function lerp(a, b, t){
     return a + t * (b - a);
 }
 

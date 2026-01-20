@@ -1,5 +1,4 @@
-import { mat4 } from './math-utils.js';
-
+import { mat4 } from '../utils/math.js';
 export class Raycaster {
     constructor(canvas, camera) {
         this.canvas = canvas;

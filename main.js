@@ -1,12 +1,12 @@
-import { Renderer }             from './renderer.js';
+import { Renderer }             from './src/renderer/renderer.js';
 import { State }                from './src/app/state.js';
 import { setupControls }        from './src/setup/controls.js';
 import { setupHandlers }        from './src/setup/handler.js';
 import { Physics}               from './src/core/physics.js';
 import { loadTexture, loadOBJ } from './src/utils/loader.js';
 import { getCanvasElement }     from './src/config/elements.js';
-import { RingManager }          from './ring.js';
-import { Raycaster }            from './raycasting.js';
+import { RingManager }          from './src/objects/ring.js';
+import { Raycaster }            from './src/core/raycasting.js';
 
 function setupRendererSettings(state, renderer, cloudTexture) {
     renderer.setGeometry(state.noise.subdivisions);

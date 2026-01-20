@@ -1,4 +1,4 @@
-import { mat4 } from '../../math-utils.js';
+import { mat4 } from '../utils/math.js';
 import { easing } from '../utils/utils.js';
 
 export function setupHandlers(canvas, state, renderer, physics, plane, ringManager, raycaster, ringGeometry) {
