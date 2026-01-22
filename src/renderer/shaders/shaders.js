@@ -212,10 +212,11 @@ export const fragmentShaderSource = glsl`#version 300 es
         return vec3(diff * brightness);
     }
 
+    //PASSAR VALORES DA UI PARA CASO QUEIRA MUDAR A COR DO RIM LIGHT E INTENSIDADE
     vec3 rimLight(vec3 normal, vec3 viewPos, vec3 worldPos){
         vec3 viewDir = normalize(viewPos - worldPos);
         float rim = 1.0 - max(dot(viewDir, normal), 0.0);
-        rim = pow(rim, 3.5);
+        rim = pow(rim, 4.5);
         return rim * vec3(0.0, 0.5, 1.0);
     }
 
@@ -284,12 +285,6 @@ export const fragmentShaderSource = glsl`#version 300 es
 
         float shadow = calculateShadow(v_worldPosition);
 
-        // if (u_lambertianDiffuse == true) {
-        //     light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
-        // } else {
-        //     light = 1.0;
-        // }
-
         vec3 rim = rimLight(normal, u_viewPosition, v_worldPosition);
 
         if (u_renderPass == 1.) {
@@ -308,6 +303,9 @@ export const fragmentShaderSource = glsl`#version 300 es
             //REFERENCIA DESSA PARTE DO CODIGO https://www.youtube.com/watch?v=6bnFfE82AJg
             //DEPOIS TRANSFORMAR EM FUNCAO E ADICIONAR VARIAVEIS PARA CONTROLAR AS CORES E NIVEIS
             //ADICIONAR TAMBEM ONDE FICA A LINHA DA AGUA E AREIA
+
+            // ISSO AQUI TEM QUE SAIR DAQUI E VIRAR UMA FUNCAO!!!!
+            //WAVES DAS AGUAS
             if (v_height >= u_layer1Level && v_height < u_layer2Level) {
                 float distanceToSand = u_layer2Level - v_height;
                 float maxTransparencyDepth = u_layer3Level - u_layer2Level;
@@ -328,10 +326,44 @@ export const fragmentShaderSource = glsl`#version 300 es
                     outColor.rgb += wave / 4.0 * light;
                 }
             }
+            //SE DER TEMPO E LEMBRAR:
+            //AMBOS EFEITOS VISUAIS SAO BASEADOS EM LAYERS. MAS E SE A PESSOA FIZER UM PLANETA ARIDO POR EXEMPLO?
+            //TEM QUE TER A OPCAO DE DESATIVAR ESSES EFEITOS VISUAIS, OU PELO MENOS FAZER COM QUE ELAS CONSIGAM ESCOLHER EM QUE LAYER OCORRE O EFEITO
+            //SE ALGUEM FIZER UM PLANETA COM VARIAS LAYERS DE "AGUA", O EFEITO DA ONDA OCORRE SO NOS PRIMEIROS LAYERS.
+
+            //VIRIAR FUNCAO
+            //NIGHT LIGHTS
+            float sunDot = dot(normalize(v_normal), lightDir); 
+            float nightFactor = smoothstep(0.15, -0.15, sunDot);
+
+            if (nightFactor > 0.0 && v_height > u_layer3Level && v_height < u_layer6Level) {
+                
+                float noise = texture(u_noiseTexture, v_modelPosition.xz * 75.0).r;
+                float cityDensity = smoothstep(0.7, 0.9, noise);
+                
+                if (cityDensity > 0.01) {
+                    float microNoise = texture(u_noiseTexture, v_modelPosition.xz * 150.0).r;
+                    float twinkle = hash(v_modelPosition.xz * 100.0); 
+                    
+                    
+                    vec3 cityColorCore = vec3(1.0, 0.9, 0.8);     //Quase branco
+                    vec3 cityColorOutskirt = vec3(1.0, 0.6, 0.2); //Laranja forte
+                    vec3 finalCityColor = mix(cityColorOutskirt, cityColorCore, cityDensity);
+                    float intensity = 2.5; 
+                    
+                    outColor.rgb += finalCityColor * nightFactor * intensity;
+                    outColor.rgb += (vec3(1.0, 0.5, 0.1) * 0.1) * cityDensity * nightFactor ;
+                }
+            }
             outColor.rgb += rim;
         }
 
         if (u_renderPass == 2.) {
+            if (u_lambertianDiffuse == true) {
+                light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
+            } else {
+                light = 1.0;
+            }
             float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
             if (cloudNoise < u_cloudThreshold) discard;
             
