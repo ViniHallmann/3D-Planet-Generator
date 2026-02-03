@@ -216,7 +216,13 @@ export const fragmentShaderSource = glsl`#version 300 es
     vec3 rimLight(vec3 normal, vec3 viewPos, vec3 worldPos){
         vec3 viewDir = normalize(viewPos - worldPos);
         float rim = 1.0 - max(dot(viewDir, normal), 0.0);
-        rim = pow(rim, 4.5);
+
+        float baseExponent = 4.5;
+        float minExponent = 3.5;
+        float maxDisplacement = 1.0;
+        float dynamicExponent = mix(baseExponent, minExponent, clamp(u_terrainDisplacement / maxDisplacement, 0.0, 1.0));
+
+        rim = pow(rim, dynamicExponent);
         return rim * vec3(0.0, 0.5, 1.0);
     }
 
@@ -333,28 +339,28 @@ export const fragmentShaderSource = glsl`#version 300 es
 
             //VIRIAR FUNCAO
             //NIGHT LIGHTS
-            float sunDot = dot(normalize(v_normal), lightDir); 
-            float nightFactor = smoothstep(0.15, -0.15, sunDot);
+            // float sunDot = dot(normalize(v_normal), lightDir); 
+            // float nightFactor = smoothstep(0.15, -0.15, sunDot);
 
-            if (nightFactor > 0.0 && v_height > u_layer3Level && v_height < u_layer6Level) {
+            // if (nightFactor > 0.0 && v_height > u_layer3Level && v_height < u_layer6Level) {
                 
-                float noise = texture(u_noiseTexture, v_modelPosition.xz * 75.0).r;
-                float cityDensity = smoothstep(0.7, 0.9, noise);
+            //     float noise = texture(u_noiseTexture, v_modelPosition.xz * 75.0).r;
+            //     float cityDensity = smoothstep(0.7, 0.9, noise);
                 
-                if (cityDensity > 0.01) {
-                    float microNoise = texture(u_noiseTexture, v_modelPosition.xz * 150.0).r;
-                    float twinkle = hash(v_modelPosition.xz * 100.0); 
+            //     if (cityDensity > 0.01) {
+            //         float microNoise = texture(u_noiseTexture, v_modelPosition.xz * 150.0).r;
+            //         float twinkle = hash(v_modelPosition.xz * 100.0); 
                     
                     
-                    vec3 cityColorCore = vec3(1.0, 0.9, 0.8);     //Quase branco
-                    vec3 cityColorOutskirt = vec3(1.0, 0.6, 0.2); //Laranja forte
-                    vec3 finalCityColor = mix(cityColorOutskirt, cityColorCore, cityDensity);
-                    float intensity = 2.5; 
+            //         vec3 cityColorCore = vec3(1.0, 0.9, 0.8);     //Quase branco
+            //         vec3 cityColorOutskirt = vec3(1.0, 0.6, 0.2); //Laranja forte
+            //         vec3 finalCityColor = mix(cityColorOutskirt, cityColorCore, cityDensity);
+            //         float intensity = 2.5; 
                     
-                    outColor.rgb += finalCityColor * nightFactor * intensity;
-                    outColor.rgb += (vec3(1.0, 0.5, 0.1) * 0.1) * cityDensity * nightFactor ;
-                }
-            }
+            //         outColor.rgb += finalCityColor * nightFactor * intensity;
+            //         outColor.rgb += (vec3(1.0, 0.5, 0.1) * 0.1) * cityDensity * nightFactor ;
+            //     }
+            // }
             outColor.rgb += rim;
         }
 
