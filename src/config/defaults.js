@@ -21,7 +21,7 @@ export const DEFAULTS = {
         isMouseOverUI: false,
         showWireframe: false,
         showLambertianDiffuse: true,
-        showClouds: true,
+        showClouds: false,
         topDownMode: false,
     },
 
