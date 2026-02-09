@@ -1,4 +1,4 @@
-function createIcosphere(subdivisions = 2) {
+function createIcosphere(subdivisions = 6) {
     const t = (1.0 + Math.sqrt(5.0)) / 2.0;
     
     let positions = [

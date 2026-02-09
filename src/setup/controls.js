@@ -37,6 +37,7 @@ export function setupControls(state, renderer) {
         sliderElement.addEventListener('input', (e) => {
             targetObject[paramKey] = parseFloat(e.target.value);
             if (valueElement) valueElement.textContent = parseFloat(e.target.value).toFixed(2);
+            state.shaders.layers[paramKey] = parseFloat(e.target.value);
             renderer.setLayerLevels(targetObject);
         });
     }
