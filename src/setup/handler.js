@@ -62,7 +62,24 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         state.camera.lastMouseY = event.clientY;
     }
 
+    // ARRUMAR E DEIXAR ISSO AQUI IMPLEMENTADO DE FORMA CORRETA DEPOIS
+    const fpsDiv = document.createElement('div');
+    fpsDiv.style.cssText = 'position:fixed;top:10px;left:10px;color:#00ff00;font-family:monospace;font-size:16px;background:rgba(0,0,0,0.7);padding:4px 8px;border-radius:4px;z-index:9999;pointer-events:none;';
+    document.body.appendChild(fpsDiv);
+    
+    let fpsFrames = 0;
+    let fpsLastTime = performance.now();
+
     function handleAnimation() {
+
+        fpsFrames++;
+        const currentFpsTime = performance.now();
+        if (currentFpsTime - fpsLastTime >= 1000) {
+            fpsDiv.innerText = `FPS: ${fpsFrames}`;
+            fpsFrames = 0;
+            fpsLastTime = currentFpsTime;
+        }
+        
         const time = performance.now() / 1000;
         physics.updatePlanetPhysics(plane, state.app.topDownMode, state.physics);
         
