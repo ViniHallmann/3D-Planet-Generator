@@ -114,7 +114,6 @@ export const fragmentShaderSource = glsl`#version 300 es
     uniform float u_layer7Level;
     uniform float u_layer8Level; 
     uniform float u_layer9Level; 
-    uniform float u_layer10Level; 
 
     uniform vec3 u_layer0Color;
     uniform vec3 u_layer1Color;
