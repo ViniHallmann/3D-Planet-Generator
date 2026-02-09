@@ -1,4 +1,4 @@
-import { vertexShaderSource, fragmentShaderSource, shadowVertexShaderSource, shadowFragmentShaderSource } from './shaders/shaders.js';
+import { vertexShaderSource, fragmentShaderSource, shadowVertexShaderSource, shadowFragmentShaderSource, starVertexShaderSource, starFragmentShaderSource } from './shaders/shaders.js';
 import { createShader, createProgram } from '../utils/wgl.js';
 import { createIcosphere } from '../utils/geometry.js';
 import { mat4 } from '../utils/math.js';
@@ -11,7 +11,18 @@ export class Renderer {
         this.gl = canvas.getContext('webgl2');
         this.uniformLocations = {};
         this.objects = [];
-        
+
+        this.matrixCache = {
+            model: mat4.create(),
+            view: mat4.create(),
+            projection: mat4.create(),
+            viewProjection: mat4.create(),
+            mvp: mat4.create(),
+            lightView: mat4.create(),
+            lightProjection: mat4.create(),
+            lightSpace: mat4.create()
+        };
+
         if (!checkGLSupport(this.gl)) return;
 
         this.initializeWebGL();
@@ -22,6 +33,7 @@ export class Renderer {
         this.createBuffers(this.geometry);
         this.createNoiseTexture(noiseParams);
         this.initShadowMap(1024);
+        this.initStarfield(5000, 50.0);
         
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
@@ -46,6 +58,11 @@ export class Renderer {
             createShader(this.gl, this.gl.VERTEX_SHADER, shadowVertexShaderSource),
             createShader(this.gl, this.gl.FRAGMENT_SHADER, shadowFragmentShaderSource)
         );
+        this.starProgram = createProgram(
+            this.gl,
+            createShader(this.gl, this.gl.VERTEX_SHADER, starVertexShaderSource),
+            createShader(this.gl, this.gl.FRAGMENT_SHADER, starFragmentShaderSource)
+        );
     }
 
     getLocations(params) {
@@ -61,6 +78,7 @@ export class Renderer {
             this.uniformLocations[activeUniform.name] = gl.getUniformLocation(this.program, activeUniform.name)
         }
     }
+
     updateUniforms(params) {
         const gl = this.gl;
 
@@ -82,6 +100,12 @@ export class Renderer {
                     gl.uniformMatrix4fv(location, false, value);
                 }
             } 
+            if (params.layers) {
+                for (let i = 0; i < 10; i++) {
+                    const key = `layer${i}Level`;
+                    gl.uniform1f(this.uniformLocations[`u_layer${i}Level`], params.layers[key]);
+                }
+            }
             else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                 this.updateUniforms(value);
             }
@@ -125,6 +149,56 @@ export class Renderer {
         }
         
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+
+    initStarfield(count = 5000, radius = 50.0) {
+        const gl = this.gl;
+        
+        const positions = [];
+        const sizes = [];
+        
+        for (let i = 0; i < count; i++) {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            
+            const x = radius * Math.sin(phi) * Math.cos(theta);
+            const y = radius * Math.sin(phi) * Math.sin(theta);
+            const z = radius * Math.cos(phi);
+            
+            positions.push(x, y, z);
+            
+            const size = 1.0 + Math.random() * 2.0;
+            sizes.push(size);
+        }
+        
+        // Criar buffers
+        this.starPositionBuffer = this.createBuffer(gl.ARRAY_BUFFER, new Float32Array(positions));
+        this.starSizeBuffer = this.createBuffer(gl.ARRAY_BUFFER, new Float32Array(sizes));
+        
+        // Get attribute locations
+        this.starPositionLoc = gl.getAttribLocation(this.starProgram, 'a_position');
+        this.starSizeLoc = gl.getAttribLocation(this.starProgram, 'a_size');
+        
+        // Get uniform location
+        this.starViewProjectionLoc = gl.getUniformLocation(this.starProgram, 'u_viewProjectionMatrix');
+        
+        // Criar VAO para estrelas
+        this.starVAO = gl.createVertexArray();
+        gl.bindVertexArray(this.starVAO);
+        
+        // Bind position
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.starPositionBuffer);
+        gl.enableVertexAttribArray(this.starPositionLoc);
+        gl.vertexAttribPointer(this.starPositionLoc, 3, gl.FLOAT, false, 0, 0);
+        
+        // Bind size
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.starSizeBuffer);
+        gl.enableVertexAttribArray(this.starSizeLoc);
+        gl.vertexAttribPointer(this.starSizeLoc, 1, gl.FLOAT, false, 0, 0);
+        
+        gl.bindVertexArray(null);
+        
+        this.starCount = count;
     }
 
     createBuffers(geometry) {
@@ -272,16 +346,16 @@ export class Renderer {
     setLayerLevels(layers) {
         const gl = this.gl;
         gl.useProgram(this.program);
-        gl.uniform1f(this.uniformLocations['u_layer0Level'], layers.layer0);
-        gl.uniform1f(this.uniformLocations['u_layer1Level'], layers.layer1);
-        gl.uniform1f(this.uniformLocations['u_layer2Level'], layers.layer2);
-        gl.uniform1f(this.uniformLocations['u_layer3Level'], layers.layer3);
-        gl.uniform1f(this.uniformLocations['u_layer4Level'], layers.layer4);
-        gl.uniform1f(this.uniformLocations['u_layer5Level'], layers.layer5);
-        gl.uniform1f(this.uniformLocations['u_layer6Level'], layers.layer6);
-        gl.uniform1f(this.uniformLocations['u_layer7Level'], layers.layer7);
-        gl.uniform1f(this.uniformLocations['u_layer8Level'], layers.layer8);
-        gl.uniform1f(this.uniformLocations['u_layer9Level'], layers.layer9);
+        gl.uniform1f(this.uniformLocations['u_layer0Level'], layers.layer0Level);
+        gl.uniform1f(this.uniformLocations['u_layer1Level'], layers.layer1Level);
+        gl.uniform1f(this.uniformLocations['u_layer2Level'], layers.layer2Level);
+        gl.uniform1f(this.uniformLocations['u_layer3Level'], layers.layer3Level);
+        gl.uniform1f(this.uniformLocations['u_layer4Level'], layers.layer4Level);
+        gl.uniform1f(this.uniformLocations['u_layer5Level'], layers.layer5Level);
+        gl.uniform1f(this.uniformLocations['u_layer6Level'], layers.layer6Level);
+        gl.uniform1f(this.uniformLocations['u_layer7Level'], layers.layer7Level);
+        gl.uniform1f(this.uniformLocations['u_layer8Level'], layers.layer8Level);
+        gl.uniform1f(this.uniformLocations['u_layer9Level'], layers.layer9Level);
     }
 
     setLayerColors(colors) {
@@ -414,6 +488,8 @@ export class Renderer {
         this.gl.uniform3fv(this.uniformLocations['u_viewPosition'], position);
     }
 
+    
+
     resizeCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
@@ -456,6 +532,34 @@ export class Renderer {
         return obj;
     }
 
+    renderStars(viewProjectionMatrix) {
+        const gl = this.gl;
+        
+        if (!this.starVAO) return;
+        
+        gl.useProgram(this.starProgram);
+        gl.bindVertexArray(this.starVAO);
+        
+        // Desabilita depth write para renderizar atrás
+        gl.depthMask(false);
+        
+        // Habilita blending para estrelas brilhantes
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+        
+        // Set uniform
+        gl.uniformMatrix4fv(this.starViewProjectionLoc, false, viewProjectionMatrix);
+        
+        // Draw points
+        gl.drawArrays(gl.POINTS, 0, this.starCount);
+        
+        // Restaura estados
+        gl.depthMask(true);
+        gl.disable(gl.BLEND);
+        
+        gl.bindVertexArray(null);
+    }
+
     renderObject(obj, time, params, planetRotationMatrix = null) {
         const gl = this.gl;
         
@@ -473,7 +577,9 @@ export class Renderer {
             obj.rotation[2] = Math.cos(obj.orbitAngle * 3) * 0.05;
         }
         
-        const modelMatrix = mat4.create();
+        //const modelMatrix = mat4.create();
+        const modelMatrix = this.matrixCache.model;
+        mat4.identity(modelMatrix);
         if (obj.rotateWithPlanet && planetRotationMatrix) {
             mat4.multiply(modelMatrix, modelMatrix, planetRotationMatrix);
         }
@@ -510,7 +616,8 @@ export class Renderer {
             mat4.scale(modelMatrix, modelMatrix, [params.planetScale, params.planetScale, params.planetScale]);
         }
         
-        const mvpMatrix = mat4.create();
+        //const mvpMatrix = mat4.create();
+        const mvpMatrix = this.matrixCache.mvp;
         mat4.multiply(mvpMatrix, this.currentViewProjection, modelMatrix);
         
         gl.bindVertexArray(obj.vao);
@@ -519,17 +626,29 @@ export class Renderer {
         gl.bindTexture(gl.TEXTURE_2D, obj.texture);
         gl.uniform1i(this.uniformLocations['u_objectTexture'], 3);
         
-        const objectParams = {
-            matrix: mvpMatrix,
-            modelMatrix: modelMatrix,
-            time: time,
-            renderPass: 4.0,
-            useColor: !obj.texture,
-            color: obj.color || [0.8, 0.8, 0.8],
-            lambertianDiffuse: params.lambertianDiffuse
-        };
+        // const objectParams = {
+        //     matrix: mvpMatrix,
+        //     modelMatrix: modelMatrix,
+        //     time: time,
+        //     renderPass: 4.0,
+        //     useColor: !obj.texture,
+        //     color: obj.color || [0.8, 0.8, 0.8],
+        //     lambertianDiffuse: params.lambertianDiffuse
+        // };
         
-        this.updateUniforms(objectParams);
+        // this.updateUniforms(objectParams);
+
+        gl.uniformMatrix4fv(this.uniformLocations['u_matrix'], false, mvpMatrix);
+        gl.uniformMatrix4fv(this.uniformLocations['u_modelMatrix'], false, modelMatrix);
+        
+        gl.uniform1f(this.uniformLocations['u_time'], time);
+        gl.uniform1f(this.uniformLocations['u_renderPass'], 4.0);
+
+        gl.uniform1i(this.uniformLocations['u_useColor'], !obj.texture ? 1 : 0);
+        gl.uniform1i(this.uniformLocations['u_useLambertianDiffuse'], params.lambertianDiffuse ? 1 : 0);
+        
+        const c = obj.color || [0.8, 0.8, 0.8];
+        gl.uniform3f(this.uniformLocations['u_color'], c[0], c[1], c[2]);
         
         gl.drawElements(gl.TRIANGLES, obj.indexCount, gl.UNSIGNED_SHORT, 0);
         gl.bindVertexArray(null);
@@ -653,7 +772,7 @@ export class Renderer {
             );
             
             gl.bindVertexArray(obj.vao);
-            gl.drawElements(gl.TRIANGLES, obj.indexCount, gl.UNSIGNED_SHORT, 0);
+            gl.drawElements(gl.TRIANGLES, obj.indexCount, gl.UNSIGNED_INT, 0);
         });
         
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -667,7 +786,7 @@ export class Renderer {
         this.updateUniforms(shadersParams);
 
         gl.bindVertexArray(this.vao);
-        gl.drawElements(gl.TRIANGLES, this.numElements, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, this.numElements, gl.UNSIGNED_INT, 0);
 
         if (wireframe) {
             gl.enable(gl.POLYGON_OFFSET_FILL);
@@ -676,7 +795,7 @@ export class Renderer {
             this.setColor(0.0, 0.0, 0.0);
 
             gl.bindVertexArray(this.vaoLines);
-            gl.drawElements(gl.LINES, this.numElementsLines, gl.UNSIGNED_SHORT, 0);
+            gl.drawElements(gl.LINES, this.numElementsLines, gl.UNSIGNED_INT, 0);
 
             gl.disable(gl.POLYGON_OFFSET_FILL);
             this.setUseColor(false);
@@ -701,7 +820,7 @@ export class Renderer {
         gl.depthMask(false);
 
         gl.bindVertexArray(this.vao);
-        gl.drawElements(gl.TRIANGLES, this.numElements, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, this.numElements, gl.UNSIGNED_INT, 0);
 
         gl.depthMask(true);
         gl.disable(gl.BLEND);
@@ -725,7 +844,7 @@ export class Renderer {
         gl.depthMask(false);
 
         gl.bindVertexArray(this.vao);
-        gl.drawElements(gl.TRIANGLES, this.numElements, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, this.numElements, gl.UNSIGNED_INT, 0);
 
         gl.depthMask(true);
         gl.disable(gl.BLEND);
@@ -735,12 +854,17 @@ export class Renderer {
     render(time, cameraPos, params, wireframe=true, lambertianDiffuse=true, autoRotate=false, renderPass, planetRotationMatrix=null) {
         const gl = this.gl;
         
-        gl.useProgram(this.program);
+        
 
-        const modelMatrix       = mat4.create();
-        const viewMatrix        = mat4.create();
-        const projectionMatrix  = mat4.create();
-        const mvpMatrix         = mat4.create();
+        // const modelMatrix       = mat4.create();
+        //const viewMatrix        = mat4.create();
+        //const projectionMatrix  = mat4.create();
+        // const mvpMatrix         = mat4.create();
+        const modelMatrix       = this.matrixCache.model;
+        const viewMatrix        = this.matrixCache.view;
+        const projectionMatrix  = this.matrixCache.projection;
+        const mvpMatrix         = this.matrixCache.mvp;
+        const viewProjectionMatrix = this.matrixCache.viewProjection;
 
         mat4.identity(modelMatrix);                                                             // Isso aqui faz com que a matriz modelo fique na origem do mundo 
         if (planetRotationMatrix) {
@@ -754,12 +878,16 @@ export class Renderer {
         //if (autoRotate) { mat4.rotateY(viewMatrix, viewMatrix, time * -0.1); } 
 
         mat4.perspective(projectionMatrix, Math.PI / 4, this.canvas.width / this.canvas.height, 0.1, 100.0); // Adiciona ilusao de profundidade, basicamente transforma de 3D para 2D para "caber" na tela
-        const viewProjectionMatrix = mat4.create();
+        //const viewProjectionMatrix = mat4.create();
         mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
         //mat4.multiply(mvpMatrix, projectionMatrix, viewMatrix);                                              // Combina tudo em uma so coisa. ViewMatrix vira relativo a projection aqui e depois a projection vira 2D com profundidade
         this.currentViewProjection = viewProjectionMatrix;
         //mat4.multiply(mvpMatrix, mvpMatrix, modelMatrix);                                                     // Agora a mvpMatrix tem tudo junto
         mat4.multiply(mvpMatrix, viewProjectionMatrix, modelMatrix);
+
+        this.renderStars(viewProjectionMatrix);
+
+        gl.useProgram(this.program);
 
         const frameParams = {
             time: time,
