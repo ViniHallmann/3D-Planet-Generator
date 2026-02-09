@@ -1,5 +1,5 @@
 import { DEFAULTS } from '../config/defaults.js';
-import { CONSTANTS } from '../config/contants.js';
+import { CONSTANTS } from '../config/constants.js';
 
 export class State {
     constructor() {
