@@ -1,4 +1,4 @@
-import { CONSTANTS } from './contants.js';
+import { CONSTANTS } from './constants.js';
 
 let defaultLayerLevels = {
     layer0Level: 0.35,

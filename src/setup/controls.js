@@ -17,7 +17,7 @@ export function setupControls(state, renderer) {
             
             const action = () => {
                 if (targetObject === state.noise) {
-                     renderer.regenerateTerrain(state.noise);
+                    renderer.regenerateTerrain(state.noise);
                 }
                 if (onChangeCallback) {
                     onChangeCallback(targetObject[paramKey]);
@@ -100,6 +100,7 @@ export function setupControls(state, renderer) {
     setupInputListeners(elements.subdivisionsSlider, elements.subdivisionsValue, state.noise, 'subdivisions', parseInt, (val) => val.toString(), false, (value) => {
         renderer.regenerateIcosphere(value, state.noise);
     });
+    //setupInputListeners(elements.subdivisionsSlider, elements.subdivisionsValue, state.noise, 'subdivisions', parseInt, (val) => val.toString());
     setupInputListeners(elements.octavesSlider, elements.octavesValue, state.noise, 'octaves', parseInt, (val) => val.toString());
     setupInputListeners(elements.persistenceSlider, elements.persistenceValue, state.noise, 'persistence', parseFloat, (val) => val.toFixed(2));
     setupInputListeners(elements.lacunaritySlider, elements.lacunarityValue, state.noise, 'lacunarity', parseFloat, (val) => val.toFixed(2));
