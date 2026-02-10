@@ -93,80 +93,93 @@
         </div>
 
         <div class="control-section">
-            <h4>Shaders</h4>
+            <h4>Light</h4>
             <div class="control-group">
-                <label for="light-speed">Light Speed</label>
+                <label for="light-speed">Speed</label>
                 <input type="range" id="light-speed" min="0.0" max="10.0" value="1.5" step="0.1" autocomplete="off">
                 <span id="light-speed-value">1.5</span>
             </div>
             <div class="control-group">
-                <label for="light-speed">Light Brightness</label>
+                <label for="light-speed">Brightness</label>
                 <input type="range" id="light-brightness" min="0.0" max="3.0" value="1.0" step="0.1" autocomplete="off">
                 <span id="light-brightness-value">1.0</span>
             </div>
             <div class="control-group">
-                <label for="light-angle">XXXXXXXX</label>
+                <label for="light-angle">Angle</label>
                 <input type="range" id="light-angle" min="0" max="360" value="45" step="1" autocomplete="off">
                 <span id="light-angle-value">XX°</span>
             </div>
             <div class="control-group">
-                <label for="light-pitch">XXXXXXXX</label>
+                <label for="light-pitch">Pitch</label>
                 <input type="range" id="light-pitch" min="-90" max="90" value="30" step="1" autocomplete="off">
                 <span id="light-pitch-value">XX°</span>
             </div>
-
-            <div class="control-group">
-                <label for="lambertian-toggle">Lambertian Diffuse Shadow</label>
-                <input type="checkbox" id="lambertian-toggle" checked autocomplete="off">
+            
+            <div class="control-section">
+                <h4>Rim</h4>
+                <div class="control-group">
+                    <label for="rim-intensity">Intensity</label>
+                    <input type="range" id="rim-intensity" min="0.0" max="1.0" value="0.5" step="0.01" autocomplete="off">
+                    <span id="rim-intensity-value">XX</span>
+                </div>
+                <div class="control-group">
+                    <label for="rim-color">Color</label>
+                    <input type="color" id="rim-color" value="#FFFFFF" autocomplete="off">
+                    <span id="rim-color-value">#FFFFFF</span>
+                </div>
+                <div class="control-group">
+                    <label for="rim-toggle">Enable</label>
+                    <input type="checkbox" id="rim-toggle" checked autocomplete="off">
+                </div>
             </div>
 
             <div class="control-section">
                 <h4>Clouds</h4>
 
                 <div class="control-group">
-                    <label for="cloud-speed">Cloud Speed</label>
+                    <label for="cloud-speed">Speed</label>
                     <input type="range" id="cloud-speed" min="0.0" max="1.0" value="0.1" step="0.05" autocomplete="off">
                     <span id="cloud-speed-value">0.1</span>
                 </div>
 
                 <div class="control-group">
-                    <label for="cloud-opacity">Cloud Opacity</label>
+                    <label for="cloud-opacity">Opacity</label>
                     <input type="range" id="cloud-opacity" min="0.0" max="1.0" value="0.5" step="0.05" autocomplete="off">
                     <span id="cloud-opacity-value">0.5</span>
                 </div>
 
                 <div class="control-group">
-                    <label for="cloud-warp-intensity">Cloud Warp Intensity</label>
+                    <label for="cloud-warp-intensity">Warp Intensity</label>
                     <input type="range" id="cloud-warp-intensity" min="0.0" max="1.0" value="0.5" step="0.05" autocomplete="off">
                     <span id="cloud-warp-intensity-value">0.5</span>
                 </div>
 
                 <div class="control-group">
-                    <label for="cloud-warp-time">Cloud Warp Time</label>
+                    <label for="cloud-warp-time">Warp Time</label>
                     <input type="range" id="cloud-warp-time" min="0.0" max="1.0" value="0.5" step="0.05" autocomplete="off">
                     <span id="cloud-warp-time-value">0.5</span>
                 </div>
 
                 <div class="control-group">
-                    <label for="cloud-texture-zoom">Cloud texture-zoom</label>
+                    <label for="cloud-texture-zoom">texture-zoom</label>
                     <input type="range" id="cloud-texture-zoom" min="0.0" max="5.0" value="1.10" step="0.1" autocomplete="off">
                     <span id="cloud-texture-zoom-value">1.10</span>
                 </div>
 
                 <div class="control-group">
-                    <label for="cloud-threshold">Cloud Threshold</label>
+                    <label for="cloud-threshold">Threshold</label>
                     <input type="range" id="cloud-threshold" min="0.0" max="1.0" value="0.65" step="0.01" autocomplete="off">
                     <span id="cloud-threshold-value">0.65</span>
                 </div>
 
                 <div class="control-group">
-                    <label for="cloud-alpha">Cloud Alpha</label>
+                    <label for="cloud-alpha">Alpha</label>
                     <input type="range" id="cloud-alpha" min="0.0" max="1.0" value="0.65" step="0.01" autocomplete="off">
                     <span id="cloud-alpha-value">0.65</span>
                 </div>
 
                 <div class="control-group">
-                    <label for="cloud-color">Cloud Color</label>
+                    <label for="cloud-color">Color</label>
                     <input type="color" id="cloud-color" value="#FFFFFF" autocomplete="off">
                     <span id="cloud-color-value">#FFFFFF</span>
                 </div>
@@ -254,7 +267,11 @@
             </div>
             <div class="control-group">
                 <label for="clouds-toggle">Clouds</label>
-                <input type="checkbox" id="clouds-toggle" checked autocomplete="off">
+                <input type="checkbox" id="clouds-toggle" unchecked autocomplete="off">
+            </div>
+            <div class="control-group">
+                <label for="lambertian-toggle">Lambertian Diffuse</label>
+                <input type="checkbox" id="lambertian-toggle" checked autocomplete="off">
             </div>
         </div>
     </div>
