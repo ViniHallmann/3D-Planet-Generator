@@ -112,8 +112,6 @@ export class Renderer {
         }
     }
 
-
-
     initializeGeometry(subdivisions) {
         this.geometry = createIcosphere(subdivisions);
         this.numElements = this.geometry.indices.length;
@@ -171,27 +169,21 @@ export class Renderer {
             sizes.push(size);
         }
         
-        // Criar buffers
         this.starPositionBuffer = this.createBuffer(gl.ARRAY_BUFFER, new Float32Array(positions));
         this.starSizeBuffer = this.createBuffer(gl.ARRAY_BUFFER, new Float32Array(sizes));
         
-        // Get attribute locations
         this.starPositionLoc = gl.getAttribLocation(this.starProgram, 'a_position');
         this.starSizeLoc = gl.getAttribLocation(this.starProgram, 'a_size');
         
-        // Get uniform location
         this.starViewProjectionLoc = gl.getUniformLocation(this.starProgram, 'u_viewProjectionMatrix');
         
-        // Criar VAO para estrelas
         this.starVAO = gl.createVertexArray();
         gl.bindVertexArray(this.starVAO);
         
-        // Bind position
         gl.bindBuffer(gl.ARRAY_BUFFER, this.starPositionBuffer);
         gl.enableVertexAttribArray(this.starPositionLoc);
         gl.vertexAttribPointer(this.starPositionLoc, 3, gl.FLOAT, false, 0, 0);
         
-        // Bind size
         gl.bindBuffer(gl.ARRAY_BUFFER, this.starSizeBuffer);
         gl.enableVertexAttribArray(this.starSizeLoc);
         gl.vertexAttribPointer(this.starSizeLoc, 1, gl.FLOAT, false, 0, 0);
@@ -488,8 +480,6 @@ export class Renderer {
         this.gl.uniform3fv(this.uniformLocations['u_viewPosition'], position);
     }
 
-    
-
     resizeCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
@@ -540,20 +530,14 @@ export class Renderer {
         gl.useProgram(this.starProgram);
         gl.bindVertexArray(this.starVAO);
         
-        // Desabilita depth write para renderizar atrás
         gl.depthMask(false);
         
-        // Habilita blending para estrelas brilhantes
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
         
-        // Set uniform
         gl.uniformMatrix4fv(this.starViewProjectionLoc, false, viewProjectionMatrix);
-        
-        // Draw points
         gl.drawArrays(gl.POINTS, 0, this.starCount);
         
-        // Restaura estados
         gl.depthMask(true);
         gl.disable(gl.BLEND);
         
@@ -655,7 +639,8 @@ export class Renderer {
     }
 
     getObjectModelMatrix(obj, time, params) {
-        const modelMatrix = mat4.create();
+        //const modelMatrix = mat4.create();
+        const modelMatrix = this.matrixCache.model;
         mat4.translate(modelMatrix, modelMatrix, obj.position);
         
         if (obj.lookAtCenter) {
@@ -706,7 +691,8 @@ export class Renderer {
             lightDir[2] * lightDistance
         ];
         
-        const lightViewMatrix = mat4.create();
+        //const lightViewMatrix = mat4.create();
+        const lightViewMatrix = this.matrixCache.lightView;
         mat4.lookAt(lightViewMatrix, lightPos, [0, 0, 0], [0, 1, 0]);
 
         if (planetRotationMatrix) {
@@ -714,7 +700,8 @@ export class Renderer {
         }
         
         const orthoSize = 3.0 * planetScale;
-        const lightProjectionMatrix = mat4.create();
+        //const lightProjectionMatrix = mat4.create();
+        const lightProjectionMatrix = this.matrixCache.lightProjection;
         mat4.orthogonal(
             lightProjectionMatrix,
             -orthoSize, orthoSize,    // left, right
@@ -722,7 +709,8 @@ export class Renderer {
             0.1, 20.0                  // near, far
         );
         
-        const lightSpaceMatrix = mat4.create();
+        //const lightSpaceMatrix = mat4.create();
+        const lightSpaceMatrix = this.matrixCache.lightSpace;
         mat4.multiply(lightSpaceMatrix, lightProjectionMatrix, lightViewMatrix);
         
         return lightSpaceMatrix;
@@ -749,7 +737,8 @@ export class Renderer {
             const modelMatrix = this.getObjectModelMatrix(obj, time, params);
 
             if (obj.rotateWithPlanet && planetRotationMatrix) {
-                const rotatedModel = mat4.create();
+                //const rotatedModel = mat4.create();
+                const rotatedModel = this.matrixCache.model;
                 mat4.multiply(rotatedModel, planetRotationMatrix, modelMatrix);
                 gl.uniformMatrix4fv(
                     gl.getUniformLocation(this.shadowProgram, 'u_modelMatrix'),
@@ -805,7 +794,6 @@ export class Renderer {
     drawCloudsPass(cloudParams) {
         const gl = this.gl;
 
-        //adicionei isso aqui para que eu possa ver a parte de tras das nuvens
         gl.disable(gl.CULL_FACE);
 
         this.setRenderPass(2);
@@ -851,39 +839,27 @@ export class Renderer {
         gl.enable(gl.CULL_FACE);
     }
 
-    render(time, cameraPos, params, wireframe=true, lambertianDiffuse=true, autoRotate=false, renderPass, planetRotationMatrix=null) {
+    render(time, cameraPos, params, wireframe=true, lambertianDiffuse=true, autoRotate=false, renderPass, planetRotationMatrix=null, rimLight) {
         const gl = this.gl;
         
-        
-
-        // const modelMatrix       = mat4.create();
-        //const viewMatrix        = mat4.create();
-        //const projectionMatrix  = mat4.create();
-        // const mvpMatrix         = mat4.create();
         const modelMatrix       = this.matrixCache.model;
         const viewMatrix        = this.matrixCache.view;
         const projectionMatrix  = this.matrixCache.projection;
         const mvpMatrix         = this.matrixCache.mvp;
         const viewProjectionMatrix = this.matrixCache.viewProjection;
 
-        mat4.identity(modelMatrix);                                                             // Isso aqui faz com que a matriz modelo fique na origem do mundo 
-        if (planetRotationMatrix) {
-            mat4.multiply(modelMatrix, modelMatrix, planetRotationMatrix);
-        }
-        
-        if (autoRotate) { mat4.rotateY(modelMatrix, modelMatrix, time * -0.1); } 
+        mat4.identity(modelMatrix);// Isso aqui faz com que a matriz modelo fique na origem do mundo 
+
+        if (planetRotationMatrix) { mat4.multiply(modelMatrix, modelMatrix, planetRotationMatrix); }
+        if (autoRotate) { mat4.rotateY(modelMatrix, modelMatrix, time * -0.1); } // AUTO ROTACIONA
+
         mat4.scale(modelMatrix, modelMatrix, [params.planetScale, params.planetScale, params.planetScale]); // Escala o planeta de acordo com o valor passado
         mat4.lookAt(viewMatrix, [cameraPos.x, cameraPos.y, cameraPos.z], [0, 0, 0], [0, 1, 0]); // Isso aqui passa os valores da camera: pos, origem do mundo que ela vai olhar, up vector
-        
-        //if (autoRotate) { mat4.rotateY(viewMatrix, viewMatrix, time * -0.1); } 
 
         mat4.perspective(projectionMatrix, Math.PI / 4, this.canvas.width / this.canvas.height, 0.1, 100.0); // Adiciona ilusao de profundidade, basicamente transforma de 3D para 2D para "caber" na tela
-        //const viewProjectionMatrix = mat4.create();
-        mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
-        //mat4.multiply(mvpMatrix, projectionMatrix, viewMatrix);                                              // Combina tudo em uma so coisa. ViewMatrix vira relativo a projection aqui e depois a projection vira 2D com profundidade
-        this.currentViewProjection = viewProjectionMatrix;
-        //mat4.multiply(mvpMatrix, mvpMatrix, modelMatrix);                                                     // Agora a mvpMatrix tem tudo junto
-        mat4.multiply(mvpMatrix, viewProjectionMatrix, modelMatrix);
+        mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix); // Combina tudo em uma so coisa. ViewMatrix vira relativo a projection aqui e depois a projection vira 2D com profundidade                                    
+        this.currentViewProjection = viewProjectionMatrix;                                                   
+        mat4.multiply(mvpMatrix, viewProjectionMatrix, modelMatrix); // Agora a mvpMatrix tem tudo junto
 
         this.renderStars(viewProjectionMatrix);
 
@@ -893,6 +869,7 @@ export class Renderer {
             time: time,
             matrix: mvpMatrix,              
             lambertianDiffuse: lambertianDiffuse,
+            showRim: rimLight,
             useColor: false,
             noiseTexture: 0,                
             cloudTexture: 1,
