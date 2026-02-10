@@ -20,7 +20,7 @@ export const DEFAULTS = {
         cloudLayerOffset: CONSTANTS.MAX_CLOUD_OFFSET,
         isMouseOverUI: false,
         showWireframe: false,
-        showLambertianDiffuse: true,
+        showLambertianDiffuse: false,
         showClouds: false,
         showRim: true,
         topDownMode: false,
@@ -79,11 +79,10 @@ export const DEFAULTS = {
         lightPitch: 0.5,
         lightDistance: 5.0,
         layers : defaultLayerLevels,
-        terrainDisplacement: 1.0,
+        terrainDisplacement: 0.3,
         planetScale: 0.05,
         rimColor: [0.0, 0.5, 1.0],
-        rimSize: 2.0,
-        rimIntensity: 1.5,
+        rimIntensity: 0.5,
     },
 
     clouds : {
@@ -97,7 +96,7 @@ export const DEFAULTS = {
         cloudTextureZoom: 1.10,
         cloudSpeed: 0.01,
         planetScale: 0.05,
-        terrainDisplacement: 1.0,
+        terrainDisplacement: 0.3,
     },
 
     cloudShadowParams : {
@@ -111,6 +110,5 @@ export const DEFAULTS = {
         terrainDisplacement: 0.3,
         cloudTextureZoom: 1.10,
         planetScale: 0.05,
-        terrainDisplacement: 1.0,
     }
 }
