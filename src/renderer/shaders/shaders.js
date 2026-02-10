@@ -183,8 +183,7 @@ export const fragmentShaderSource = glsl`#version 300 es
 
         //REFERENCIA DO CODIGO DO SLOPE: https://www.youtube.com/watch?v=6bnFfE82AJg&t=60s
         float flatness = dot(normalize(v_normal), normalize(v_modelPosition));
-        // TERMINAR O RESTO DEPOIS
-        
+
         //REFERENCIA CODIGO VARIACAO HEIGHT VALUE: https://www.youtube.com/watch?v=fZh2p0odPyQ&t=175s
         //height += (hash(v_modelPosition.xz * 50.) * 2.0 - 1.0) * 0.0025;
 
@@ -279,153 +278,280 @@ export const fragmentShaderSource = glsl`#version 300 es
         return shadow;
     }
 
+
+    vec3 getLightDirection(){
+        return normalize(vec3(
+            cos(u_lightAngle) * cos(u_lightPitch),
+            sin(u_lightPitch),
+            sin(u_lightAngle) * cos(u_lightPitch)
+        ));
+    }
+
+    float calculateLight(vec3 normal, vec3 lightDir, float shadow) {
+        if (u_lambertianDiffuse) {
+            return lambertianDiffuse(normal, lightDir, u_lightBrightness).r * shadow;
+        }
+        return 1.0;
+    }
+
+    vec3 applyWaterTransparency(vec3 waterColor, float height, float light) {
+        float distanceToSand = u_layer2Level - height;
+        float maxTransparencyDepth = u_layer3Level - u_layer2Level;
+        
+        float normalizeDepth = clamp(distanceToSand / maxTransparencyDepth, 0.0, 1.0);
+        float waterLerp = pow(1.0 - normalizeDepth, 2.0);
+        
+        vec3 sandColor = u_layer3Color * light;
+        return mix(waterColor, sandColor, waterLerp);
+    }
+
+    vec3 applyShoreWaves(vec3 color, float height, float light) {
+        float waveZone = 0.02;
+        float distanceToSand = u_layer2Level - height;
+        
+        if (distanceToSand < waveZone) {
+            float waveIntensity = 1.0 - (distanceToSand / waveZone);
+            
+            float wave1 = sin(u_time * 2.0 + distanceToSand * 150.0) * 0.5 + 0.5;
+            float wave2 = sin(u_time * 1.5 + distanceToSand * 100.0 + 1.0) * 0.5 + 0.5;
+            float wave = max(wave1, wave2 * 0.7);
+            
+            wave *= waveIntensity;
+            return color + vec3(wave * 0.25 * light);
+        }
+        return color;
+    }
+
+    vec3 applyWaterEffects(vec3 baseColor, float height, float light) {
+        if (height < u_layer1Level || height >= u_layer2Level) {
+            return baseColor;
+        }
+        
+        vec3 color = baseColor;
+        
+        color = applyWaterTransparency(color, height, light);
+        color = applyShoreWaves(color, height, light);
+        
+        return color;
+    }
+
+    vec4 renderTerrain(vec3 normal, vec3 lightDir, float light, vec3 rim) {
+        vec4 color;
+        
+        if (u_useColor) {
+            color = vec4(u_color * light, 1.0);
+        } else {
+            vec3 terrainColor = defineTerrainColor(v_height).rgb;
+            color = vec4(terrainColor * light, 1.0);
+        }
+        
+        color.rgb = applyWaterEffects(color.rgb, v_height, light);
+        color.rgb += rim;
+        
+        return color;
+    }
+
+    vec4 renderClouds(vec3 normal, vec3 lightDir, float light) {
+        float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
+        if (cloudNoise < u_cloudThreshold) discard;
+        
+        float alpha = u_cloudOpacity * smoothstep(0.5, 0.8, cloudNoise);
+        return vec4(u_cloudColor, alpha * light);
+    }
+
+    vec4 renderCloudShadow(vec3 normal, vec3 lightDir, float light) {
+        float terrainHeight = length(v_modelPosition);
+        float terrainInfluence = 0.5;
+        float cloudHeight = 1.0 + (u_terrainDisplacement * terrainInfluence) + (u_cloudScale - 1.0);
+
+        if (terrainHeight >= cloudHeight - 0.01) discard;
+
+        float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
+        if (cloudNoise < u_cloudThreshold) discard;
+
+        float alpha = 0.85; 
+        return vec4(vec3(0.0), alpha * light);
+    }
+
+    vec4 renderObject(vec3 normal, vec3 lightDir, float light) {
+        if (u_useColor) {
+            return vec4(u_color * light, 1.0);
+        } else {
+            vec3 texColor = texture(u_objectTexture, v_texcoord).rgb;
+            return vec4(texColor * light, 1.0);
+        }
+    }
+
     void main() {
         vec3 normal = normalize(v_normal);
-        float angle = u_lightAngle;
-        float pitch = u_lightPitch;
-        vec3 lightDir = normalize(vec3(
-            cos(angle) * cos(pitch),
-            sin(pitch),
-            sin(angle) * cos(pitch)
-        ));
-
-        float light;
-        light = u_lightBrightness;
-
+        vec3 lightDir = getLightDirection();
         float shadow = calculateShadow(v_worldPosition);
+        float light = calculateLight(normal, lightDir, shadow);
+        
         vec3 rim = vec3(0.0);
-        if (u_showRim == true) {
+        if (u_showRim) {
             rim = rimLight(normal, u_viewPosition, v_worldPosition);
         }
 
-        //vec3 rim = rimLight(normal, u_viewPosition, v_worldPosition);
-
-        if (u_renderPass == 1.) {
-            if (u_lambertianDiffuse == true) {
-                light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r * shadow;
-            } else {
-                light = 1.0;
-            }
-            if (u_useColor) {
-                outColor = vec4(u_color * light, 1.0);
-            } else {
-                vec3 color = defineTerrainColor(v_height).rgb;
-                outColor = vec4(color * light, 1.0);
-            }
-
-            //REFERENCIA DESSA PARTE DO CODIGO https://www.youtube.com/watch?v=6bnFfE82AJg
-            //DEPOIS TRANSFORMAR EM FUNCAO E ADICIONAR VARIAVEIS PARA CONTROLAR AS CORES E NIVEIS
-            //ADICIONAR TAMBEM ONDE FICA A LINHA DA AGUA E AREIA
-
-            // ISSO AQUI TEM QUE SAIR DAQUI E VIRAR UMA FUNCAO!!!!
-            //WAVES DAS AGUAS
-            if (v_height >= u_layer1Level && v_height < u_layer2Level) {
-                float distanceToSand = u_layer2Level - v_height;
-                float maxTransparencyDepth = u_layer3Level - u_layer2Level;
-                
-                float normalizeDepth = clamp(distanceToSand / maxTransparencyDepth, 0.0, 1.0);
-                float waterLerp = pow(1.0 - normalizeDepth, 2.0);
-                
-                vec3 sandColor = u_layer3Color * light;
-                outColor.rgb = mix(outColor.rgb, sandColor, waterLerp);
-                
-                float waveZone = 0.02;
-                float distanceFromSand = v_height - u_layer2Level;
-                
-                if (distanceToSand < waveZone) {
-                    float waveIntensity = 1.0 - (distanceToSand / waveZone);
-                    float wave = sin(u_time * 2.0 + distanceToSand * 150.0) * 0.5 + 0.5;
-                    wave *= waveIntensity;
-                    outColor.rgb += wave / 4.0 * light;
-                }
-            }
-            //SE DER TEMPO E LEMBRAR:
-            //AMBOS EFEITOS VISUAIS SAO BASEADOS EM LAYERS. MAS E SE A PESSOA FIZER UM PLANETA ARIDO POR EXEMPLO?
-            //TEM QUE TER A OPCAO DE DESATIVAR ESSES EFEITOS VISUAIS, OU PELO MENOS FAZER COM QUE ELAS CONSIGAM ESCOLHER EM QUE LAYER OCORRE O EFEITO
-            //SE ALGUEM FIZER UM PLANETA COM VARIAS LAYERS DE "AGUA", O EFEITO DA ONDA OCORRE SO NOS PRIMEIROS LAYERS.
-
-            //VIRIAR FUNCAO
-            //NIGHT LIGHTS
-            // float sunDot = dot(normalize(v_normal), lightDir); 
-            // float nightFactor = smoothstep(0.15, -0.15, sunDot);
-
-            // if (nightFactor > 0.0 && v_height > u_layer3Level && v_height < u_layer6Level) {
-                
-            //     float noise = texture(u_noiseTexture, v_modelPosition.xz * 75.0).r;
-            //     float cityDensity = smoothstep(0.7, 0.9, noise);
-                
-            //     if (cityDensity > 0.01) {
-            //         float microNoise = texture(u_noiseTexture, v_modelPosition.xz * 150.0).r;
-            //         float twinkle = hash(v_modelPosition.xz * 100.0); 
-                    
-                    
-            //         vec3 cityColorCore = vec3(1.0, 0.9, 0.8);     //Quase branco
-            //         vec3 cityColorOutskirt = vec3(1.0, 0.6, 0.2); //Laranja forte
-            //         vec3 finalCityColor = mix(cityColorOutskirt, cityColorCore, cityDensity);
-            //         float intensity = 2.5; 
-                    
-            //         outColor.rgb += finalCityColor * nightFactor * intensity;
-            //         outColor.rgb += (vec3(1.0, 0.5, 0.1) * 0.1) * cityDensity * nightFactor ;
-            //     }
-            // }
-            outColor.rgb += rim;
+        if (u_renderPass == 1.0) {
+            outColor = renderTerrain(normal, lightDir, light, rim);
         }
-
-        if (u_renderPass == 2.) {
-            if (u_lambertianDiffuse == true) {
-                light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
-            } else {
-                light = 1.0;
-            }
-            float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
-            if (cloudNoise < u_cloudThreshold) discard;
-            
-            float alpha = u_cloudOpacity * smoothstep(0.5, 0.8, cloudNoise);
-
-            //DEPOIS COLOCAR INPUT DO ALPHA NO HTML PARA CONTROLAR INTENSIDADE DAS CORES
-            outColor = vec4(u_cloudColor, alpha * light);
+        else if (u_renderPass == 2.0) {
+            float cloudLight = u_lambertianDiffuse ? lambertianDiffuse(normal, lightDir, u_lightBrightness).r : 1.0;
+            outColor = renderClouds(normal, lightDir, cloudLight);
         } 
-        
-        if (u_renderPass == 3.) {
-            if (u_lambertianDiffuse == true) {
-                light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
-            } else {
-                light = 1.0;
-            }
-            float terrainHeight = length(v_modelPosition);
-            float terrainInfluence = 0.5;
-            float cloudHeight = 1.0 + (u_terrainDisplacement * terrainInfluence) + (u_cloudScale - 1.0);
-
-            if (terrainHeight >= cloudHeight - 0.01) discard;
-
-            float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
-            if (cloudNoise < u_cloudThreshold) discard;
-
-            float alpha = smoothstep(0.65, 0.8, cloudNoise);
-            
-            alpha = 0.85; 
-            outColor = vec4(vec3(0.0), alpha * light);
+        else if (u_renderPass == 3.0) {
+            float cloudLight = u_lambertianDiffuse ? lambertianDiffuse(normal, lightDir, u_lightBrightness).r : 1.0;
+            outColor = renderCloudShadow(normal, lightDir, cloudLight);
         }
-
-        if (u_renderPass == 4.) {
-            float light = u_lightBrightness;
-            if (u_lambertianDiffuse) {
-                vec3 lightDir = normalize(vec3(
-                    cos(u_lightAngle) * cos(u_lightPitch),
-                    sin(u_lightPitch),
-                    sin(u_lightAngle) * cos(u_lightPitch)
-                ));
-                light = max(dot(normalize(v_normal), lightDir), 0.0) * u_lightBrightness;
-            }
-            
-            if (u_useColor) {
-                outColor = vec4(u_color * light, 1.0);
-            } else {
-                vec3 texColor = texture(u_objectTexture, v_texcoord).rgb;
-                outColor = vec4(texColor * light, 1.0);
-            }
+        else if (u_renderPass == 4.0) {
+            float objLight = u_lambertianDiffuse ? lambertianDiffuse(normal, lightDir, u_lightBrightness).r : 1.0;
+            outColor = renderObject(normal, lightDir, objLight);
         }
     }
+
+    // void main() {
+    //     vec3 normal = normalize(v_normal);
+    //     float angle = u_lightAngle;
+    //     float pitch = u_lightPitch;
+    //     vec3 lightDir = getLightDirection();
+    //     float light;
+    //     light = u_lightBrightness;
+
+    //     float shadow = calculateShadow(v_worldPosition);
+    //     vec3 rim = vec3(0.0);
+    //     if (u_showRim == true) {
+    //         rim = rimLight(normal, u_viewPosition, v_worldPosition);
+    //     }
+
+    //     //vec3 rim = rimLight(normal, u_viewPosition, v_worldPosition);
+
+    //     if (u_renderPass == 1.) {
+    //         if (u_lambertianDiffuse == true) {
+    //             light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r * shadow;
+    //         } else {
+    //             light = 1.0;
+    //         }
+    //         if (u_useColor) {
+    //             outColor = vec4(u_color * light, 1.0);
+    //         } else {
+    //             vec3 color = defineTerrainColor(v_height).rgb;
+    //             outColor = vec4(color * light, 1.0);
+    //         }
+
+    //         //REFERENCIA DESSA PARTE DO CODIGO https://www.youtube.com/watch?v=6bnFfE82AJg
+    //         //DEPOIS TRANSFORMAR EM FUNCAO E ADICIONAR VARIAVEIS PARA CONTROLAR AS CORES E NIVEIS
+    //         //ADICIONAR TAMBEM ONDE FICA A LINHA DA AGUA E AREIA
+
+    //         // ISSO AQUI TEM QUE SAIR DAQUI E VIRAR UMA FUNCAO!!!!
+    //         //WAVES DAS AGUAS
+    //         if (v_height >= u_layer1Level && v_height < u_layer2Level) {
+    //             float distanceToSand = u_layer2Level - v_height;
+    //             float maxTransparencyDepth = u_layer3Level - u_layer2Level;
+                
+    //             float normalizeDepth = clamp(distanceToSand / maxTransparencyDepth, 0.0, 1.0);
+    //             float waterLerp = pow(1.0 - normalizeDepth, 2.0);
+                
+    //             vec3 sandColor = u_layer3Color * light;
+    //             outColor.rgb = mix(outColor.rgb, sandColor, waterLerp);
+                
+    //             float waveZone = 0.02;
+    //             float distanceFromSand = v_height - u_layer2Level;
+                
+    //             if (distanceToSand < waveZone) {
+    //                 float waveIntensity = 1.0 - (distanceToSand / waveZone);
+    //                 float wave = sin(u_time * 2.0 + distanceToSand * 150.0) * 0.5 + 0.5;
+    //                 wave *= waveIntensity;
+    //                 outColor.rgb += wave / 4.0 * light;
+    //             }
+    //         }
+    //         //SE DER TEMPO E LEMBRAR:
+    //         //AMBOS EFEITOS VISUAIS SAO BASEADOS EM LAYERS. MAS E SE A PESSOA FIZER UM PLANETA ARIDO POR EXEMPLO?
+    //         //TEM QUE TER A OPCAO DE DESATIVAR ESSES EFEITOS VISUAIS, OU PELO MENOS FAZER COM QUE ELAS CONSIGAM ESCOLHER EM QUE LAYER OCORRE O EFEITO
+    //         //SE ALGUEM FIZER UM PLANETA COM VARIAS LAYERS DE "AGUA", O EFEITO DA ONDA OCORRE SO NOS PRIMEIROS LAYERS.
+
+    //         //VIRIAR FUNCAO
+    //         //NIGHT LIGHTS
+    //         // float sunDot = dot(normalize(v_normal), lightDir); 
+    //         // float nightFactor = smoothstep(0.15, -0.15, sunDot);
+
+    //         // if (nightFactor > 0.0 && v_height > u_layer3Level && v_height < u_layer6Level) {
+                
+    //         //     float noise = texture(u_noiseTexture, v_modelPosition.xz * 75.0).r;
+    //         //     float cityDensity = smoothstep(0.7, 0.9, noise);
+                
+    //         //     if (cityDensity > 0.01) {
+    //         //         float microNoise = texture(u_noiseTexture, v_modelPosition.xz * 150.0).r;
+    //         //         float twinkle = hash(v_modelPosition.xz * 100.0); 
+                    
+                    
+    //         //         vec3 cityColorCore = vec3(1.0, 0.9, 0.8);     //Quase branco
+    //         //         vec3 cityColorOutskirt = vec3(1.0, 0.6, 0.2); //Laranja forte
+    //         //         vec3 finalCityColor = mix(cityColorOutskirt, cityColorCore, cityDensity);
+    //         //         float intensity = 2.5; 
+                    
+    //         //         outColor.rgb += finalCityColor * nightFactor * intensity;
+    //         //         outColor.rgb += (vec3(1.0, 0.5, 0.1) * 0.1) * cityDensity * nightFactor ;
+    //         //     }
+    //         // }
+    //         outColor.rgb += rim;
+    //     }
+
+    //     if (u_renderPass == 2.) {
+    //         if (u_lambertianDiffuse == true) {
+    //             light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
+    //         } else {
+    //             light = 1.0;
+    //         }
+    //         float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
+    //         if (cloudNoise < u_cloudThreshold) discard;
+            
+    //         float alpha = u_cloudOpacity * smoothstep(0.5, 0.8, cloudNoise);
+
+    //         //DEPOIS COLOCAR INPUT DO ALPHA NO HTML PARA CONTROLAR INTENSIDADE DAS CORES
+    //         outColor = vec4(u_cloudColor, alpha * light);
+    //     } 
+        
+    //     if (u_renderPass == 3.) {
+    //         if (u_lambertianDiffuse == true) {
+    //             light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
+    //         } else {
+    //             light = 1.0;
+    //         }
+    //         float terrainHeight = length(v_modelPosition);
+    //         float terrainInfluence = 0.5;
+    //         float cloudHeight = 1.0 + (u_terrainDisplacement * terrainInfluence) + (u_cloudScale - 1.0);
+
+    //         if (terrainHeight >= cloudHeight - 0.01) discard;
+
+    //         float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
+    //         if (cloudNoise < u_cloudThreshold) discard;
+
+    //         float alpha = smoothstep(0.65, 0.8, cloudNoise);
+            
+    //         alpha = 0.85; 
+    //         outColor = vec4(vec3(0.0), alpha * light);
+    //     }
+
+    //     if (u_renderPass == 4.) {
+    //         float light = u_lightBrightness;
+    //         if (u_lambertianDiffuse) {
+    //             vec3 lightDir = normalize(vec3(
+    //                 cos(u_lightAngle) * cos(u_lightPitch),
+    //                 sin(u_lightPitch),
+    //                 sin(u_lightAngle) * cos(u_lightPitch)
+    //             ));
+    //             light = max(dot(normalize(v_normal), lightDir), 0.0) * u_lightBrightness;
+    //         }
+            
+    //         if (u_useColor) {
+    //             outColor = vec4(u_color * light, 1.0);
+    //         } else {
+    //             vec3 texColor = texture(u_objectTexture, v_texcoord).rgb;
+    //             outColor = vec4(texColor * light, 1.0);
+    //         }
+    //     }
+    // }
 `;
 
 export const shadowVertexShaderSource = glsl`#version 300 es
