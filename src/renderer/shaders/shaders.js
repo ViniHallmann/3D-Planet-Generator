@@ -140,6 +140,11 @@ export const fragmentShaderSource = glsl`#version 300 es
     uniform bool u_lambertianDiffuse;
     uniform float u_lightBrightness;
 
+    uniform float u_rimSize;
+    uniform float u_rimIntensity;
+    uniform vec3 u_rimColor;
+    uniform bool u_showRim;
+
     uniform float u_cloudOpacity;
     uniform float u_cloudScale;
     uniform float u_cloudSpeed;
@@ -211,7 +216,6 @@ export const fragmentShaderSource = glsl`#version 300 es
         return vec3(diff * brightness);
     }
 
-    //PASSAR VALORES DA UI PARA CASO QUEIRA MUDAR A COR DO RIM LIGHT E INTENSIDADE
     vec3 rimLight(vec3 normal, vec3 viewPos, vec3 worldPos){
         vec3 viewDir = normalize(viewPos - worldPos);
         float rim = 1.0 - max(dot(viewDir, normal), 0.0);
@@ -222,7 +226,7 @@ export const fragmentShaderSource = glsl`#version 300 es
         float dynamicExponent = mix(baseExponent, minExponent, clamp(u_terrainDisplacement / maxDisplacement, 0.0, 1.0));
 
         rim = pow(rim, dynamicExponent);
-        return rim * vec3(0.0, 0.5, 1.0);
+        return rim * u_rimColor * u_rimIntensity;
     }
 
     float triplanarSample(vec3 pos, vec3 normal, float scale) {
@@ -289,8 +293,12 @@ export const fragmentShaderSource = glsl`#version 300 es
         light = u_lightBrightness;
 
         float shadow = calculateShadow(v_worldPosition);
+        vec3 rim = vec3(0.0);
+        if (u_showRim == true) {
+            rim = rimLight(normal, u_viewPosition, v_worldPosition);
+        }
 
-        vec3 rim = rimLight(normal, u_viewPosition, v_worldPosition);
+        //vec3 rim = rimLight(normal, u_viewPosition, v_worldPosition);
 
         if (u_renderPass == 1.) {
             if (u_lambertianDiffuse == true) {

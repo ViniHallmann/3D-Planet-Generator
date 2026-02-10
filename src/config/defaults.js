@@ -22,6 +22,7 @@ export const DEFAULTS = {
         showWireframe: false,
         showLambertianDiffuse: true,
         showClouds: false,
+        showRim: true,
         topDownMode: false,
     },
 

@@ -48,6 +48,7 @@ export function setupControls(state, renderer) {
     elements.wireframeToggle.addEventListener('change', (e) => state.app.showWireframe = e.target.checked);
     elements.lambertianDiffuseToggle.addEventListener('change', (e) => state.app.showLambertianDiffuse = e.target.checked);
     elements.cloudsToggle.addEventListener('change', (e) => state.app.showClouds = e.target.checked);
+    elements.rimToggle.addEventListener('change', (e) => state.app.showRim = e.target.checked);
 
     //SEED
     elements.seedInput.addEventListener('change', (e) => {
@@ -116,6 +117,13 @@ export function setupControls(state, renderer) {
         state.cloudShadowParams.terrainDisplacement = value;
         renderer.setTerrainDisplacement(value);
     });
+
+    //RIM
+    setupInputListeners(elements.rimIntensity, elements.rimIntensityValue, state.shaders, 'rimIntensity', parseFloat, (val) => val.toFixed(2), false);
+    setupInputListeners(elements.rimSize, elements.rimSizeValue, state.shaders, 'rimSize', parseFloat, (val) => val.toFixed(2), false);
+    setupInputListeners(elements.rimColor, elements.rimColorValue, state.shaders, 'rimColor', (val) => hexToRgb(val), (val) => {
+        return `R: ${Math.round(val[0]*255)} G: ${Math.round(val[1]*255)} B: ${Math.round(val[2]*255)}`;
+    }, false);
 
     //CLOUDS
     setupInputListeners(elements.cloudSpeed, elements.cloudSpeedValue, state.clouds, 'cloudSpeed', parseFloat, (val) => val.toFixed(2), false);

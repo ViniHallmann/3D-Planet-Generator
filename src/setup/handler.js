@@ -136,13 +136,13 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         
         renderer.render(
             time, cameraPosition, state.shaders, state.app.showWireframe, 
-            state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 1., rotationMatrixToUse
+            state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 1., rotationMatrixToUse, state.app.showRim
         );
 
         if (state.app.showClouds){
             renderer.render(
                 time, cameraPosition, state.cloudShadowParams, state.app.showWireframe, 
-                state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 3., rotationMatrixToUse
+                state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 3., rotationMatrixToUse, state.app.showRim
             );
             
             for (let i = 0; i < state.app.numActiveCloudLayers; i++) {
@@ -154,7 +154,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
                 };
                 renderer.render(
                     time, cameraPosition, layerParams, state.app.showWireframe, 
-                    state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 2., rotationMatrixToUse
+                    state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 2., rotationMatrixToUse, state.app.showRim
                 );
             }
         }
