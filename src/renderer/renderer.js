@@ -794,7 +794,7 @@ export class Renderer {
     drawCloudsPass(cloudParams) {
         const gl = this.gl;
 
-        gl.disable(gl.CULL_FACE);
+        //gl.disable(gl.CULL_FACE);
 
         this.setRenderPass(2);
         this.updateUniforms(cloudParams);
@@ -818,7 +818,7 @@ export class Renderer {
     drawCloudShadowsPass(cloudParams) {
         const gl = this.gl;
 
-        gl.disable(gl.CULL_FACE);
+        //gl.disable(gl.CULL_FACE);
 
         this.setRenderPass(3);
         this.updateUniforms(cloudParams);
