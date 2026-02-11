@@ -13,8 +13,9 @@ export const vertexShaderSource = glsl`#version 300 es
     uniform sampler2D u_cloudTexture;
     uniform float u_renderPass;
 
+    uniform float u_terrainDisplacement;
+
     uniform float u_cloudScale;
-    uniform float u_terrainDisplacement;      
     uniform float u_cloudDisplacementIntensity;
     uniform float u_cloudSpeed;
 
@@ -80,6 +81,14 @@ export const vertexShaderSource = glsl`#version 300 es
 
         if (u_renderPass == 4.) {
             pos = a_position.xyz;
+            v_height = 0.0;
+        }
+
+        if (u_renderPass == 5.) {
+            float waterLevel = 0.45;
+            
+            float waterRadius = 1.0 + (waterLevel * u_terrainDisplacement);
+            pos = a_position.xyz * waterRadius;
             v_height = 0.0;
         }
 
@@ -163,6 +172,9 @@ export const fragmentShaderSource = glsl`#version 300 es
     uniform sampler2D u_shadowMap;
     uniform mat4 u_lightSpaceMatrix;
     
+    uniform vec3 u_waterColor;
+    uniform float u_waterOpacity;
+
     out vec4 outColor;
 
     vec4 getLayer0Color(float height) { return vec4(u_layer0Color, 1.0); }
@@ -382,6 +394,22 @@ export const fragmentShaderSource = glsl`#version 300 es
         }
     }
 
+    vec4 renderWater(vec3 normal, vec3 viewDir){
+        float fresnel = dot(normalize(normal), normalize(viewDir));
+        fresnel = abs(fresnel);
+        
+        // Inverte: 0 quando olhando de lado, 1 quando olhando de cima
+        float viewAngle = 1.0 - fresnel;
+        
+        // Interpola opacidade baseado no ângulo
+        float minOpacity = 0.95; 
+        float maxOpacity = u_waterOpacity;
+        
+        float alpha = mix(maxOpacity, minOpacity, pow(viewAngle, 2.0));
+        
+        return vec4(u_waterColor, alpha);
+    }
+
     void main() {
         vec3 normal = normalize(v_normal);
         vec3 lightDir = getLightDirection();
@@ -408,6 +436,11 @@ export const fragmentShaderSource = glsl`#version 300 es
             float objLight = u_lambertianDiffuse ? lambertianDiffuse(normal, lightDir, u_lightBrightness).r : 1.0;
             outColor = renderObject(normal, lightDir, objLight);
         }
+        else if (u_renderPass == 5.0) {
+            vec3 viewDir = u_viewPosition - v_worldPosition;
+            outColor = renderWater(normal, viewDir);
+        }
+
     }
 
     // void main() {

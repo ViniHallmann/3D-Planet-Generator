@@ -480,6 +480,16 @@ export class Renderer {
         this.gl.uniform3fv(this.uniformLocations['u_viewPosition'], position);
     }
 
+    setWaterColor(color){
+        this.gl.useProgram(this.program);
+        this.gl.uniform3fv(this.uniformLocations['u_waterColor'], color);
+    }
+
+    setWaterOpacity(opacity){
+        this.gl.useProgram(this.program);
+        this.gl.uniform1f(this.uniformLocations['u_waterOpacity'], opacity);
+    }
+
     resizeCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
@@ -839,6 +849,23 @@ export class Renderer {
         gl.enable(gl.CULL_FACE);
     }
 
+    drawWaterPass(waterParams) {
+        const gl = this.gl;
+
+        this.setRenderPass(5);
+        this.updateUniforms(waterParams);
+
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.depthMask(false);
+
+        gl.bindVertexArray(this.vao);
+        gl.drawElements(gl.TRIANGLES, this.numElements, gl.UNSIGNED_INT, 0);
+
+        gl.depthMask(true);
+        gl.disable(gl.BLEND);
+    }
+
     render(time, cameraPos, params, wireframe=true, lambertianDiffuse=true, autoRotate=false, renderPass, planetRotationMatrix=null, rimLight) {
         const gl = this.gl;
         
@@ -904,6 +931,14 @@ export class Renderer {
         if (renderPass === 3) {
             this.drawCloudShadowsPass(params);
             return;
+        }
+
+        if (renderPass === 4) {
+            return
+        }
+
+        if (renderPass === 5){
+            this.drawWaterPass(params)
         }
         
     }

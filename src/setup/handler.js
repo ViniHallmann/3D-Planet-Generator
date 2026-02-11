@@ -139,6 +139,20 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
             state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 1., rotationMatrixToUse, state.app.showRim
         );
 
+
+        if (state.app.showWater) {
+            const waterParams = {
+                ...state.shaders,
+                waterColor: state.water.waterColor,
+                waterOpacity: state.water.waterOpacity,
+            };
+            
+            renderer.render(
+                time, cameraPosition, waterParams, state.app.showWireframe, 
+                state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 5., rotationMatrixToUse, state.app.showRim
+            );
+        }
+
         if (state.app.showClouds){
             renderer.render(
                 time, cameraPosition, state.cloudShadowParams, state.app.showWireframe, 
