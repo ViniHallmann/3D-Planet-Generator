@@ -134,6 +134,15 @@
             </div>
 
             <div class="control-section">
+                <h4>Water</h4>
+                <div class="control-group">
+                    <label for="water-opacity">Opacity</label>
+                    <input type="range" id="water-opacity" min="0.0" max="1.0" value="0.5" step="0.01" autocomplete="off">
+                    <span id="water-opacity-value">0.5</span>
+                </div>
+            </div>
+
+            <div class="control-section">
                 <h4>Clouds</h4>
 
                 <div class="control-group">
@@ -273,6 +282,11 @@
                 <label for="lambertian-toggle">Lambertian Diffuse</label>
                 <input type="checkbox" id="lambertian-toggle" unchecked autocomplete="off">
             </div>
+            <div class="control-group">
+                <label for="water-toggle">Water</label>
+                <input type="checkbox" id="water-toggle" unchecked autocomplete="off">
+            </div>
+
         </div>
     </div>
     <script type="module" src="main.js"></script>
