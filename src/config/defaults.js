@@ -23,6 +23,7 @@ export const DEFAULTS = {
         showLambertianDiffuse: false,
         showClouds: false,
         showRim: true,
+        showWater: true,
         topDownMode: false,
     },
 
@@ -123,5 +124,13 @@ export const DEFAULTS = {
         terrainDisplacement: 0.3,
         cloudTextureZoom: 1.10,
         planetScale: 0.05,
+    },
+
+    water: {
+        waterLevel: 0.35,
+        waterColor: [0.0, 0.3, 0.6],
+        waterOpacity: 0.8,
+        waterScale: 0.05,
+        terrainDisplacement: 0.3,
     }
 }

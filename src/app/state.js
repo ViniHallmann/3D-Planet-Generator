@@ -28,5 +28,6 @@ export class State {
         this.shaders = { ...DEFAULTS.shaders };
         this.clouds = { ...DEFAULTS.clouds };
         this.cloudShadowParams = { ...DEFAULTS.cloudShadowParams };
+        this.water = { ...DEFAULTS.water };
     }
 }

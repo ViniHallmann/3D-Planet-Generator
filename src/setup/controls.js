@@ -115,6 +115,7 @@ export function setupControls(state, renderer) {
         state.shaders.terrainDisplacement = value;
         state.clouds.terrainDisplacement = value;
         state.cloudShadowParams.terrainDisplacement = value;
+        state.water.terrainDisplacement = value;
         renderer.setTerrainDisplacement(value);
     });
 
