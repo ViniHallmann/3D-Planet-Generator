@@ -46,6 +46,20 @@ export const vertexShaderSource = glsl`#version 300 es
         return x * weights.x + y * weights.y + z * weights.z;
     }
 
+    // vec3 gerstnerWave(vec3 position, vec2 direction, float steepness, float wavelength, float speed) {
+    //     float k = 2.0 * 3.14159 / wavelength;
+    //     float c = sqrt(9.8 / k);
+    //     vec2 d = normalize(direction);
+    //     float f = k * (dot(d, position.xz) - c * u_time * speed);
+    //     float a = steepness / k;
+        
+    //     return vec3(
+    //         d.x * a * cos(f),
+    //         a * sin(f),
+    //         d.y * a * cos(f)
+    //     );
+    // }
+
     void main() {
         vec3 pos;
 
@@ -84,37 +98,54 @@ export const vertexShaderSource = glsl`#version 300 es
             v_height = 0.0;
         }
 
-        // if (u_renderPass == 5.) {
-        //     float waterLevel = 0.45;
+        if (u_renderPass == 5.) {
+            float waterLevel = 0.45;
             
-        //     float waterRadius = 1.0 + (waterLevel * u_terrainDisplacement);
-        //     pos = a_position.xyz * waterRadius;
+            float waterRadius = 1.0 + (waterLevel * u_terrainDisplacement);
+            pos = a_position.xyz * waterRadius;
+            v_height = 0.0;
+        }
+
+        // if (u_renderPass == 5.) {
+        //     float waterHeightLevel = 0.35;
+        //     float waterRadius = 1.0 + (waterHeightLevel * u_terrainDisplacement);
+            
+        //     vec3 weights = abs(normalize(a_position.xyz));
+        //     weights = max(weights - 0.2, 0.0);
+        //     weights /= dot(weights, vec3(1.0));
+            
+        //     float waveSpeed = 0.1;
+        //     vec3 wavePos = a_position.xyz + vec3(u_time * waveSpeed, 0.0, u_time * waveSpeed * 0.7);
+            
+        //     float wave1 = texture(u_cloudTexture, wavePos.yz * 2.0).r;
+        //     float wave2 = texture(u_cloudTexture, wavePos.xz * 3.0).r;
+        //     float wave3 = texture(u_cloudTexture, wavePos.xy * 1.5).r;
+            
+        //     float waveHeight = (wave1 * weights.x + wave2 * weights.y + wave3 * weights.z) - 0.5;
+            
+        //     float waveAmplitude = 0.01; // Tamanho das ondas
+        //     vec3 waveDisplacement = normalize(a_position.xyz) * waveHeight * waveAmplitude;
+            
+        //     pos = a_position.xyz * waterRadius + waveDisplacement;
         //     v_height = 0.0;
         // }
 
-        if (u_renderPass == 5.) {
-            float waterHeightLevel = 0.35;
-            float waterRadius = 1.0 + (waterHeightLevel * u_terrainDisplacement);
+
+        // if (u_renderPass == 5.) {
+        //     float waterHeightLevel = 0.35;
+        //     float waterRadius = 1.0 + (waterHeightLevel * u_terrainDisplacement);
             
-            vec3 weights = abs(normalize(a_position.xyz));
-            weights = max(weights - 0.2, 0.0);
-            weights /= dot(weights, vec3(1.0));
+        //     vec3 basePos = a_position.xyz * waterRadius;
             
-            float waveSpeed = 0.1;
-            vec3 wavePos = a_position.xyz + vec3(u_time * waveSpeed, 0.0, u_time * waveSpeed * 0.7);
+        //     // Adicionar múltiplas ondas
+        //     vec3 wave = vec3(0.0);
+        //     wave += gerstnerWave(basePos, vec2(1.0, 0.0), 0.5, 0.3, 1.0);
+        //     wave += gerstnerWave(basePos, vec2(0.0, 1.0), 0.3, 0.2, 1.3);
+        //     wave += gerstnerWave(basePos, vec2(1.0, 1.0), 0.2, 0.15, 0.8);
             
-            float wave1 = texture(u_cloudTexture, wavePos.yz * 2.0).r;
-            float wave2 = texture(u_cloudTexture, wavePos.xz * 3.0).r;
-            float wave3 = texture(u_cloudTexture, wavePos.xy * 1.5).r;
-            
-            float waveHeight = (wave1 * weights.x + wave2 * weights.y + wave3 * weights.z) - 0.5;
-            
-            float waveAmplitude = 0.01; // Tamanho das ondas
-            vec3 waveDisplacement = normalize(a_position.xyz) * waveHeight * waveAmplitude;
-            
-            pos = a_position.xyz * waterRadius + waveDisplacement;
-            v_height = 0.0;
-        }
+        //     pos = basePos + wave * 0.01; // Escala do efeito
+        //     v_height = 0.0;
+        // }
 
         gl_Position = u_matrix * vec4(pos, 1.0);
         v_normal = mat3(u_modelMatrix) * a_normal;
