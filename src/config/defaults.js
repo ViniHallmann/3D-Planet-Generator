@@ -129,7 +129,7 @@ export const DEFAULTS = {
     water: {
         waterLevel: 0.35,
         waterColor: [0.0, 0.3, 0.6],
-        waterOpacity: 0.8,
+        waterOpacity: 0.0,
         waterScale: 0.05,
         terrainDisplacement: 0.3,
     }
