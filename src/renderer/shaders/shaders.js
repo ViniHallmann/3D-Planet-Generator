@@ -84,11 +84,35 @@ export const vertexShaderSource = glsl`#version 300 es
             v_height = 0.0;
         }
 
-        if (u_renderPass == 5.) {
-            float waterLevel = 0.45;
+        // if (u_renderPass == 5.) {
+        //     float waterLevel = 0.45;
             
-            float waterRadius = 1.0 + (waterLevel * u_terrainDisplacement);
-            pos = a_position.xyz * waterRadius;
+        //     float waterRadius = 1.0 + (waterLevel * u_terrainDisplacement);
+        //     pos = a_position.xyz * waterRadius;
+        //     v_height = 0.0;
+        // }
+
+        if (u_renderPass == 5.) {
+            float waterHeightLevel = 0.35;
+            float waterRadius = 1.0 + (waterHeightLevel * u_terrainDisplacement);
+            
+            vec3 weights = abs(normalize(a_position.xyz));
+            weights = max(weights - 0.2, 0.0);
+            weights /= dot(weights, vec3(1.0));
+            
+            float waveSpeed = 0.1;
+            vec3 wavePos = a_position.xyz + vec3(u_time * waveSpeed, 0.0, u_time * waveSpeed * 0.7);
+            
+            float wave1 = texture(u_cloudTexture, wavePos.yz * 2.0).r;
+            float wave2 = texture(u_cloudTexture, wavePos.xz * 3.0).r;
+            float wave3 = texture(u_cloudTexture, wavePos.xy * 1.5).r;
+            
+            float waveHeight = (wave1 * weights.x + wave2 * weights.y + wave3 * weights.z) - 0.5;
+            
+            float waveAmplitude = 0.01; // Tamanho das ondas
+            vec3 waveDisplacement = normalize(a_position.xyz) * waveHeight * waveAmplitude;
+            
+            pos = a_position.xyz * waterRadius + waveDisplacement;
             v_height = 0.0;
         }
 
@@ -398,14 +422,7 @@ export const fragmentShaderSource = glsl`#version 300 es
         float fresnel = dot(normalize(normal), normalize(viewDir));
         fresnel = abs(fresnel);
         
-        // Inverte: 0 quando olhando de lado, 1 quando olhando de cima
-        float viewAngle = 1.0 - fresnel;
-        
-        // Interpola opacidade baseado no ângulo
-        float minOpacity = 0.95; 
-        float maxOpacity = u_waterOpacity;
-        
-        float alpha = mix(maxOpacity, minOpacity, pow(viewAngle, 2.0));
+        float alpha = mix(0.95, u_waterOpacity, pow(fresnel, 2.0));
         
         return vec4(u_waterColor, alpha);
     }
