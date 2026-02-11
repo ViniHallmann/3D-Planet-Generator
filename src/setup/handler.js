@@ -102,7 +102,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         let cameraPosition; 
         if (state.app.topDownMode) {
             cameraPosition = { x: 0, y: 5.0, z: 0.1 }; 
-            plane.position = [0, 1.85, 0]; 
+            plane.position = [0., state.shaders.terrainDisplacement + 1.85, 0.]; 
         } else {
             cameraPosition = {
                 x: state.camera.radius * Math.sin(state.camera.phi) * Math.cos(state.camera.theta),

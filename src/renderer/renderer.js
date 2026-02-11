@@ -651,6 +651,7 @@ export class Renderer {
     getObjectModelMatrix(obj, time, params) {
         //const modelMatrix = mat4.create();
         const modelMatrix = this.matrixCache.model;
+        mat4.identity(modelMatrix);
         mat4.translate(modelMatrix, modelMatrix, obj.position);
         
         if (obj.lookAtCenter) {
@@ -703,6 +704,7 @@ export class Renderer {
         
         //const lightViewMatrix = mat4.create();
         const lightViewMatrix = this.matrixCache.lightView;
+        mat4.identity(lightViewMatrix); 
         mat4.lookAt(lightViewMatrix, lightPos, [0, 0, 0], [0, 1, 0]);
 
         if (planetRotationMatrix) {
@@ -712,6 +714,7 @@ export class Renderer {
         const orthoSize = 3.0 * planetScale;
         //const lightProjectionMatrix = mat4.create();
         const lightProjectionMatrix = this.matrixCache.lightProjection;
+        mat4.identity(lightProjectionMatrix);
         mat4.orthogonal(
             lightProjectionMatrix,
             -orthoSize, orthoSize,    // left, right
@@ -742,13 +745,18 @@ export class Renderer {
             planetRotationMatrix
         );
         this.currentLightSpaceMatrix = lightSpaceMatrix;
+
+        gl.uniformMatrix4fv(
+            gl.getUniformLocation(this.shadowProgram, 'u_lightSpaceMatrix'),
+            false, lightSpaceMatrix
+        );
         
         this.objects.forEach(obj => {
             const modelMatrix = this.getObjectModelMatrix(obj, time, params);
 
             if (obj.rotateWithPlanet && planetRotationMatrix) {
-                //const rotatedModel = mat4.create();
-                const rotatedModel = this.matrixCache.model;
+                const rotatedModel = mat4.create();
+                //const rotatedModel = this.matrixCache.model;
                 mat4.multiply(rotatedModel, planetRotationMatrix, modelMatrix);
                 gl.uniformMatrix4fv(
                     gl.getUniformLocation(this.shadowProgram, 'u_modelMatrix'),
@@ -761,17 +769,17 @@ export class Renderer {
                 );
             }
             
-            gl.uniformMatrix4fv(
-                gl.getUniformLocation(this.shadowProgram, 'u_lightSpaceMatrix'),
-                false, lightSpaceMatrix
-            );
-            gl.uniformMatrix4fv(
-                gl.getUniformLocation(this.shadowProgram, 'u_modelMatrix'),
-                false, modelMatrix
-            );
+            // gl.uniformMatrix4fv(
+            //     gl.getUniformLocation(this.shadowProgram, 'u_lightSpaceMatrix'),
+            //     false, lightSpaceMatrix
+            // );
+            // gl.uniformMatrix4fv(
+            //     gl.getUniformLocation(this.shadowProgram, 'u_modelMatrix'),
+            //     false, modelMatrix
+            // );
             
             gl.bindVertexArray(obj.vao);
-            gl.drawElements(gl.TRIANGLES, obj.indexCount, gl.UNSIGNED_INT, 0);
+            gl.drawElements(gl.TRIANGLES, obj.indexCount, gl.UNSIGNED_SHORT, 0);
         });
         
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -804,7 +812,7 @@ export class Renderer {
     drawCloudsPass(cloudParams) {
         const gl = this.gl;
 
-        //gl.disable(gl.CULL_FACE);
+        gl.disable(gl.CULL_FACE);
 
         this.setRenderPass(2);
         this.updateUniforms(cloudParams);
@@ -828,7 +836,7 @@ export class Renderer {
     drawCloudShadowsPass(cloudParams) {
         const gl = this.gl;
 
-        //gl.disable(gl.CULL_FACE);
+        gl.disable(gl.CULL_FACE);
 
         this.setRenderPass(3);
         this.updateUniforms(cloudParams);
