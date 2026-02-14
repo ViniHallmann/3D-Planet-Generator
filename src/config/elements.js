@@ -35,6 +35,7 @@ export function getControlsElements() {
         waterOpacity:         document.getElementById('water-opacity'),
         waterOpacityValue:    document.getElementById('water-opacity-value'),
         waterToggle:         document.getElementById('water-toggle'),
+        wavesToggle:         document.getElementById('waves-toggle'),
         cloudSpeed:              document.getElementById('cloud-speed'),
         cloudSpeedValue:         document.getElementById('cloud-speed-value'),
         cloudOpacity:            document.getElementById('cloud-opacity'),
@@ -85,5 +86,8 @@ export function getControlsElements() {
         layer7Color:    document.getElementById('layer7-color'),
         layer8Color:    document.getElementById('layer8-color'),
         layer9Color:    document.getElementById('layer9-color'),
+        addRingBtn:      document.getElementById('add-ring'),
+        removeRingBtn:   document.getElementById('remove-ring'),
+        ringCount:     document.getElementById('ring-count'),
     }
 }
