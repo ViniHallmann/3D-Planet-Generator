@@ -120,6 +120,7 @@ export class Renderer {
 
     initializeNoise(noiseParams) {
         this.noiseGenerator = new NoiseGenerator(512, 512);
+        this.noiseParams = noiseParams;
         this.triangleHeights = this.calculateTriangleHeights(this.geometry, noiseParams);
     }
 
@@ -296,6 +297,19 @@ export class Renderer {
         }
         
         return heights;
+    }
+
+    getTerrainHeightAtPosition(x, y, z, terrainDisplacement) {
+        const len = Math.sqrt(x*x + y*y + z*z);
+        if (len === 0) return 1.0;
+        
+        const nx = x / len;
+        const ny = y / len;
+        const nz = z / len;
+        
+        const noiseHeight = this.noiseGenerator.get3DNoise(nx, ny, nz, this.noiseParams);
+        
+        return 1.0 + (noiseHeight * terrainDisplacement);
     }
 
 

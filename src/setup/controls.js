@@ -50,6 +50,7 @@ export function setupControls(state, renderer) {
     elements.cloudsToggle.addEventListener('change', (e) => state.app.showClouds = e.target.checked);
     elements.rimToggle.addEventListener('change', (e) => state.app.showRim = e.target.checked);
     elements.waterToggle.addEventListener('change', (e) => state.app.showWater = e.target.checked);
+    elements.wavesToggle.addEventListener('change', (e) => state.app.showWaves = e.target.checked);
 
     //SEED
     elements.seedInput.addEventListener('change', (e) => {
@@ -118,6 +119,9 @@ export function setupControls(state, renderer) {
         state.cloudShadowParams.terrainDisplacement = value;
         state.water.terrainDisplacement = value;
         renderer.setTerrainDisplacement(value);
+        if (window.updateRingHeights) {
+            window.updateRingHeights();
+        }
     });
 
     //RIM
@@ -240,5 +244,22 @@ export function setupControls(state, renderer) {
 
         elements.controlsPanel.addEventListener('mouseenter', () => { state.app.isMouseOverUI = true; });
         elements.controlsPanel.addEventListener('mouseleave', () => { state.app.isMouseOverUI = false; });
+    }
+
+    //OBJECTS - RINGS
+    if (elements.addRingBtn) {
+        elements.addRingBtn.addEventListener('click', () => {
+            if (window.addRingToScene) {
+                window.addRingToScene();
+            }
+        });
+    }
+
+    if (elements.clearRingsBtn) {
+        elements.clearRingsBtn.addEventListener('click', () => {
+            if (window.clearAllRings) {
+                window.clearAllRings();
+            }
+        });
     }
 }

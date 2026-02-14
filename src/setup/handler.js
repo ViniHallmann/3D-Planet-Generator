@@ -1,8 +1,43 @@
 import { mat4 } from '../utils/math.js';
 import { easing } from '../utils/utils.js';
+import { CONSTANTS } from '../config/constants.js';
+import { TerrainHeight } from '../utils/terrainHeight.js';
 
 export function setupHandlers(canvas, state, renderer, physics, plane, ringManager, raycaster, ringGeometry) {
     
+    // function getOrbitRadius(terrainDisplacement, x, y, z) {
+    //     const baseRadius = CONSTANTS.ORBIT_RADIUS + (terrainDisplacement * 0.3);
+        
+    //     if (renderer && x !== undefined) {
+    //         const terrainHeight = renderer.getTerrainHeightAtPosition(x, y, z, terrainDisplacement);
+    //         const safetyMargin = 0.1;
+    //         return Math.max(baseRadius, terrainHeight + safetyMargin);
+    //     }
+        
+    //     return baseRadius;
+    // }
+    const terrainHeight = new TerrainHeight(renderer.noiseGenerator);
+    
+    function getTerrainHeight(normalizedDirection, heightOffset = 0.3) {
+        return terrainHeight.getHeightAtPosition(
+            normalizedDirection,
+            state.noise,
+            state.shaders.terrainDisplacement,
+            heightOffset
+        );
+    }
+
+    function getPositionAtTerrain(normalizedDirection, heightOffset = 0.3) {
+        return terrainHeight.getPositionAtHeight(
+            normalizedDirection,
+            state.noise,
+            state.shaders.terrainDisplacement,
+            heightOffset
+        );
+    }
+
+    physics.setTerrainHeightCalculator(getTerrainHeight);
+
     //TIRAR ISSO DAQUI
     const ringObjects = [];
 
@@ -12,9 +47,103 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         ringObj.ringReference = ring;
         ringObj.rotateWithPlanet = true;
         ringObj.scale = [0.1, 0.1, 0.1];
+
+        const orbitRadius = Math.sqrt(ring.position[0]**2 + ring.position[1]**2 + ring.position[2]**2);
+        const nx = ring.position[0] / orbitRadius;
+        const ny = ring.position[1] / orbitRadius;
+        const nz = ring.position[2] / orbitRadius;
+
+        ringObj.baseDirection = [nx, ny, nz];
+
+        const rotX = Math.asin(-ny);
+        const rotY = Math.atan2(nx, nz);
+        
+        ringObj.rotation = [rotX, rotY, 0];
+
         ringObjects.push(ringObj);
         return ringObj;
     }
+
+    function updateRingCount() {
+        const countElement = document.getElementById('ring-count');
+        if (countElement) {
+            countElement.textContent = ringManager.getActiveCount();
+        }
+    }
+
+    function updateRingPositions() {
+        ringObjects.forEach((ringObj) => {
+            if (ringObj.baseDirection && ringObj.ringReference) {
+                const newPosition = getPositionAtTerrain(ringObj.baseDirection, 0.3);
+                
+                ringObj.position[0] = newPosition[0];
+                ringObj.position[1] = newPosition[1];
+                ringObj.position[2] = newPosition[2];
+                
+                ringObj.ringReference.position[0] = newPosition[0];
+                ringObj.ringReference.position[1] = newPosition[1];
+                ringObj.ringReference.position[2] = newPosition[2];
+            }
+        });
+
+        ringManager.rings.forEach(ring => {
+            if (ring.baseDirection) {
+                const newPosition = getPositionAtTerrain(ring.baseDirection, 0.3);
+                ring.position[0] = newPosition[0];
+                ring.position[1] = newPosition[1];
+                ring.position[2] = newPosition[2];
+            }
+        });
+    }
+
+    // window.addRingToScene = function() {
+    //     const ringRadius = getOrbitRadius(state.shaders.terrainDisplacement);
+        
+    //     const ring = ringManager.addRandomRing(ringRadius);
+    //     addRingToScene(ring);
+    //     console.log('Anel adicionado na posição:', ring.position);
+    //     console.log('Raio com terrain displacement:', ringRadius);
+    //     updateRingCount();
+    // };
+
+    
+    window.updateRingHeights = updateRingPositions;
+
+    window.addRingToScene = function() {
+        // Criar direção aleatória normalizada
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        
+        const normalizedDirection = [
+            Math.sin(phi) * Math.cos(theta),
+            Math.cos(phi),
+            Math.sin(phi) * Math.sin(theta)
+        ];
+        
+        // Calcular posição com altura do terreno
+        const position = getPositionAtTerrain(normalizedDirection, 0.3);
+        
+        const ring = ringManager.addRing(position);
+        ring.baseDirection = [...normalizedDirection]; // Salvar a direção base
+        
+        addRingToScene(ring);
+        console.log('Anel adicionado na posição:', position);
+        updateRingCount();
+    };
+
+    window.clearAllRings = function() {
+        ringManager.clearRings();
+
+        for (let i = ringObjects.length - 1; i >= 0; i--) {
+            const index = renderer.objects.indexOf(ringObjects[i]);
+            if (index > -1) {
+                renderer.objects.splice(index, 1);
+            }
+        }
+        ringObjects.length = 0;
+        updateRingCount();
+        console.log('Todos os anéis foram removidos');
+    };
 
     function handleZoom(event) {
         if (state.app.isMouseOverUI) return;
@@ -81,9 +210,21 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         }
         
         const time = performance.now() / 1000;
-        physics.updatePlanetPhysics(plane, state.app.topDownMode, state.physics);
+        physics.updatePlanetPhysics(plane, state.app.topDownMode, state.physics, state.shaders.terrainDisplacement);
         
-        //RINGS
+        // O physics já calcula a altura do avião corretamente via getTerrainHeightFunc
+        // Não recalcular aqui para evitar conflitos!
+
+        // Sincronizar posições visuais dos ringObjects
+        ringObjects.forEach(ringObj => {
+            if (ringObj.ringReference) {
+                ringObj.position[0] = ringObj.ringReference.position[0];
+                ringObj.position[1] = ringObj.ringReference.position[1];
+                ringObj.position[2] = ringObj.ringReference.position[2];
+            }
+        });
+
+        
         ringManager.cleanup();
         for (let i = ringObjects.length - 1; i >= 0; i--) {
             const obj = ringObjects[i];
@@ -91,18 +232,37 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
                 const rendererIndex = renderer.objects.indexOf(obj);
                 if (rendererIndex > -1) renderer.objects.splice(rendererIndex, 1);
                 ringObjects.splice(i, 1);
+                updateRingCount();
             }
         }
         
         if (plane && plane.position) {
-            ringManager.checkCollisions(plane.position, 0.05, physics.planetRotationMatrix);
+            const collisionRadius = 0.15 + (state.shaders.terrainDisplacement * 0.2);
+            ringManager.checkCollisions(plane.position, collisionRadius, physics.planetRotationMatrix);
         }
 
         //CAMERA
         let cameraPosition; 
+        // if (state.app.topDownMode) {
+        //     const baseHeight = getOrbitRadius(state.shaders.terrainDisplacement);
+        //     const terrainHeight = renderer.getTerrainHeightAtPosition(0, 1, 0, state.shaders.terrainDisplacement);
+        //     const safetyMargin = 0.15;
+        //     cameraPosition = { x: 0, y: 5.0, z: 0.1 }; 
+        //     plane.position = [0., Math.max(baseHeight, terrainHeight + safetyMargin), 0.]; 
+            
+        //     // plane.position = [0., getOrbitRadius(state.shaders.terrainDisplacement), 0.]; 
+        // } else {
+        //     cameraPosition = {
+        //         x: state.camera.radius * Math.sin(state.camera.phi) * Math.cos(state.camera.theta),
+        //         y: state.camera.radius * Math.cos(state.camera.phi),
+        //         z: state.camera.radius * Math.sin(state.camera.phi) * Math.sin(state.camera.theta)
+        //     };
+        // }
+
         if (state.app.topDownMode) {
             cameraPosition = { x: 0, y: 5.0, z: 0.1 }; 
-            plane.position = [0., state.shaders.terrainDisplacement + 1.85, 0.]; 
+            const topDownHeight = getTerrainHeight([0, 1, 0], 0.3);
+            plane.position = [0, topDownHeight, 0]; 
         } else {
             cameraPosition = {
                 x: state.camera.radius * Math.sin(state.camera.phi) * Math.cos(state.camera.theta),
@@ -149,14 +309,14 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
             
             renderer.render(
                 time, cameraPosition, waterParams, state.app.showWireframe, 
-                state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 5., rotationMatrixToUse, state.app.showRim
+                state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 5., rotationMatrixToUse, state.app.showRim, state.app.showWaves
             );
         }
 
         if (state.app.showClouds){
             renderer.render(
                 time, cameraPosition, state.cloudShadowParams, state.app.showWireframe, 
-                state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 3., rotationMatrixToUse, state.app.showRim
+                state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 3., rotationMatrixToUse, state.app.showRim, state.app.showWaves
             );
             
             for (let i = 0; i < state.app.numActiveCloudLayers; i++) {
@@ -168,7 +328,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
                 };
                 renderer.render(
                     time, cameraPosition, layerParams, state.app.showWireframe, 
-                    state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 2., rotationMatrixToUse, state.app.showRim
+                    state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 2., rotationMatrixToUse, state.app.showRim, state.app.showWaves
                 );
             }
         }
@@ -198,6 +358,46 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         }
     });
 
+    // canvas.addEventListener('contextmenu', (e) => {
+    //     e.preventDefault();
+    //     if (state.app.isMouseOverUI) return;
+        
+    //     const cameraPos = {
+    //         x: state.camera.radius * Math.sin(state.camera.phi) * Math.cos(state.camera.theta),
+    //         y: state.camera.radius * Math.cos(state.camera.phi),
+    //         z: state.camera.radius * Math.sin(state.camera.phi) * Math.sin(state.camera.theta)
+    //     };
+        
+    //     const aspect = canvas.width / canvas.height;
+    //     const projectionMatrix = mat4.create();
+    //     mat4.perspective(projectionMatrix, Math.PI / 4, aspect, 0.1, 100);
+        
+    //     const viewMatrix = mat4.create();
+    //     mat4.lookAt(viewMatrix, [cameraPos.x, cameraPos.y, cameraPos.z], [0, 0, 0], [0, 1, 0]);
+        
+    //     const ray = raycaster.createRay(e.clientX, e.clientY, cameraPos, projectionMatrix, viewMatrix);        
+    //     const planetRadius = 1.5 + (state.shaders.terrainDisplacement * 0.3);
+    //     const result = raycaster.intersectSphere(ray, [0, 0, 0], planetRadius);
+        
+    //     if (result.hit) {
+    //         const len = Math.sqrt(result.point[0]**2 + result.point[1]**2 + result.point[2]**2);
+    //         const orbitRadius = getOrbitRadius(state.shaders.terrainDisplacement);
+    //         const ringPosition = [(result.point[0] / len) * orbitRadius,(result.point[1] / len) * orbitRadius,(result.point[2] / len) * orbitRadius];
+            
+    //         const ring = ringManager.addRing(ringPosition);
+    //         const ringObj = addRingToScene(ring);
+
+    //         const nx = ringPosition[0] / orbitRadius;
+    //         const ny = ringPosition[1] / orbitRadius;
+    //         const nz = ringPosition[2] / orbitRadius;
+
+    //         const rotX = Math.asin(-ny);
+    //         const rotY = Math.atan2(nx, nz);
+            
+    //         ringObj.rotation = [rotX, rotY, 0];
+    //     }
+    // });
+
     canvas.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         if (state.app.isMouseOverUI) return;
@@ -215,26 +415,32 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         const viewMatrix = mat4.create();
         mat4.lookAt(viewMatrix, [cameraPos.x, cameraPos.y, cameraPos.z], [0, 0, 0], [0, 1, 0]);
         
-        const ray = raycaster.createRay(e.clientX, e.clientY, cameraPos, projectionMatrix, viewMatrix);        
-        const planetRadius = 1.5 + (state.shaders.terrainDisplacement * 0.3);
-        const result = raycaster.intersectSphere(ray, [0, 0, 0], planetRadius);
+        const ray = raycaster.createRay(e.clientX, e.clientY, cameraPos, projectionMatrix, viewMatrix);
+        
+        const averageRadius = 1.5 + (state.shaders.terrainDisplacement * 0.3);
+        const result = raycaster.intersectSphere(ray, [0, 0, 0], averageRadius);
         
         if (result.hit) {
+            // Normalizar direção
             const len = Math.sqrt(result.point[0]**2 + result.point[1]**2 + result.point[2]**2);
-            const orbitRadius = 1.85;
-            const ringPosition = [(result.point[0] / len) * orbitRadius,(result.point[1] / len) * orbitRadius,(result.point[2] / len) * orbitRadius];
+            const normalizedDirection = [
+                result.point[0] / len,
+                result.point[1] / len,
+                result.point[2] / len
+            ];
+            
+            const ringPosition = getPositionAtTerrain(normalizedDirection, 0.3);
             
             const ring = ringManager.addRing(ringPosition);
+            ring.baseDirection = [...normalizedDirection];
+            
             const ringObj = addRingToScene(ring);
 
-            const nx = ringPosition[0] / orbitRadius;
-            const ny = ringPosition[1] / orbitRadius;
-            const nz = ringPosition[2] / orbitRadius;
-
-            const rotX = Math.asin(-ny);
-            const rotY = Math.atan2(nx, nz);
+            const rotX = Math.asin(-normalizedDirection[1]);
+            const rotY = Math.atan2(normalizedDirection[0], normalizedDirection[2]);
             
             ringObj.rotation = [rotX, rotY, 0];
+            updateRingCount();
         }
     });
 

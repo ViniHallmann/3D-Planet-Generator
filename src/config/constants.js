@@ -12,4 +12,5 @@ export const CONSTANTS = {
     TURN_ACCELERATION: 0.005,
     FRICTION_MOVE: 0.95,
     FRICTION_TURN: 0.90,
+    ORBIT_RADIUS: 1.5,
 };

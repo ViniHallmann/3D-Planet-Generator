@@ -86,8 +86,9 @@ export function getControlsElements() {
         layer7Color:    document.getElementById('layer7-color'),
         layer8Color:    document.getElementById('layer8-color'),
         layer9Color:    document.getElementById('layer9-color'),
-        addRingBtn:      document.getElementById('add-ring'),
-        removeRingBtn:   document.getElementById('remove-ring'),
+        addRingBtn:      document.getElementById('add-ring-btn'),
+        removeRingBtn:   document.getElementById('remove-ring-btn'),
+        clearRingsBtn:   document.getElementById('clear-rings-btn'),
         ringCount:     document.getElementById('ring-count'),
     }
 }
