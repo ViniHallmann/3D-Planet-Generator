@@ -208,6 +208,7 @@ export const fragmentShaderSource = glsl`#version 300 es
     uniform float u_rimIntensity;
     uniform vec3 u_rimColor;
     uniform bool u_showRim;
+    uniform bool u_showWaves;
 
     uniform float u_cloudOpacity;
     uniform float u_cloudScale;
@@ -412,7 +413,9 @@ export const fragmentShaderSource = glsl`#version 300 es
             color = vec4(terrainColor * light, 1.0);
         }
         
-        color.rgb = applyWaterEffects(color.rgb, v_height, light);
+        if (u_showWaves) {
+            color.rgb = applyWaterEffects(color.rgb, v_height, light);
+        }
         color.rgb += rim;
         
         return color;
@@ -453,7 +456,7 @@ export const fragmentShaderSource = glsl`#version 300 es
         float fresnel = dot(normalize(normal), normalize(viewDir));
         fresnel = abs(fresnel);
         
-        float alpha = mix(0.95, u_waterOpacity, pow(fresnel, 2.0));
+        float alpha = mix(0.85, u_waterOpacity, pow(fresnel, 2.0));
         
         return vec4(u_waterColor, alpha);
     }
