@@ -134,7 +134,7 @@ export class Physics {
             angle: 0,
             inclination: (Math.random() - 0.5) * 0.5,
             speed: 0.005 + Math.random() * 0.01,
-            baseRadius: 1.85, // MODIFICADO: Renomeado para deixar claro que é o raio base
+            baseRadius: CONSTANTS.ORBIT_RADIUS,
             wobble: Math.random() * Math.PI * 2,
             wobbleSpeed: 0.02 + Math.random() * 0.02,
             wobbleAmount: 0.1 + Math.random() * 0.1,  
@@ -175,29 +175,26 @@ export class Physics {
         const horizontalRadius = Math.cos(cfg.inclination);
         const wobbleY = Math.sin(cfg.wobble) * cfg.wobbleAmount;
         
-        // Calcular direção normalizada da órbita
         const direction = [
             Math.cos(cfg.angle) * horizontalRadius,
             baseY + wobbleY,
             Math.sin(cfg.angle) * horizontalRadius
         ];
         
-        // Normalizar
         const len = Math.sqrt(direction[0]**2 + direction[1]**2 + direction[2]**2);
         direction[0] /= len;
         direction[1] /= len;
         direction[2] /= len;
         
-        // NOVO: Se temos função de altura, usar ela; senão usar cálculo antigo
-        let radius;
-        if (this.getTerrainHeightFunc) {
-            radius = this.getTerrainHeightFunc(direction, 0.3);
-        } else {
-            // Fallback para o método antigo
-            radius = cfg.baseRadius + (terrainDisplacement * 0.3);
-        }
+        //let radius;
+        const radius = cfg.baseRadius + (terrainDisplacement * 0.3);
+        // if (this.getTerrainHeightFunc) {
+        //     radius = this.getTerrainHeightFunc(direction, 0.3);
+        // } else {
+        //     // Fallback para o método antigo
+        //     radius = cfg.baseRadius + (terrainDisplacement * 0.3);
+        // }
         
-        // Aplicar posição com altura correta do terreno
         plane.position[0] = direction[0] * radius;
         plane.position[1] = direction[1] * radius;
         plane.position[2] = direction[2] * radius;
@@ -210,7 +207,6 @@ export class Physics {
         ];
     }
 
-    // MODIFICADO: updatePlanetPhysics com altura do terreno
     updatePlanetPhysics(plane, topDownMode, physicsParams, terrainDisplacement=0) {
         if (!topDownMode) {
             this.updateOrbit(plane, topDownMode, terrainDisplacement);
