@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,116 +7,113 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <canvas id="glcanvas"> </canvas>
+    <canvas id="glcanvas"></canvas>
 
+    <!-- FPS Counter -->
+    <div id="fps-counter" class="fps-counter">FPS: 0</div>
+
+    <!-- Controls Tooltip -->
     <div id="controls-tooltip" class="controls-tooltip">
         <span class="tooltip-key">C</span> Controlar avião (WASD para mover)
-        <br>
-        <span class="tooltip-key">Botao Direito do mouse</span> Cria anéis na posição clicada
+        <span class="tooltip-key">Mouse Direito</span> Criar anel na posição
     </div>
 
-    <button id="controls-toggle" class="controls-toggle" aria-label="Toggle Controls" style="display: none;">
+    <!-- Controls Toggle Button -->
+    <button id="controls-toggle" class="controls-toggle" aria-label="Toggle Controls">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
     </button>
 
+    <!-- Controls Panel -->
     <div id="controls" class="controls-panel controls-visible">
+        <!-- Header -->
         <div class="controls-header">
             <div class="header-left">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="settings-icon">
-                <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-                <span>Controles de variáveis</span>
+                <span>Controles de Variáveis</span>
             </div>
-        <div class="header-right">
-            <button id="controls-close" class="controls-close" aria-label="Close Controls">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-            </button>
-        </div>
-    </div>
-
-    <div class="controls-content">
-
-        <div class="control-section">
-            <h4>Resolution</h4>
-            <div class="control-group">
-                <label for="subdivisons">subdivisons</label>
-                <input type="range" id="subdivisons" min="1" max="8" value="6" step="1" autocomplete="off">
-                <span id="subdivisons-value">6</span>
-            </div>
-        </div>
-      
-        <div class="control-section">
-            <h4>Noise</h4>
-            <div class="control-group">
-                <label for="noise-type">Noise Type</label>
-                <select id="noise-type">
-                    <option value="simplex">Simplex</option>
-                    <option value="perlin">Perlin</option>
-                    <option value="value">Value</option>
-                </select>
-            </div>
-            <div class="control-group">
-                <label for="octaves">Octaves</label>
-                <input type="range" id="octaves" min="1" max="10" value="4" step="1" autocomplete="off">
-                <span id="octaves-value">4</span>
-            </div>
-            <div class="control-group">
-                <label for="persistence">Persistence</label>
-                <input type="range" id="persistence" min="0.1" max="1.0" value="0.5" step="0.05" autocomplete="off">
-                <span id="persistence-value">0.5</span>
-            </div>
-            <div class="control-group">
-                <label for="lacunarity">Lacunarity</label>
-                <input type="range" id="lacunarity" min="1.0" max="4.0" value="2.0" step="0.1" autocomplete="off">
-                <span id="lacunarity-value">2.0</span>
-            </div>
-            <div class="control-group">
-                <label for="noise-zoom">Noise Zoom</label>
-                <input type="range" id="noise-zoom" min="0.0" max="2.0" value="1.0" step="0.05" autocomplete="off">
-                <span id="noise-zoom-value">1.0</span>
-            </div>
-            <!-- <div class="control-group">
-                <label for="noise-resolution">Noise Resolution</label>
-                <input type="range" id="noise-resolution" min="256" max="4096" value="512" step="256">
-                <span id="noise-resolution-value">512</span>
-            </div> -->
-            <div class="control-group">
-                <label for="seed-input">Seed</label>
-                <input type="number" id="seed-input" min="0" max="9999999999" value="0" step="1" autocomplete="off">
-                <button id="seed-random" style="padding: 4px 12px; background: #4fd1c7; border: none; border-radius: 4px; color: #1a202c; font-size: 12px; cursor: pointer; font-weight: 500;">RANDOM</button>
-
+            <div class="header-right">
+                <button id="controls-close" class="controls-close" aria-label="Close Controls">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
             </div>
         </div>
 
-        <div class="control-section">
-            <h4>Light</h4>
-            <div class="control-group">
-                <label for="light-speed">Speed</label>
-                <input type="range" id="light-speed" min="0.0" max="10.0" value="1.5" step="0.1" autocomplete="off">
-                <span id="light-speed-value">1.5</span>
-            </div>
-            <div class="control-group">
-                <label for="light-speed">Brightness</label>
-                <input type="range" id="light-brightness" min="0.0" max="3.0" value="1.0" step="0.1" autocomplete="off">
-                <span id="light-brightness-value">1.0</span>
-            </div>
-            <div class="control-group">
-                <label for="light-angle">Angle</label>
-                <input type="range" id="light-angle" min="0" max="360" value="45" step="1" autocomplete="off">
-                <span id="light-angle-value">XX°</span>
-            </div>
-            <div class="control-group">
-                <label for="light-pitch">Pitch</label>
-                <input type="range" id="light-pitch" min="-90" max="90" value="30" step="1" autocomplete="off">
-                <span id="light-pitch-value">XX°</span>
-            </div>
-            
+        <!-- Content -->
+        <div class="controls-content">
+
+            <!-- Resolution -->
             <div class="control-section">
-                <h4>Rim</h4>
+                <h4>Resolution</h4>
+                <div class="control-group">
+                    <label for="subdivisons">Subdivisions</label>
+                    <input type="range" id="subdivisons" min="1" max="8" value="6" step="1" autocomplete="off">
+                    <span id="subdivisons-value">6</span>
+                </div>
+            </div>
+        
+            <!-- Noise -->
+            <div class="control-section">
+                <h4>Noise</h4>
+                <div class="control-group">
+                    <label for="noise-type">Type</label>
+                    <select id="noise-type">
+                        <option value="simplex">Simplex</option>
+                        <option value="perlin">Perlin</option>
+                        <option value="value">Value</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="octaves">Octaves</label>
+                    <input type="range" id="octaves" min="1" max="10" value="4" step="1" autocomplete="off">
+                    <span id="octaves-value">4</span>
+                </div>
+                <div class="control-group">
+                    <label for="persistence">Persistence</label>
+                    <input type="range" id="persistence" min="0.1" max="1.0" value="0.5" step="0.05" autocomplete="off">
+                    <span id="persistence-value">0.5</span>
+                </div>
+                <div class="control-group">
+                    <label for="lacunarity">Lacunarity</label>
+                    <input type="range" id="lacunarity" min="1.0" max="4.0" value="2.0" step="0.1" autocomplete="off">
+                    <span id="lacunarity-value">2.0</span>
+                </div>
+                <div class="control-group">
+                    <label for="noise-zoom">Zoom</label>
+                    <input type="range" id="noise-zoom" min="0.0" max="2.0" value="1.0" step="0.05" autocomplete="off">
+                    <span id="noise-zoom-value">1.0</span>
+                </div>
+                <div class="control-group">
+                    <label for="seed-input">Seed</label>
+                    <input type="number" id="seed-input" min="0" max="2147483647" value="0" step="1" autocomplete="off" style="flex: 1; padding: 4px 8px; background: rgba(45, 55, 72, 0.8); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: #e2e8f0; font-size: 12px;">
+                    <button id="seed-random" class="action-button-small">RANDOM</button>
+                </div>
+            </div>
+
+            <!-- Light -->
+            <div class="control-section">
+                <h4>Light</h4>
+                <div class="control-group">
+                    <label for="light-speed">Speed</label>
+                    <input type="range" id="light-speed" min="0.0" max="10.0" value="1.5" step="0.1" autocomplete="off">
+                    <span id="light-speed-value">1.5</span>
+                </div>
+                <div class="control-group">
+                    <label for="light-brightness">Brightness</label>
+                    <input type="range" id="light-brightness" min="0.0" max="3.0" value="1.0" step="0.1" autocomplete="off">
+                    <span id="light-brightness-value">1.0</span>
+                </div>
+                <div class="control-group">
+                    <label for="lambertian-toggle">Enable</label>
+                    <input type="checkbox" id="lambertian-toggle" autocomplete="off">
+                </div>
+            </div>
+
+            <!-- Rim -->
+            <div class="control-section">
+                <h4>Rim Light</h4>
                 <div class="control-group">
                     <label for="rim-intensity">Intensity</label>
                     <input type="range" id="rim-intensity" min="0.0" max="1.0" value="0.5" step="0.01" autocomplete="off">
@@ -133,6 +130,7 @@
                 </div>
             </div>
 
+            <!-- Water -->
             <div class="control-section">
                 <h4>Water</h4>
                 <div class="control-group">
@@ -140,106 +138,115 @@
                     <input type="range" id="water-opacity" min="0.0" max="1.0" value="0.0" step="0.01" autocomplete="off">
                     <span id="water-opacity-value">0.0</span>
                 </div>
+                <div class="control-group">
+                    <label for="water-toggle">Enable</label>
+                    <input type="checkbox" id="water-toggle" checked autocomplete="off">
+                </div>
+                <div class="control-group">
+                    <label for="waves-toggle">Waves</label>
+                    <input type="checkbox" id="waves-toggle" checked autocomplete="off">
+                </div>
             </div>
 
+            <!-- Clouds -->
             <div class="control-section">
                 <h4>Clouds</h4>
-
                 <div class="control-group">
                     <label for="cloud-speed">Speed</label>
                     <input type="range" id="cloud-speed" min="0.0" max="1.0" value="0.1" step="0.05" autocomplete="off">
                     <span id="cloud-speed-value">0.1</span>
                 </div>
-
                 <div class="control-group">
                     <label for="cloud-opacity">Opacity</label>
                     <input type="range" id="cloud-opacity" min="0.0" max="1.0" value="0.5" step="0.05" autocomplete="off">
                     <span id="cloud-opacity-value">0.5</span>
                 </div>
-
                 <div class="control-group">
                     <label for="cloud-warp-intensity">Warp Intensity</label>
                     <input type="range" id="cloud-warp-intensity" min="0.0" max="1.0" value="0.5" step="0.05" autocomplete="off">
                     <span id="cloud-warp-intensity-value">0.5</span>
                 </div>
-
                 <div class="control-group">
                     <label for="cloud-warp-time">Warp Time</label>
                     <input type="range" id="cloud-warp-time" min="0.0" max="1.0" value="0.5" step="0.05" autocomplete="off">
                     <span id="cloud-warp-time-value">0.5</span>
                 </div>
-
                 <div class="control-group">
-                    <label for="cloud-texture-zoom">texture-zoom</label>
+                    <label for="cloud-texture-zoom">Texture Zoom</label>
                     <input type="range" id="cloud-texture-zoom" min="0.0" max="5.0" value="1.10" step="0.1" autocomplete="off">
                     <span id="cloud-texture-zoom-value">1.10</span>
                 </div>
-
                 <div class="control-group">
                     <label for="cloud-threshold">Threshold</label>
                     <input type="range" id="cloud-threshold" min="0.0" max="1.0" value="0.65" step="0.01" autocomplete="off">
                     <span id="cloud-threshold-value">0.65</span>
                 </div>
-
                 <div class="control-group">
                     <label for="cloud-alpha">Alpha</label>
                     <input type="range" id="cloud-alpha" min="0.0" max="1.0" value="0.65" step="0.01" autocomplete="off">
                     <span id="cloud-alpha-value">0.65</span>
                 </div>
-
                 <div class="control-group">
                     <label for="cloud-color">Color</label>
                     <input type="color" id="cloud-color" value="#FFFFFF" autocomplete="off">
                     <span id="cloud-color-value">#FFFFFF</span>
                 </div>
+                <div class="control-group">
+                    <label for="clouds-toggle">Enable</label>
+                    <input type="checkbox" id="clouds-toggle" unchecked autocomplete="off">
+                </div>
+            </div>
 
+            <!-- Terrain Layers -->
             <div class="control-section">
                 <h4>Terrain Layers</h4>
                 <div class="control-group">
-                    <label for="terrain-displacement">Terrain Displacement</label>
+                    <label for="terrain-displacement">Displacement</label>
                     <input type="range" id="terrain-displacement" min="0.0" max="1.0" value="0.3" step="0.01" autocomplete="off">
                     <span id="terrain-displacement-value">0.3</span>
                 </div>
                 <div class="control-group">
                     <label for="num-layers">Active Layers</label>
-                    <input type="number" id="num-layers" min="1" max="10" value="10" step="1" autocomplete="off">
+                    <input type="number" id="num-layers" min="1" max="10" value="10" step="1" autocomplete="off" style="width: 50px; padding: 4px; background: rgba(45, 55, 72, 0.8); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; color: #e2e8f0; text-align: center;">
                     <span id="num-layers-value">10</span>
                 </div>
+                
+                <!-- Layer Controls -->
                 <div class="control-group">
                     <label for="layer0-level">Layer 0</label>
                     <input type="color" id="layer0-color" value="#08223e" autocomplete="off">
-                    <input type="range" id="layer0-level" min="0.0" max="1.0" value="0.20" step="0.01" autocomplete="off">
-                    <span id="layer0-value">0.20</span>
+                    <input type="range" id="layer0-level" min="0.0" max="1.0" value="0.35" step="0.01" autocomplete="off">
+                    <span id="layer0-value">0.35</span>
                 </div>
                 <div class="control-group">
                     <label for="layer1-level">Layer 1</label>
                     <input type="color" id="layer1-color" value="#1a3f62" autocomplete="off">
-                    <input type="range" id="layer1-level" min="0.0" max="1.0" value="0.30" step="0.01" autocomplete="off">
-                    <span id="layer1-value">0.30</span>
+                    <input type="range" id="layer1-level" min="0.0" max="1.0" value="0.45" step="0.01" autocomplete="off">
+                    <span id="layer1-value">0.45</span>
                 </div>
                 <div class="control-group">
                     <label for="layer2-level">Layer 2</label>
                     <input type="color" id="layer2-color" value="#365962" autocomplete="off">
-                    <input type="range" id="layer2-level" min="0.0" max="1.0" value="0.35" step="0.01" autocomplete="off">
-                    <span id="layer2-value">0.35</span>
+                    <input type="range" id="layer2-level" min="0.0" max="1.0" value="0.50" step="0.01" autocomplete="off">
+                    <span id="layer2-value">0.50</span>
                 </div>
                 <div class="control-group">
                     <label for="layer3-level">Layer 3</label>
                     <input type="color" id="layer3-color" value="#587262" autocomplete="off">
-                    <input type="range" id="layer3-level" min="0.0" max="1.0" value="0.40" step="0.01" autocomplete="off">
-                    <span id="layer3-value">0.40</span>
+                    <input type="range" id="layer3-level" min="0.0" max="1.0" value="0.55" step="0.01" autocomplete="off">
+                    <span id="layer3-value">0.55</span>
                 </div>
                 <div class="control-group">
                     <label for="layer4-level">Layer 4</label>
-                    <input type="color" id="layer4-color" value="#898961" autocomplete="off">
-                    <input type="range" id="layer4-level" min="0.0" max="1.0" value="0.50" step="0.01" autocomplete="off">
-                    <span id="layer4-value">0.50</span>
+                    <input type="color" id="layer4-color" value="#ccb380" autocomplete="off">
+                    <input type="range" id="layer4-level" min="0.0" max="1.0" value="0.60" step="0.01" autocomplete="off">
+                    <span id="layer4-value">0.60</span>
                 </div>
                 <div class="control-group">
                     <label for="layer5-level">Layer 5</label>
                     <input type="color" id="layer5-color" value="#58723f" autocomplete="off">
-                    <input type="range" id="layer5-level" min="0.0" max="1.0" value="0.60" step="0.01" autocomplete="off">
-                    <span id="layer5-value">0.60</span>
+                    <input type="range" id="layer5-level" min="0.0" max="1.0" value="0.65" step="0.01" autocomplete="off">
+                    <span id="layer5-value">0.65</span>
                 </div>
                 <div class="control-group">
                     <label for="layer6-level">Layer 6</label>
@@ -262,50 +269,72 @@
                 <div class="control-group">
                     <label for="layer9-level">Layer 9</label>
                     <input type="color" id="layer9-color" value="#fafafa" autocomplete="off">
-                    <input type="range" id="layer9-level" min="0.0" max="1.0" value="0.85" step="0.01" autocomplete="off">
+                    <input type="range" id="layer9-level" min="0.0" max="1.0" value="0.90" step="0.01" autocomplete="off">
                     <span id="layer9-value">0.90</span>
                 </div>
             </div>
-        </div>
-        
-        <div class="control-section">
-            <h4>Objetos</h4>
-            <div class="control-group">
-                <label for="ring-count">Anéis ativos</label>
-                <span id="ring-count" style="color: #4fd1c7; font-weight: 500;">0</span>
+            
+            <!-- Objects / Rings -->
+            <div class="control-section">
+                <h4>Objetos</h4>
+                <div class="stats-display">
+                    <div class="stat-item">
+                        <span class="stat-label">Anéis Ativos</span>
+                        <span id="ring-count" class="stat-value">0</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <button id="add-ring-btn" class="action-button">Adicionar Anel</button>
+                </div>
+                <div class="control-group">
+                    <button id="clear-rings-btn" class="action-button danger">Limpar Todos</button>
+                </div>
             </div>
-            <div class="control-group">
-                <button id="add-ring-btn" class="action-button">Adicionar Anel</button>
-            </div>
-            <div class="control-group">
-                <button id="clear-rings-btn" class="action-button danger">Limpar Todos</button>
-            </div>
-        </div>
 
-        <div class="control-section">
-            <h4>Outro</h4>
-            <div class="control-group">
-                <label for="wireframe-toggle">Wireframe</label>
-                <input type="checkbox" id="wireframe-toggle" unchecked autocomplete="off">
+            <!-- Time Attack Game -->
+            <div class="control-section">
+                <h4>Time Attack</h4>
+                
+                <div class="game-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Tempo</span>
+                        <span id="game-timer" class="stat-value highlight">60.0s</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Anéis</span>
+                        <span class="stat-value">
+                            <span id="game-score">0</span> / <span id="game-target">10</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <div id="game-status" class="game-status"></div>
+
+                <div class="control-group">
+                    <button id="game-start-btn" class="action-button primary">
+                        ▶ Iniciar Jogo
+                    </button>
+                </div>
+
+                <div class="control-group">
+                    <button id="game-restart-btn" class="action-button secondary" style="display: none;">
+                        ▶ Reiniciar
+                    </button>
+                </div>
             </div>
-            <div class="control-group">
-                <label for="clouds-toggle">Clouds</label>
-                <input type="checkbox" id="clouds-toggle" unchecked autocomplete="off">
+
+            <!-- Other Settings -->
+            <div class="control-section">
+                <h4>Outros</h4>
+                <div class="control-group">
+                    <label for="wireframe-toggle">Wireframe</label>
+                    <input type="checkbox" id="wireframe-toggle" autocomplete="off">
+                </div>
             </div>
-            <div class="control-group">
-                <label for="lambertian-toggle">Lambertian Diffuse</label>
-                <input type="checkbox" id="lambertian-toggle" unchecked autocomplete="off">
-            </div>
-            <div class="control-group">
-                <label for="water-toggle">Water</label>
-                <input type="checkbox" id="water-toggle" checked autocomplete="off">
-            </div>
-            <div class="control-group">
-                <label for="waves-toggle">Waves</label>
-                <input type="checkbox" id="waves-toggle" checked autocomplete="off">
-            </div>
+
         </div>
     </div>
+
     <script type="module" src="main.js"></script>
 </body>
 </html>
