@@ -381,3 +381,32 @@ canvas {
   background: #2d3748;
   color: #e2e8f0;
 }
+
+.action-button {
+    width: 100%;
+    padding: 6px 12px;
+    background: #4fd1c7;
+    border: none;
+    border-radius: 4px;
+    color: #1a202c;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-button:hover {
+    background: #38b2ac;
+}
+
+.action-button:active {
+    transform: scale(0.98);
+}
+
+.action-button.danger {
+    background: #fc8181;
+}
+
+.action-button.danger:hover {
+    background: #f56565;
+}

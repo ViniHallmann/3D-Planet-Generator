@@ -207,64 +207,78 @@
                 </div>
                 <div class="control-group">
                     <label for="layer0-level">Layer 0</label>
-                    <input type="color" id="layer0-color" value="#000080" autocomplete="off">
+                    <input type="color" id="layer0-color" value="#08223e" autocomplete="off">
                     <input type="range" id="layer0-level" min="0.0" max="1.0" value="0.20" step="0.01" autocomplete="off">
                     <span id="layer0-value">0.20</span>
                 </div>
                 <div class="control-group">
                     <label for="layer1-level">Layer 1</label>
-                    <input type="color" id="layer1-color" value="#0000ff" autocomplete="off">
+                    <input type="color" id="layer1-color" value="#1a3f62" autocomplete="off">
                     <input type="range" id="layer1-level" min="0.0" max="1.0" value="0.30" step="0.01" autocomplete="off">
                     <span id="layer1-value">0.30</span>
                 </div>
                 <div class="control-group">
                     <label for="layer2-level">Layer 2</label>
-                    <input type="color" id="layer2-color" value="#0080ff" autocomplete="off">
+                    <input type="color" id="layer2-color" value="#365962" autocomplete="off">
                     <input type="range" id="layer2-level" min="0.0" max="1.0" value="0.35" step="0.01" autocomplete="off">
                     <span id="layer2-value">0.35</span>
                 </div>
                 <div class="control-group">
                     <label for="layer3-level">Layer 3</label>
-                    <input type="color" id="layer3-color" value="#ccb380" autocomplete="off">
+                    <input type="color" id="layer3-color" value="#587262" autocomplete="off">
                     <input type="range" id="layer3-level" min="0.0" max="1.0" value="0.40" step="0.01" autocomplete="off">
                     <span id="layer3-value">0.40</span>
                 </div>
                 <div class="control-group">
                     <label for="layer4-level">Layer 4</label>
-                    <input type="color" id="layer4-color" value="#33ff33" autocomplete="off">
+                    <input type="color" id="layer4-color" value="#898961" autocomplete="off">
                     <input type="range" id="layer4-level" min="0.0" max="1.0" value="0.50" step="0.01" autocomplete="off">
                     <span id="layer4-value">0.50</span>
                 </div>
                 <div class="control-group">
                     <label for="layer5-level">Layer 5</label>
-                    <input type="color" id="layer5-color" value="#008000" autocomplete="off">
+                    <input type="color" id="layer5-color" value="#58723f" autocomplete="off">
                     <input type="range" id="layer5-level" min="0.0" max="1.0" value="0.60" step="0.01" autocomplete="off">
                     <span id="layer5-value">0.60</span>
                 </div>
                 <div class="control-group">
                     <label for="layer6-level">Layer 6</label>
-                    <input type="color" id="layer6-color" value="#808080" autocomplete="off">
+                    <input type="color" id="layer6-color" value="#405934" autocomplete="off">
                     <input type="range" id="layer6-level" min="0.0" max="1.0" value="0.70" step="0.01" autocomplete="off">
                     <span id="layer6-value">0.70</span>
                 </div>
                 <div class="control-group">
                     <label for="layer7-level">Layer 7</label>
-                    <input type="color" id="layer7-color" value="#404040" autocomplete="off">
+                    <input type="color" id="layer7-color" value="#72624c" autocomplete="off">
                     <input type="range" id="layer7-level" min="0.0" max="1.0" value="0.75" step="0.01" autocomplete="off">
                     <span id="layer7-value">0.75</span>
                 </div>
                 <div class="control-group">
                     <label for="layer8-level">Layer 8</label>
-                    <input type="color" id="layer8-color" value="#b36b00" autocomplete="off">
+                    <input type="color" id="layer8-color" value="#c0c0c0" autocomplete="off">
                     <input type="range" id="layer8-level" min="0.0" max="1.0" value="0.80" step="0.01" autocomplete="off">
                     <span id="layer8-value">0.80</span>
                 </div>
                 <div class="control-group">
                     <label for="layer9-level">Layer 9</label>
-                    <input type="color" id="layer9-color" value="#8b4513" autocomplete="off">
+                    <input type="color" id="layer9-color" value="#fafafa" autocomplete="off">
                     <input type="range" id="layer9-level" min="0.0" max="1.0" value="0.85" step="0.01" autocomplete="off">
                     <span id="layer9-value">0.90</span>
                 </div>
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <h4>Objetos</h4>
+            <div class="control-group">
+                <label for="ring-count">Anéis ativos</label>
+                <span id="ring-count" style="color: #4fd1c7; font-weight: 500;">0</span>
+            </div>
+            <div class="control-group">
+                <button id="add-ring-btn" class="action-button">Adicionar Anel</button>
+            </div>
+            <div class="control-group">
+                <button id="clear-rings-btn" class="action-button danger">Limpar Todos</button>
             </div>
         </div>
 
@@ -286,7 +300,10 @@
                 <label for="water-toggle">Water</label>
                 <input type="checkbox" id="water-toggle" unchecked autocomplete="off">
             </div>
-
+            <div class="control-group">
+                <label for="waves-toggle">Waves</label>
+                <input type="checkbox" id="waves-toggle" checked autocomplete="off">
+            </div>
         </div>
     </div>
     <script type="module" src="main.js"></script>
