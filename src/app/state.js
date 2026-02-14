@@ -5,6 +5,8 @@ export class State {
     constructor() {
         this.app = { ...DEFAULTS.app };
 
+        this.game = { ...DEFAULTS.game };
+
         this.physics = {
             MOUSE_ROTATION_SPEED: CONSTANTS.MOUSE_ROTATION_SPEED,
             MAX_LAYERS: CONSTANTS.MAX_LAYERS,
