@@ -133,5 +133,10 @@ export const DEFAULTS = {
         waterOpacity: 0.0,
         waterScale: 0.05,
         terrainDisplacement: 0.3,
+    },
+
+    game : {
+        score: 0,
+        isPlaying: false,
     }
 }
