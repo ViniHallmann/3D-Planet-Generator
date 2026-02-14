@@ -24,6 +24,7 @@ export const DEFAULTS = {
         showClouds: false,
         showRim: true,
         showWater: true,
+        showWaves: true,
         topDownMode: false,
     },
 
@@ -74,16 +75,16 @@ export const DEFAULTS = {
     // },
     
     layerColors : {
-        layer0:  [0.031, 0.133, 0.243],   // #08223e  - oceano profundo
-        layer1:  [0.102, 0.247, 0.384],   // #1a3f62  - oceano médio
-        layer2:  [0.212, 0.349, 0.443],   // #365962  - oceano raso
-        layer3:  [0.345, 0.447, 0.384],   // #587262  - costa/estuário
-        layer4:  [0.802, 0.702, 0.502],   // #898961  - areia/praia
-        layer5:  [0.349, 0.447, 0.251],   // #58723f  - vegetação baixa
-        layer6:  [0.251, 0.349, 0.200],   // #405934  - floresta densa
-        layer7:  [0.447, 0.384, 0.298],   // #72624c  - montanhas/rochas
-        layer8:  [0.753, 0.753, 0.753],   // #c0c0c0  - neve/rocha clara
-        layer9:  [0.980, 0.980, 0.980],   // #fafafa  - neve/gelo puro
+        layer0:  [0.031, 0.133, 0.243],   // #08223e  - oceano profundo #000080
+        layer1:  [0.102, 0.247, 0.384],   // #1a3f62  - oceano médio #0000ff
+        layer2:  [0.212, 0.349, 0.443],   // #365962  - oceano raso #0080ff
+        layer3:  [0.345, 0.447, 0.384],   // #587262  - costa/estuário #ccb380
+        layer4:  [0.802, 0.702, 0.502],   // #898961  - areia/praia #33ff33
+        layer5:  [0.349, 0.447, 0.251],   // #58723f  - vegetação baixa #008000
+        layer6:  [0.251, 0.349, 0.200],   // #405934  - floresta densa #808080
+        layer7:  [0.447, 0.384, 0.298],   // #72624c  - montanhas/rochas #404040
+        layer8:  [0.753, 0.753, 0.753],   // #c0c0c0  - neve/rocha clara #b36b00
+        layer9:  [0.980, 0.980, 0.980],   // #fafafa  - neve/gelo puro #8b4513
     },
 
     shaders : {
