@@ -243,21 +243,6 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
 
         //CAMERA
         let cameraPosition; 
-        // if (state.app.topDownMode) {
-        //     const baseHeight = getOrbitRadius(state.shaders.terrainDisplacement);
-        //     const terrainHeight = renderer.getTerrainHeightAtPosition(0, 1, 0, state.shaders.terrainDisplacement);
-        //     const safetyMargin = 0.15;
-        //     cameraPosition = { x: 0, y: 5.0, z: 0.1 }; 
-        //     plane.position = [0., Math.max(baseHeight, terrainHeight + safetyMargin), 0.]; 
-            
-        //     // plane.position = [0., getOrbitRadius(state.shaders.terrainDisplacement), 0.]; 
-        // } else {
-        //     cameraPosition = {
-        //         x: state.camera.radius * Math.sin(state.camera.phi) * Math.cos(state.camera.theta),
-        //         y: state.camera.radius * Math.cos(state.camera.phi),
-        //         z: state.camera.radius * Math.sin(state.camera.phi) * Math.sin(state.camera.theta)
-        //     };
-        // }
 
         if (state.app.topDownMode) {
             cameraPosition = { x: 0, y: 5.0, z: 0.1 }; 
