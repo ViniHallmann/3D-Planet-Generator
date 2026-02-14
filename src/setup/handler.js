@@ -2,9 +2,11 @@ import { mat4 } from '../utils/math.js';
 import { easing } from '../utils/utils.js';
 import { CONSTANTS } from '../config/constants.js';
 import { TerrainHeight } from '../utils/terrainHeight.js';
+import { Game } from '../core/game.js';
 
 export function setupHandlers(canvas, state, renderer, physics, plane, ringManager, raycaster, ringGeometry) {
     
+    const game = new Game(state);
     // function getOrbitRadius(terrainDisplacement, x, y, z) {
     //     const baseRadius = CONSTANTS.ORBIT_RADIUS + (terrainDisplacement * 0.3);
         
@@ -192,9 +194,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
     }
 
     // ARRUMAR E DEIXAR ISSO AQUI IMPLEMENTADO DE FORMA CORRETA DEPOIS
-    const fpsDiv = document.createElement('div');
-    fpsDiv.style.cssText = 'position:fixed;top:10px;left:10px;color:#00ff00;font-family:monospace;font-size:16px;background:rgba(0,0,0,0.7);padding:4px 8px;border-radius:4px;z-index:9999;pointer-events:none;';
-    document.body.appendChild(fpsDiv);
+    const fpsDiv = document.createElement('fps-counter');
     
     let fpsFrames = 0;
     let fpsLastTime = performance.now();
@@ -211,11 +211,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         
         const time = performance.now() / 1000;
         physics.updatePlanetPhysics(plane, state.app.topDownMode, state.physics, state.shaders.terrainDisplacement);
-        
-        // O physics já calcula a altura do avião corretamente via getTerrainHeightFunc
-        // Não recalcular aqui para evitar conflitos!
 
-        // Sincronizar posições visuais dos ringObjects
         ringObjects.forEach(ringObj => {
             if (ringObj.ringReference) {
                 ringObj.position[0] = ringObj.ringReference.position[0];
@@ -343,46 +339,6 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         }
     });
 
-    // canvas.addEventListener('contextmenu', (e) => {
-    //     e.preventDefault();
-    //     if (state.app.isMouseOverUI) return;
-        
-    //     const cameraPos = {
-    //         x: state.camera.radius * Math.sin(state.camera.phi) * Math.cos(state.camera.theta),
-    //         y: state.camera.radius * Math.cos(state.camera.phi),
-    //         z: state.camera.radius * Math.sin(state.camera.phi) * Math.sin(state.camera.theta)
-    //     };
-        
-    //     const aspect = canvas.width / canvas.height;
-    //     const projectionMatrix = mat4.create();
-    //     mat4.perspective(projectionMatrix, Math.PI / 4, aspect, 0.1, 100);
-        
-    //     const viewMatrix = mat4.create();
-    //     mat4.lookAt(viewMatrix, [cameraPos.x, cameraPos.y, cameraPos.z], [0, 0, 0], [0, 1, 0]);
-        
-    //     const ray = raycaster.createRay(e.clientX, e.clientY, cameraPos, projectionMatrix, viewMatrix);        
-    //     const planetRadius = 1.5 + (state.shaders.terrainDisplacement * 0.3);
-    //     const result = raycaster.intersectSphere(ray, [0, 0, 0], planetRadius);
-        
-    //     if (result.hit) {
-    //         const len = Math.sqrt(result.point[0]**2 + result.point[1]**2 + result.point[2]**2);
-    //         const orbitRadius = getOrbitRadius(state.shaders.terrainDisplacement);
-    //         const ringPosition = [(result.point[0] / len) * orbitRadius,(result.point[1] / len) * orbitRadius,(result.point[2] / len) * orbitRadius];
-            
-    //         const ring = ringManager.addRing(ringPosition);
-    //         const ringObj = addRingToScene(ring);
-
-    //         const nx = ringPosition[0] / orbitRadius;
-    //         const ny = ringPosition[1] / orbitRadius;
-    //         const nz = ringPosition[2] / orbitRadius;
-
-    //         const rotX = Math.asin(-ny);
-    //         const rotY = Math.atan2(nx, nz);
-            
-    //         ringObj.rotation = [rotX, rotY, 0];
-    //     }
-    // });
-
     canvas.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         if (state.app.isMouseOverUI) return;
@@ -406,7 +362,6 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         const result = raycaster.intersectSphere(ray, [0, 0, 0], averageRadius);
         
         if (result.hit) {
-            // Normalizar direção
             const len = Math.sqrt(result.point[0]**2 + result.point[1]**2 + result.point[2]**2);
             const normalizedDirection = [
                 result.point[0] / len,
@@ -428,6 +383,41 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
             updateRingCount();
         }
     });
+
+    const startBtn = document.getElementById('game-start-btn');
+    const restartBtn = document.getElementById('game-restart-btn');
+
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            game.startGame(renderer, physics, ringManager);
+        });
+    }
+
+    if (restartBtn) {
+        restartBtn.addEventListener('click', () => {
+            // Limpar anéis visuais
+            for (let i = ringObjects.length - 1; i >= 0; i--) {
+                const obj = ringObjects[i];
+                const rendererIndex = renderer.objects.indexOf(obj);
+                if (rendererIndex > -1) renderer.objects.splice(rendererIndex, 1);
+                ringObjects.splice(i, 1);
+            }
+            
+            // Limpar anéis do manager
+            ringManager.clearRings();
+            
+            // Resetar jogo
+            game.reset();
+            
+            // Voltar ao modo normal
+            if (state.app.topDownMode) {
+                state.app.topDownMode = false;
+                physics.toggleTopDownMode(plane, state.app.topDownMode);
+            }
+            
+            updateRingCount();
+        });
+    }
 
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('mouseup', handleMouseUp);
