@@ -1,4 +1,6 @@
 import { CONSTANTS } from '../config/constants.js'
+import { easing } from '../utils/utils.js';
+
 export class Ring {
     constructor(position, options = {}) {
         this.position = [...position];
@@ -18,6 +20,7 @@ export class Ring {
         this.position[1] = this.baseDirection[1] * radius;
         this.position[2] = this.baseDirection[2] * radius;
     }
+
     
     // checkCollision(point, radius = 0.2) {
     //     if (this.collected) return false;
@@ -36,22 +39,18 @@ export class Ring {
                 ringPos = this.transformPoint(ring.position, rotationMatrix);
             }
             
-            // NOVA ABORDAGEM: Usar distância angular na superfície
+
             const angularDist = this.getAngularDistance(point, ringPos);
             
-            // Converter raio de colisão para ângulo
-            // Assumindo raio da esfera ~ 1.5, raio de colisão 0.15 = ~0.1 radianos
             const avgSphereRadius = 1.5;
             const angularRadius = radius / avgSphereRadius;
             
             if (angularDist < angularRadius) {
-                // Verificação adicional: diferença de altura não pode ser muito grande
                 const heightDiff = Math.abs(
                     Math.sqrt(point[0]**2 + point[1]**2 + point[2]**2) -
                     Math.sqrt(ringPos[0]**2 + ringPos[1]**2 + ringPos[2]**2)
                 );
                 
-                // Permitir até 0.3 unidades de diferença de altura
                 if (heightDiff < 0.3) {
                     if (ring.collect()) {
                         this.score++;
