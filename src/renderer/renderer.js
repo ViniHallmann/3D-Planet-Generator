@@ -490,6 +490,11 @@ export class Renderer {
         this.gl.uniform1f(this.uniformLocations['u_waterOpacity'], opacity);
     }
 
+    setShowWaves(show){
+        this.gl.useProgram(this.program);
+        this.gl.uniform1i(this.uniformLocations['u_showWaves'], show);
+    }
+
     resizeCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
@@ -874,7 +879,7 @@ export class Renderer {
         gl.disable(gl.BLEND);
     }
 
-    render(time, cameraPos, params, wireframe=true, lambertianDiffuse=true, autoRotate=false, renderPass, planetRotationMatrix=null, rimLight) {
+    render(time, cameraPos, params, wireframe=true, lambertianDiffuse=true, autoRotate=false, renderPass, planetRotationMatrix=null, rimLight, showWaves) {
         const gl = this.gl;
         
         const modelMatrix       = this.matrixCache.model;
@@ -910,6 +915,7 @@ export class Renderer {
             cloudTexture: 1,
             viewPosition: [cameraPos.x, cameraPos.y, cameraPos.z],
             modelMatrix: modelMatrix,              
+            showWaves: showWaves,
         };
 
         this.updateUniforms(frameParams);
@@ -927,7 +933,7 @@ export class Renderer {
         }
 
         if (renderPass === 1) {
-            this.drawPlanetPass(params, wireframe);
+            this.drawPlanetPass(params, wireframe, showWaves);
             return;
         }
 
