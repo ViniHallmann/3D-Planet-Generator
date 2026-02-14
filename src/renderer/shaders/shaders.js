@@ -452,13 +452,13 @@ export const fragmentShaderSource = glsl`#version 300 es
         }
     }
 
-    vec4 renderWater(vec3 normal, vec3 viewDir){
+    vec4 renderWater(vec3 normal, vec3 viewDir, float light) {
         float fresnel = dot(normalize(normal), normalize(viewDir));
         fresnel = abs(fresnel);
         
         float alpha = mix(0.85, u_waterOpacity, pow(fresnel, 2.0));
         
-        return vec4(u_waterColor, alpha);
+        return vec4(u_waterColor, alpha)* light;
     }
 
     void main() {
@@ -489,7 +489,7 @@ export const fragmentShaderSource = glsl`#version 300 es
         }
         else if (u_renderPass == 5.0) {
             vec3 viewDir = u_viewPosition - v_worldPosition;
-            outColor = renderWater(normal, viewDir);
+            outColor = renderWater(normal, viewDir, light);
         }
 
     }
