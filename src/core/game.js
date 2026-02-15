@@ -2,15 +2,16 @@ export class Game {
     constructor(state) {
         this.state = state;
         this.gameState = 'idle'; // idle, playing, won, lost
-        this.timeRemaining = 60;
+        this.timeRemaining = 30;
         this.targetRings = 10;
         this.updateInterval = null;
     }
 
     startGame(physics, plane, ringManager) {
         this.gameState = 'playing';
-        this.timeRemaining = 60;
+        this.timeRemaining = 30;
         this.state.game.score = 0;
+        ringManager.score = 0;
         
         if (!this.state.app.topDownMode) {
             this.state.app.topDownMode = true;
@@ -20,7 +21,6 @@ export class Game {
             if (tooltip) tooltip.classList.add('hidden');
         }
 
-        // Limpar e adicionar anéis
         if (window.clearAllRings) {
             window.clearAllRings();
         }
@@ -31,7 +31,6 @@ export class Game {
             }
         }
 
-        // Iniciar timer
         this.startTimer();
         this.updateUI();
     }
@@ -107,11 +106,11 @@ export class Game {
 
         if (statusElement) {
             if (this.gameState === 'won') {
-                statusElement.textContent = '🎉 VOCÊ VENCEU!';
+                statusElement.textContent = 'VOCÊ VENCEU!';
                 statusElement.style.color = '#00ff00';
                 statusElement.style.display = 'block';
             } else if (this.gameState === 'lost') {
-                statusElement.textContent = '❌ TEMPO ESGOTADO!';
+                statusElement.textContent = 'TEMPO ESGOTADO!';
                 statusElement.style.color = '#ff4444';
                 statusElement.style.display = 'block';
             } else {
@@ -140,7 +139,7 @@ export class Game {
         }
         
         this.gameState = 'idle';
-        this.timeRemaining = 60;
+        this.timeRemaining = 30;
         this.state.game.score = 0;
         this.updateUI();
     }

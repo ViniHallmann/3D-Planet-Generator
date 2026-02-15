@@ -194,7 +194,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
     }
 
     // ARRUMAR E DEIXAR ISSO AQUI IMPLEMENTADO DE FORMA CORRETA DEPOIS
-    const fpsDiv = document.createElement('fps-counter');
+    const fpsDiv = document.getElementById('fps-counter');
     
     let fpsFrames = 0;
     let fpsLastTime = performance.now();
@@ -234,7 +234,17 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         
         if (plane && plane.position) {
             const collisionRadius = 0.15 + (state.shaders.terrainDisplacement * 0.2);
+            
+            const previousScore = state.game.score;
+            
             ringManager.checkCollisions(plane.position, collisionRadius, physics.planetRotationMatrix);
+            
+            state.game.score = ringManager.score;
+            
+            if (state.game.score > previousScore) {
+                game.updateUI();
+                game.checkWinCondition(ringManager);
+            }
         }
 
         //CAMERA
