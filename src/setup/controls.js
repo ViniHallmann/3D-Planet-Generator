@@ -144,6 +144,27 @@ export function setupControls(state, renderer) {
     setupInputListeners(elements.cloudOpacity, elements.cloudOpacityValue, state.clouds, 'cloudOpacity', parseFloat, (val) => val.toFixed(2), false);
     setupInputListeners(elements.cloudTextureZoom, elements.cloudTextureZoomValue, state.clouds, 'cloudTextureZoom', parseFloat, (val) => val.toFixed(2), false);
     
+
+    setupInputListeners(elements.cloudSpeed, elements.cloudSpeedValue, state.clouds, 'cloudSpeed', parseFloat, (val) => val.toFixed(2), false, (value) => {
+        state.cloudShadowParams.cloudSpeed = value;
+    });
+
+    setupInputListeners(elements.cloudWarpIntensity, elements.cloudWarpIntensityValue, state.clouds, 'cloudWarpIntensity', parseFloat, (val) => val.toFixed(2), false, (value) => {
+        state.cloudShadowParams.cloudWarpIntensity = value;
+    });
+
+    setupInputListeners(elements.cloudThreshold, elements.cloudThresholdValue, state.clouds, 'cloudThreshold', parseFloat, (val) => val.toFixed(2), false, (value) => {
+        state.cloudShadowParams.cloudThreshold = value;
+    });
+
+    setupInputListeners(elements.cloudAlpha, elements.cloudAlphaValue, state.clouds, 'cloudAlpha', parseFloat, (val) => val.toFixed(2), false, (value) => {
+        state.cloudShadowParams.cloudAlpha = value;
+    });
+
+    setupInputListeners(elements.cloudTextureZoom, elements.cloudTextureZoomValue, state.clouds, 'cloudTextureZoom', parseFloat, (val) => val.toFixed(2), false, (value) => {
+        state.cloudShadowParams.cloudTextureZoom = value;
+    });
+    
     setupInputListeners(elements.cloudColor, elements.cloudColorValue, state.clouds, 'cloudColor', (val) => hexToRgb(val), (val) => {
         return `R: ${Math.round(val[0]*255)} G: ${Math.round(val[1]*255)} B: ${Math.round(val[2]*255)}`;
     }, false);
