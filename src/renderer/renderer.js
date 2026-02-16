@@ -124,6 +124,7 @@ export class Renderer {
         this.noiseParams = noiseParams;
         this.triangleHeights = this.calculateTriangleHeights(this.geometry, noiseParams);
         this.terrainNormals = this.calculateTerrainNormals(this.geometry, this.triangleHeights);
+        this.manualOffsets = new Float32Array(this.geometry.positions.length / 3).fill(0);
     }
 
     initShadowMap(resolution = 2048) {
@@ -316,7 +317,8 @@ export class Renderer {
             const y = geometry.positions[i * 3 + 1];
             const z = geometry.positions[i * 3 + 2];
             
-            heights[i] = this.noiseGenerator.get3DNoise(x, y, z, params);
+            const noiseVal = this.noiseGenerator.get3DNoise(x, y, z, params);
+            heights[i] = noiseVal + (this.manualOffsets ? this.manualOffsets[i] : 0);
         }
         
         return heights;
@@ -1089,5 +1091,59 @@ export class Renderer {
         }
         
     }
+
+    applyBrush(point, radius, strength, mode = 'add') {
+        // point: vetor [x, y, z] normalizado onde o raio bateu na esfera
+        // radius: tamanho do pincel (em coordenadas normalizadas, ex: 0.1)
+        // strength: força da deformação (ex: 0.05 para subir, -0.05 para descer)
+        
+        const positions = this.geometry.positions;
+        const numVertices = positions.length / 3;
+        let modified = false;
+
+        // Loop simples (pode ser otimizado depois com Octree)
+        for (let i = 0; i < numVertices; i++) {
+            const px = positions[i * 3];
+            const py = positions[i * 3 + 1];
+            const pz = positions[i * 3 + 2];
+
+            // Calcula a distância entre o vértice atual e o ponto do clique
+            // Como estamos na esfera unitária, distância euclidiana funciona bem
+            const dist = Math.sqrt(
+                (px - point[0])**2 + 
+                (py - point[1])**2 + 
+                (pz - point[2])**2
+            );
+
+            if (dist < radius) {
+                // Cálculo de Falloff (suavização)
+                // O centro do pincel é forte, as bordas são fracas
+                // Usando uma curva cosseno ou linear simples:
+                const falloff = 0.5 * (1 + Math.cos(Math.PI * dist / radius)); 
+                
+                // Aplica a modificação
+                this.manualOffsets[i] += strength * falloff;
+                modified = true;
+            }
+        }
+
+        if (modified) {
+            this.updateTerrainGeometry();
+        }
+    }
+
+    updateTerrainGeometry() {
+        // 1. Recalcula alturas combinando Noise + ManualOffsets
+        this.triangleHeights = this.calculateTriangleHeights(this.geometry, this.noiseParams);
+        
+        // 2. Recalcula as normais baseadas na nova topologia
+        // (Sua função calculateTerrainNormals já existe e parece correta para isso)
+        this.terrainNormals = this.calculateTerrainNormals(this.geometry, this.triangleHeights);
+        
+        // 3. Envia os novos dados para a GPU
+        this.updateTriangleHeightBuffer();
+        this.updateTerrainNormalBuffer();
+    }
 }
+
 
