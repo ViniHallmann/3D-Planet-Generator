@@ -106,15 +106,19 @@ export class Game {
         }
 
         if (statusElement) {
+            statusElement.classList.remove('win', 'lose');
+
             if (this.gameState === 'won') {
-                statusElement.textContent = 'VOCÊ VENCEU!';
-                statusElement.style.color = '#00ff00';
+                statusElement.textContent = 'YOU WIN!';
+                statusElement.classList.add('win');
                 statusElement.style.display = 'block';
-            } else if (this.gameState === 'lost') {
-                statusElement.textContent = 'TEMPO ESGOTADO!';
-                statusElement.style.color = '#ff4444';
+            } 
+            else if (this.gameState === 'lost') {
+                statusElement.textContent = 'YOU LOST!';
+                statusElement.classList.add('lose');
                 statusElement.style.display = 'block';
-            } else {
+            } 
+            else {
                 statusElement.style.display = 'none';
             }
         }

@@ -5,6 +5,13 @@ export function hexToRgb(hex) {
     return [r, g, b];
 }
 
+export function rgbToHex(rgb) {
+    const r = Math.round(rgb[0] * 255).toString(16).padStart(2, '0');
+    const g = Math.round(rgb[1] * 255).toString(16).padStart(2, '0');
+    const b = Math.round(rgb[2] * 255).toString(16).padStart(2, '0');
+    return `#${r}${g}${b}`;
+}
+
 export const easing = {
     easeOutBack: (t) => {
         const c1 = 1.70158;

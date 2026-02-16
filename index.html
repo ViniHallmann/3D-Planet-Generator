@@ -28,11 +28,11 @@
     </button>
 
     <!-- Controls Panel -->
-    <div id="controls" class="controls-panel controls-visible">
+    <div id="controls" class="controls-panel">
         <!-- Header -->
         <div class="controls-header">
             <div class="header-left">
-                <span>Controles de Variáveis</span>
+                <span>CONTROL PANEL</span>
             </div>
             <div class="header-right">
                 <button id="controls-close" class="controls-close" aria-label="Close Controls">
@@ -90,7 +90,7 @@
                 <div class="control-group">
                     <label for="seed-input">Seed</label>
                     <input type="number" id="seed-input" min="0" max="2147483647" value="0" step="1" autocomplete="off" class="seed-input">
-                    <button id="seed-random" class="action-button-small">RANDOM</button>
+                    <button id="seed-random" class="action-button-small">random</button>
                 </div>
             </div>
 
@@ -148,7 +148,11 @@
                     <label for="waves-toggle">Waves</label>
                     <input type="checkbox" id="waves-toggle" checked autocomplete="off">
                 </div>
-            </div>
+                <div class="control-group">
+                    <label for="water-color">Color</label>
+                    <input type="color" id="water-color" value="#1e90ff" autocomplete="off">
+                    <span id="water-color-value">#1e90ff</span>
+                </div>
 
             <!-- Clouds -->
             <div class="control-section">
@@ -194,8 +198,8 @@
                     <span id="cloud-color-value">#FFFFFF</span>
                 </div>
                 <div class="control-group">
-                    <label for="cloud-type">Tipo de Nuvem</label>
-                    <select id="cloud-type">
+                    <label for="cloud-type">Cloud Type</label>
+                    <select id="cloud-type" autocomplete="off">
                         <option value="cloud1">cloud1</option>
                         <option value="cloud2">cloud2</option>
                         <option value="cloud3" selected>cloud3</option>
@@ -286,32 +290,31 @@
             
             <!-- Objects / Rings -->
             <div class="control-section">
-                <h4>Objetos</h4>
+                <h4>Objects</h4>
                 <div class="stats-display">
                     <div class="stat-item">
-                        <span class="stat-label">Anéis Ativos</span>
+                        <span class="stat-label">Actives</span>
                         <span id="ring-count" class="stat-value">0</span>
                     </div>
+                    <div class="control-group">
+                        <button id="add-ring-btn" class="action-button">+</button>
+                        <button id="clear-rings-btn" class="action-button danger">-</button>
+                    </div>
                 </div>
-                <div class="control-group">
-                    <button id="add-ring-btn" class="action-button">Adicionar Anel</button>
-                </div>
-                <div class="control-group">
-                    <button id="clear-rings-btn" class="action-button danger">Limpar Todos</button>
-                </div>
+                
             </div>
 
-            <!-- Time Attack Game -->
+            <!-- Game -->
             <div class="control-section">
-                <h4>Collect Game</h4>
+                <h4>Game</h4>
                 
                 <div class="game-stats">
                     <div class="stat-item">
-                        <span class="stat-label">Tempo</span>
+                        <span class="stat-label">Time</span>
                         <span id="game-timer" class="stat-value highlight">30.0s</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Anéis</span>
+                        <span class="stat-label">Rings</span>
                         <span class="stat-value">
                             <span id="game-score">0</span> / <span id="game-target">10</span>
                         </span>
@@ -322,20 +325,20 @@
 
                 <div class="control-group">
                     <button id="game-start-btn" class="action-button primary">
-                        ▶ Iniciar Jogo
+                        ▶
                     </button>
                 </div>
 
                 <div class="control-group">
                     <button id="game-restart-btn" class="action-button secondary" style="display: none;">
-                        ▶ Reiniciar
+                        ▶
                     </button>
                 </div>
             </div>
 
             <!-- Other Settings -->
             <div class="control-section">
-                <h4>Outros</h4>
+                <h4>Other Settings</h4>
                 <div class="control-group">
                     <label for="wireframe-toggle">Wireframe</label>
                     <input type="checkbox" id="wireframe-toggle" autocomplete="off">
@@ -343,6 +346,20 @@
                 <div class="control-group">
                     <label for="stars-toggle">Stars</label>
                     <input type="checkbox" id="stars-toggle" autocomplete="off" checked>
+                </div>
+                <div class="control-group">
+                    <label for="preset-choice">Presets</label>
+                    <select id="preset-choice" autocomplete="off">
+                        <option value="realista">Reaslim</option>
+                        <option value="vibrante" selected>Vibrant</option>
+                        <option value="verde">Green Planet</option>
+                        <option value="deserto">Desert</option>
+                        <option value="gelo">Ice</option>
+                        <option value="vulcanico">Volcanique</option>
+                        <option value="oceano">Ocean</option>
+                        <option value="toxico">Toxic</option>
+                        <option value="marte">Mars</option>
+                    </select>
                 </div>
             </div>
         </div>

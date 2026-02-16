@@ -531,3 +531,4 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
 
     handleAnimation();
 }
+

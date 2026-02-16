@@ -72,12 +72,9 @@ export class Physics {
             let angleDiff = this.normalizeAngle(nav.targetAngle - cfg.angle);
             let inclDiff = nav.targetInclination - cfg.inclination;
             
-            
-            // Interpolar
             cfg.angle += angleDiff * nav.lerpSpeed;
             cfg.inclination += inclDiff * nav.lerpSpeed;
             
-            // Chegou ao destino?
             if (Math.abs(angleDiff) < nav.arrivalThreshold && 
                 Math.abs(inclDiff) < nav.arrivalThreshold) {
                 nav.isNavigating = false;

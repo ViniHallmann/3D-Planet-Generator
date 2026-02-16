@@ -18,3 +18,4 @@ function createProgram(gl, vertexShader, fragmentShader) {
 }
 
 export { createShader, createProgram };
+

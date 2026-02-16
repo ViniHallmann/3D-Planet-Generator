@@ -1,7 +1,8 @@
 import { getControlsElements } from '../config/elements.js';
-import { hexToRgb } from '../utils/utils.js';
+import { hexToRgb, rgbToHex } from '../utils/utils.js';
 import { loadTexture } from '../utils/loader.js'; 
 import { CONSTANTS } from '../config/constants.js';
+import { PRESETS } from '../config/defaults.js';
 
 export function setupControls(state, renderer) {
 
@@ -138,7 +139,9 @@ export function setupControls(state, renderer) {
 
     //WATER
     setupInputListeners(elements.waterOpacity, elements.waterOpacityValue, state.water, 'waterOpacity', parseFloat, (val) => val.toFixed(2), false);
-
+    setupInputListeners(elements.waterColor, elements.waterColorValue, state.water, 'waterColor', (val) => hexToRgb(val), (val) => {
+        return `R: ${Math.round(val[0]*255)} G: ${Math.round(val[1]*255)} B: ${Math.round(val[2]*255)}`;
+    }, false);
 
     //CLOUDS
     setupInputListeners(elements.cloudSpeed, elements.cloudSpeedValue, state.clouds, 'cloudSpeed', parseFloat, (val) => val.toFixed(2), false);
@@ -295,4 +298,27 @@ export function setupControls(state, renderer) {
         const newTexture = await loadTexture(renderer, texturePath, 512);
         renderer.setCloudTexture(newTexture);
     });
+
+    //PRESET
+    elements.presetChoise.addEventListener('change', (e) => {
+        const presetKey = e.target.value.toLowerCase();
+        const preset = PRESETS[presetKey];
+        Object.keys(preset.layerColors).forEach(layerKey => {
+            state.layerColors[layerKey] = [...preset.layerColors[layerKey]];
+        });
+        state.shaders.slopeColor = [...preset.slopeColor];
+            
+
+        for (let i = 0; i < CONSTANTS.MAX_LAYERS; i++) {
+            const colorInput = document.getElementById(`layer${i}-color`);
+            if (colorInput) {
+                colorInput.value = rgbToHex(preset.layerColors[`layer${i}`]);
+            }
+        }
+    
+        renderer.setLayerColors(state.layerColors);
+        renderer.setSlopeColor(state.shaders.slopeColor);
+    });
+    
+    
 }
