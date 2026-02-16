@@ -4,8 +4,7 @@ import { CONSTANTS } from '../config/constants.js';
 import { TerrainHeight } from '../utils/terrainHeight.js';
 import { Game } from '../core/game.js';
 
-export function setupHandlers(canvas, state, renderer, physics, plane, ringManager, raycaster, ringGeometry) {
-    
+export function setupHandlers(canvas, state, renderer, physics, plane, ringManager, raycaster, ringGeometry) {    
     const game = new Game(state);
     // function getOrbitRadius(terrainDisplacement, x, y, z) {
     //     const baseRadius = CONSTANTS.ORBIT_RADIUS + (terrainDisplacement * 0.3);
@@ -129,7 +128,6 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         ring.baseDirection = [...normalizedDirection]; // Salvar a direção base
         
         addRingToScene(ring);
-        console.log('Anel adicionado na posição:', position);
         updateRingCount();
     };
 
@@ -144,7 +142,6 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         }
         ringObjects.length = 0;
         updateRingCount();
-        console.log('Todos os anéis foram removidos');
     };
 
     function handleZoom(event) {
@@ -157,19 +154,61 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
 
     function handleMouseDown(event) {
         if (state.app.isMouseOverUI) return;
-        if (event.button !== state.physics.LEFT_BUTTON_VALUE) return; 
         
-        state.camera.isDragging = true;
-        state.camera.lastMouseX = event.clientX;
-        state.camera.lastMouseY = event.clientY;
+        if (event.button === 0) {
+            event.preventDefault();
+            
+            if (state.app.topDownMode) {
+                return;
+            }
+            
+            const cameraPos = {
+                x: state.camera.radius * Math.sin(state.camera.phi) * Math.cos(state.camera.theta),
+                y: state.camera.radius * Math.cos(state.camera.phi),
+                z: state.camera.radius * Math.sin(state.camera.phi) * Math.sin(state.camera.theta)
+            };
+            
+            const aspect = canvas.width / canvas.height;
+            const projectionMatrix = mat4.create();
+            mat4.perspective(projectionMatrix, Math.PI / 4, aspect, 0.1, 100);
+            
+            const viewMatrix = mat4.create();
+            mat4.lookAt(viewMatrix, [cameraPos.x, cameraPos.y, cameraPos.z], [0, 0, 0], [0, 1, 0]);
+            
+            const ray = raycaster.createRay(event.clientX, event.clientY, cameraPos, projectionMatrix, viewMatrix);
+            
+            const averageRadius = 1.5 + (state.shaders.terrainDisplacement * 0.3);
+            const result = raycaster.intersectSphere(ray, [0, 0, 0], averageRadius);
+            
+            if (result.hit) {
+                const len = Math.sqrt(result.point[0]**2 + result.point[1]**2 + result.point[2]**2);
+                const normalizedDirection = [
+                    result.point[0] / len,
+                    result.point[1] / len,
+                    result.point[2] / len
+                ];
+                physics.navigateTo(normalizedDirection);
+            }
+            return;
+        }
         
-        canvas.style.cursor = 'grabbing';
+        // BOTÃO DO MEIO (1) - ROTACIONAR PLANETA
+        if (event.button === 1) {
+            event.preventDefault();
+            state.camera.isDragging = true;
+            state.camera.lastMouseX = event.clientX;
+            state.camera.lastMouseY = event.clientY;
+            canvas.style.cursor = 'grabbing';
+            return;
+        }
     }
 
     function handleMouseUp(event) {
-        if (event.button !== state.physics.LEFT_BUTTON_VALUE) return;
-        state.camera.isDragging = false;
-        canvas.style.cursor = 'grab';
+        // Aceitar botão esquerdo (0) ou botão do meio (1)
+        if (event.button === 0 || event.button === 1) {
+            state.camera.isDragging = false;
+            canvas.style.cursor = 'grab';
+        }
     }
 
     function handleMouseLeave(event) {
