@@ -238,6 +238,24 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
     let fpsFrames = 0;
     let fpsLastTime = performance.now();
 
+    const intro = {
+        isActive: true,
+        phase: 0,
+        startTime: performance.now(),
+
+        cameraStartRadius: 200,
+        cameraEndRadius: state.camera.radius,
+        cameraDuration: 2000,
+        
+        scaleDuration: 1500,
+    };
+
+
+    state.camera.radius = intro.cameraStartRadius;
+    state.shaders.planetScale = 0;
+    state.clouds.planetScale = 0;
+    state.cloudShadowParams.planetScale = 0;
+
     function handleAnimation() {
 
         fpsFrames++;
@@ -249,6 +267,38 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         }
         
         const time = performance.now() / 1000;
+
+        if (intro.isActive) {
+            const now = performance.now();
+            const elapsed = now - intro.startTime;
+            
+            if (intro.phase === 0) {
+                // ZOOM: de longe para perto
+                const progress = Math.min(elapsed / intro.cameraDuration, 1.0);
+                const easedProgress = easing.easeOutCubic(progress);
+                
+                state.camera.radius = intro.cameraStartRadius + 
+                    (intro.cameraEndRadius - intro.cameraStartRadius) * easedProgress;
+                
+                // Quando zoom chega em ~70%, começa o scale do planeta
+                if (progress >= 0.7 && !physics.animation.isAnimating) {
+                    physics.animation.isAnimating = true;
+                    physics.animation.startTime = now;
+                    physics.animation.startScale = 0;
+                    physics.animation.targetScale = 1.0;
+                    physics.animation.duration = intro.scaleDuration;
+                }
+                
+                if (progress >= 1.0) {
+                    intro.phase = 1;
+                }
+            } else if (intro.phase === 1) {
+                // Espera scale do planeta terminar
+                if (!physics.animation.isAnimating) {
+                    intro.isActive = false;
+                }
+            }
+        }
         physics.updatePlanetPhysics(plane, state.app.topDownMode, state.physics, state.shaders.terrainDisplacement);
 
         ringObjects.forEach(ringObj => {
@@ -256,6 +306,10 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
                 ringObj.position[0] = ringObj.ringReference.position[0];
                 ringObj.position[1] = ringObj.ringReference.position[1];
                 ringObj.position[2] = ringObj.ringReference.position[2];
+
+                ringObj.ringReference.updateAnimation();
+                const s = ringObj.ringReference.scale * 0.1;
+                ringObj.scale = [s, s, s];
             }
         });
 
@@ -263,7 +317,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         ringManager.cleanup();
         for (let i = ringObjects.length - 1; i >= 0; i--) {
             const obj = ringObjects[i];
-            if (obj.ringReference && obj.ringReference.collected) {
+            if (obj.ringReference && obj.ringReference.collected && !obj.ringReference.shouldRender()) {
                 const rendererIndex = renderer.objects.indexOf(obj);
                 if (rendererIndex > -1) renderer.objects.splice(rendererIndex, 1);
                 ringObjects.splice(i, 1);
@@ -305,6 +359,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         renderer.cameraPosition = cameraPosition;
 
         //VIRAR FUNCAO DEPOIS
+        // ISSO AQUI EH A ANIMACAO DE ESCALA DO PLANETA NO INICIO QUANDO ENTRA NO PROJETO
         if (physics.animation.isAnimating) {
             const elapsed = performance.now() - physics.animation.startTime;
             const progress = Math.min(elapsed / physics.animation.duration, 1.0);
