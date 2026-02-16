@@ -6,18 +6,10 @@ import { Game } from '../core/game.js';
 
 export function setupHandlers(canvas, state, renderer, physics, plane, ringManager, raycaster, ringGeometry) {    
     const game = new Game(state);
-    // function getOrbitRadius(terrainDisplacement, x, y, z) {
-    //     const baseRadius = CONSTANTS.ORBIT_RADIUS + (terrainDisplacement * 0.3);
-        
-    //     if (renderer && x !== undefined) {
-    //         const terrainHeight = renderer.getTerrainHeightAtPosition(x, y, z, terrainDisplacement);
-    //         const safetyMargin = 0.1;
-    //         return Math.max(baseRadius, terrainHeight + safetyMargin);
-    //     }
-        
-    //     return baseRadius;
-    // }
     const terrainHeight = new TerrainHeight(renderer.noiseGenerator);
+    let mouseX = 0;
+    let mouseY = 0;
+    const keysPressed = {};
     
     function getTerrainHeight(normalizedDirection, heightOffset = 0.3) {
         return terrainHeight.getHeightAtPosition(
@@ -96,17 +88,6 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
             }
         });
     }
-
-    // window.addRingToScene = function() {
-    //     const ringRadius = getOrbitRadius(state.shaders.terrainDisplacement);
-        
-    //     const ring = ringManager.addRandomRing(ringRadius);
-    //     addRingToScene(ring);
-    //     console.log('Anel adicionado na posição:', ring.position);
-    //     console.log('Raio com terrain displacement:', ringRadius);
-    //     updateRingCount();
-    // };
-
     
     window.updateRingHeights = updateRingPositions;
 
@@ -151,49 +132,40 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         const zoomStep = 0.35;
         state.camera.radius += delta * zoomStep;
     }
-
     function handleMouseDown(event) {
         if (state.app.isMouseOverUI) return;
         
+        const cameraPos = {
+            x: state.camera.radius * Math.sin(state.camera.phi) * Math.cos(state.camera.theta),
+            y: state.camera.radius * Math.cos(state.camera.phi),
+            z: state.camera.radius * Math.sin(state.camera.phi) * Math.sin(state.camera.theta)
+        };
+        
+        const aspect = canvas.width / canvas.height;
+        const projectionMatrix = mat4.create();
+        mat4.perspective(projectionMatrix, Math.PI / 4, aspect, 0.1, 100);
+        
+        const viewMatrix = mat4.create();
+        mat4.lookAt(viewMatrix, [cameraPos.x, cameraPos.y, cameraPos.z], [0, 0, 0], [0, 1, 0]);
+        
+        const ray = raycaster.createRay(event.clientX, event.clientY, cameraPos, projectionMatrix, viewMatrix);
+        
+        const averageRadius = 1.5 + (state.shaders.terrainDisplacement * 0.3);
+        const result = raycaster.intersectSphere(ray, [0, 0, 0], averageRadius);
+
+        if (!result.hit) return;
+
+        const normalizedPoint = raycaster.normalizeToSphere(result.point);
+
         if (event.button === 0) {
             event.preventDefault();
             
-            if (state.app.topDownMode) {
-                return;
-            }
+            if (state.app.topDownMode) return;
             
-            const cameraPos = {
-                x: state.camera.radius * Math.sin(state.camera.phi) * Math.cos(state.camera.theta),
-                y: state.camera.radius * Math.cos(state.camera.phi),
-                z: state.camera.radius * Math.sin(state.camera.phi) * Math.sin(state.camera.theta)
-            };
-            
-            const aspect = canvas.width / canvas.height;
-            const projectionMatrix = mat4.create();
-            mat4.perspective(projectionMatrix, Math.PI / 4, aspect, 0.1, 100);
-            
-            const viewMatrix = mat4.create();
-            mat4.lookAt(viewMatrix, [cameraPos.x, cameraPos.y, cameraPos.z], [0, 0, 0], [0, 1, 0]);
-            
-            const ray = raycaster.createRay(event.clientX, event.clientY, cameraPos, projectionMatrix, viewMatrix);
-            
-            const averageRadius = 1.5 + (state.shaders.terrainDisplacement * 0.3);
-            const result = raycaster.intersectSphere(ray, [0, 0, 0], averageRadius);
-            
-            if (result.hit) {
-                const len = Math.sqrt(result.point[0]**2 + result.point[1]**2 + result.point[2]**2);
-                const normalizedDirection = [
-                    result.point[0] / len,
-                    result.point[1] / len,
-                    result.point[2] / len
-                ];
-                physics.navigateTo(normalizedDirection);
-            }
-            return;
+            physics.navigateTo(normalizedPoint);
         }
         
-        // BOTÃO DO MEIO (1) - ROTACIONAR PLANETA
-        if (event.button === 1) {
+        else if (event.button === 1) {
             event.preventDefault();
             state.camera.isDragging = true;
             state.camera.lastMouseX = event.clientX;
@@ -202,9 +174,8 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
             return;
         }
     }
-
+    
     function handleMouseUp(event) {
-        // Aceitar botão esquerdo (0) ou botão do meio (1)
         if (event.button === 0 || event.button === 1) {
             state.camera.isDragging = false;
             canvas.style.cursor = 'grab';
@@ -217,6 +188,9 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
     }
 
     function handleMouseMove(event) {
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+        
         if (!state.camera.isDragging || state.app.isMouseOverUI) return;
 
         const deltaX = event.clientX - state.camera.lastMouseX;
@@ -230,6 +204,36 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
 
         state.camera.lastMouseX = event.clientX;
         state.camera.lastMouseY = event.clientY;
+    }
+
+    function handleTerrainInput(cameraPos) {
+        if (!keysPressed['r'] && !keysPressed['t']) return;
+
+        const aspect = canvas.width / canvas.height;
+        const projectionMatrix = mat4.create();
+        mat4.perspective(projectionMatrix, Math.PI / 4, aspect, 0.1, 100);
+
+        const viewMatrix = mat4.create();
+        mat4.lookAt(viewMatrix, [cameraPos.x, cameraPos.y, cameraPos.z], [0, 0, 0], [0, 1, 0]);
+
+        const ray = raycaster.createRay(mouseX, mouseY, cameraPos, projectionMatrix, viewMatrix);
+
+        const averageRadius = 1.5 + (state.shaders.terrainDisplacement * 0.3);
+        const result = raycaster.intersectSphere(ray, [0, 0, 0], averageRadius);
+
+        if (result.hit) {
+            const normalizedPoint = raycaster.normalizeToSphere(result.point);
+            
+            const brushRadius = 0.15;
+            const intensity = 0.01; 
+            const strength = keysPressed['r'] ? intensity : -intensity;
+
+            renderer.applyBrush(normalizedPoint, brushRadius, strength);
+
+            if (window.updateRingHeights) {
+                window.updateRingHeights();
+            }
+        }
     }
 
     // ARRUMAR E DEIXAR ISSO AQUI IMPLEMENTADO DE FORMA CORRETA DEPOIS
@@ -358,6 +362,8 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
             };
         }
 
+        handleTerrainInput(cameraPosition);
+
         const rotationMatrixToUse = state.app.topDownMode ? physics.planetRotationMatrix : null;
         renderer.cameraPosition = cameraPosition;
 
@@ -429,11 +435,16 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
     }
 
     window.addEventListener('keydown', (e) => {
-        if(physics.keys.hasOwnProperty(e.key.toLowerCase())) physics.keys[e.key.toLowerCase()] = true;
+        const key = e.key.toLowerCase();
+        keysPressed[key] = true;
+        if(physics.keys.hasOwnProperty(key)) physics.keys[key] = true;
     });
 
     window.addEventListener('keyup', (e) => {
-        if(physics.keys.hasOwnProperty(e.key.toLowerCase())) physics.keys[e.key.toLowerCase()] = false;
+        const key = e.key.toLowerCase();
+        keysPressed[key] = false;
+
+        if(physics.keys.hasOwnProperty(key)) physics.keys[key] = false;
     });
 
     window.addEventListener('keydown', (e) => {
