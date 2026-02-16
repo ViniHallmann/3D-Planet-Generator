@@ -13,7 +13,7 @@ export class Ring {
         this.animationPhase = 0;
         this.animationProgress = 0;
         this.animationSpeed = 0.05;
-        this.maxScale = 1.3; 
+        this.maxScale = 1.3;
 
         const len = Math.sqrt(position[0]**2 + position[1]**2 + position[2]**2);
         this.baseDirection = [
@@ -29,20 +29,37 @@ export class Ring {
         this.position[2] = this.baseDirection[2] * radius;
     }
 
+    updateIdleAnimation(deltaTime = 0.016) {
+        if (this.collected) return;
+
+        this.idleTime += deltaTime * this.idleSpeed;
+        
+        const breathe = Math.sin(this.idleTime) * 0.5 + 0.5;
+        const idleScaleBonus = breathe * this.idleAmplitude;
+        
+        this.idleRotation += deltaTime * 0.5;
+        
+        return {
+            scaleBonus: idleScaleBonus,
+            rotation: this.idleRotation,
+            bobOffset: Math.sin(this.idleTime * 1.5) * 0.02
+        };
+    }
+
     updateAnimation() {
         if (!this.isAnimating) return false;
         
         this.animationProgress += this.animationSpeed;
         
         if (this.animationPhase === 0) {
-            this.scale = lerp(1.0, this.maxScale, easing.easeOutCubic(this.animationProgress));
+            this.scale = lerp(1.0, this.maxScale, easing.easeOutBack(this.animationProgress));
             
             if (this.animationProgress >= 1.0) {
                 this.animationProgress = 0;
                 this.animationPhase = 1;
             }
         } else {
-            this.scale = lerp(this.maxScale, 0, easing.easeOutCubic(this.animationProgress));
+            this.scale = lerp(this.maxScale, 0, easing.easeInCubic(this.animationProgress));
             
             if (this.animationProgress >= 1.0) {
                 this.scale = 0;
@@ -58,49 +75,12 @@ export class Ring {
         return !this.collected || this.isAnimating;
     }
 
-    
-    // checkCollision(point, radius = 0.2) {
-    //     if (this.collected) return false;
-    //     const dx = point[0] - this.position[0];
-    //     const dy = point[1] - this.position[1];
-    //     const dz = point[2] - this.position[2];
-    //     return Math.sqrt(dx*dx + dy*dy + dz*dz) < radius;
-    // }
-
-    checkCollisions(point, radius = 0.1, rotationMatrix = null) {
-        this.rings.forEach(ring => {
-            if (ring.collected) return;
-            
-            let ringPos = ring.position;
-            if (rotationMatrix) {
-                ringPos = this.transformPoint(ring.position, rotationMatrix);
-            }
-            
-
-            const angularDist = this.getAngularDistance(point, ringPos);
-            
-            const avgSphereRadius = 1.5;
-            const angularRadius = radius / avgSphereRadius;
-            
-            if (angularDist < angularRadius) {
-                const heightDiff = Math.abs(
-                    Math.sqrt(point[0]**2 + point[1]**2 + point[2]**2) -
-                    Math.sqrt(ringPos[0]**2 + ringPos[1]**2 + ringPos[2]**2)
-                );
-                
-                if (heightDiff < 0.3) {
-                    if (ring.collect()) {
-                        this.score++;
-                        console.log('Ring coletado! Score:', this.score);
-                    }
-                }
-            }
-        });
-    }
-
     collect() {
         if (!this.collected) {
             this.collected = true;
+            this.isAnimating = true;
+            this.animationPhase = 0;
+            this.animationProgress = 0;
             return true;
         }
         return false;
