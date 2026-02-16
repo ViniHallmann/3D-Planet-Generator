@@ -1,11 +1,19 @@
 import { CONSTANTS } from '../config/constants.js'
 import { easing } from '../utils/utils.js';
+import { lerp } from '../utils/noise.js';
 
 export class Ring {
     constructor(position, options = {}) {
         this.position = [...position];
         this.color = options.color || [1.0, 0.8, 0.2];
         this.collected = false;
+
+        this.scale = 1.0;
+        this.isAnimating = false;
+        this.animationPhase = 0;
+        this.animationProgress = 0;
+        this.animationSpeed = 0.05;
+        this.maxScale = 1.3; 
 
         const len = Math.sqrt(position[0]**2 + position[1]**2 + position[2]**2);
         this.baseDirection = [
@@ -19,6 +27,35 @@ export class Ring {
         this.position[0] = this.baseDirection[0] * radius;
         this.position[1] = this.baseDirection[1] * radius;
         this.position[2] = this.baseDirection[2] * radius;
+    }
+
+    updateAnimation() {
+        if (!this.isAnimating) return false;
+        
+        this.animationProgress += this.animationSpeed;
+        
+        if (this.animationPhase === 0) {
+            this.scale = lerp(1.0, this.maxScale, easing.easeOutCubic(this.animationProgress));
+            
+            if (this.animationProgress >= 1.0) {
+                this.animationProgress = 0;
+                this.animationPhase = 1;
+            }
+        } else {
+            this.scale = lerp(this.maxScale, 0, easing.easeOutCubic(this.animationProgress));
+            
+            if (this.animationProgress >= 1.0) {
+                this.scale = 0;
+                this.isAnimating = false;
+                return true; // Animação completa
+            }
+        }
+        
+        return false; // Animação ainda em progresso
+    }
+
+    shouldRender() {
+        return !this.collected || this.isAnimating;
     }
 
     
@@ -139,7 +176,7 @@ export class RingManager {
     }
 
     cleanup() {
-        this.rings = this.rings.filter(r => !r.collected);
+        this.rings = this.rings.filter(r => !r.collected || r.isAnimating);
     }
 
     getActiveCount() {
