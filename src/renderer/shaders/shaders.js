@@ -209,21 +209,14 @@ export const fragmentShaderSource = glsl`#version 300 es
         //REFERENCIA DO CODIGO DO SLOPE: https://www.youtube.com/watch?v=6bnFfE82AJg&t=60s
         // Usa a normal do terreno (calculada a partir dos triângulos deslocados) para detectar slope
         float flatness = dot(normalize(v_terrainNormal), normalize(v_modelPosition));
-        
-        // Calcula o fator de slope (0 = plano, 1 = penhasco vertical)
         float slope = 1.0 - flatness;
-        
-        // Suaviza a transição entre terreno normal e rocha
         float slopeFactor = smoothstep(u_slopeThreshold, u_slopeThreshold + u_slopeBlend, slope);
-        
-        // Slope só é aplicado a partir do layer4 (vegetação para cima)
         float heightFactor = smoothstep(u_layer4Level - 0.05, u_layer4Level + 0.05, height);
         slopeFactor *= heightFactor;
 
         //REFERENCIA CODIGO VARIACAO HEIGHT VALUE: https://www.youtube.com/watch?v=fZh2p0odPyQ&t=175s
         //height += (hash(v_modelPosition.xz * 50.) * 2.0 - 1.0) * 0.0025;
 
-        // Obtém todas as cores das layers
         vec3 colors[10];
         colors[0] = u_layer0Color;
         colors[1] = u_layer1Color;
@@ -236,7 +229,6 @@ export const fragmentShaderSource = glsl`#version 300 es
         colors[8] = u_layer8Color;
         colors[9] = u_layer9Color;
 
-        // Obtém todos os níveis das layers
         float levels[10];
         levels[0] = u_layer0Level;
         levels[1] = u_layer1Level;
@@ -249,35 +241,30 @@ export const fragmentShaderSource = glsl`#version 300 es
         levels[8] = u_layer8Level;
         levels[9] = u_layer9Level;
 
-        // Cor da última layer ativa (índice = numActiveLayers - 1)
         int lastActiveIdx = u_numActiveLayers - 1;
         vec3 lastActiveColor = colors[lastActiveIdx];
 
         vec4 baseColor;
         
-        // Se só tem 1 layer ativa, usa só essa cor
         if (u_numActiveLayers == 1) {
             baseColor = vec4(colors[0], 1.0);
         }
-        // Se tem 2 layers ativas
         else if (u_numActiveLayers == 2) {
             if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
             else baseColor = vec4(colors[1], 1.0);
         }
-        // Se tem 3 layers ativas
         else if (u_numActiveLayers == 3) {
             if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
             else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
             else baseColor = vec4(colors[2], 1.0);
         }
-        // Se tem 4 layers ativas
+
         else if (u_numActiveLayers == 4) {
             if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
             else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
             else if (height < levels[2]) baseColor = mix(vec4(colors[2], 1.0), vec4(colors[3], 1.0), smoothstep(levels[2] - 0.05, levels[2] + 0.05, height));
             else baseColor = vec4(colors[3], 1.0);
         }
-        // Se tem 5 layers ativas
         else if (u_numActiveLayers == 5) {
             if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
             else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
@@ -285,7 +272,6 @@ export const fragmentShaderSource = glsl`#version 300 es
             else if (height < levels[3]) baseColor = mix(vec4(colors[3], 1.0), vec4(colors[4], 1.0), smoothstep(levels[3] - 0.05, levels[3] + 0.05, height));
             else baseColor = vec4(colors[4], 1.0);
         }
-        // Se tem 6 layers ativas
         else if (u_numActiveLayers == 6) {
             if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
             else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
@@ -294,7 +280,6 @@ export const fragmentShaderSource = glsl`#version 300 es
             else if (height < levels[4]) baseColor = mix(vec4(colors[4], 1.0), vec4(colors[5], 1.0), smoothstep(levels[4] - 0.05, levels[4] + 0.05, height));
             else baseColor = vec4(colors[5], 1.0);
         }
-        // Se tem 7 layers ativas
         else if (u_numActiveLayers == 7) {
             if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
             else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
@@ -304,7 +289,6 @@ export const fragmentShaderSource = glsl`#version 300 es
             else if (height < levels[5]) baseColor = mix(vec4(colors[5], 1.0), vec4(colors[6], 1.0), smoothstep(levels[5] - 0.05, levels[5] + 0.05, height));
             else baseColor = vec4(colors[6], 1.0);
         }
-        // Se tem 8 layers ativas
         else if (u_numActiveLayers == 8) {
             if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
             else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
@@ -315,7 +299,6 @@ export const fragmentShaderSource = glsl`#version 300 es
             else if (height < levels[6]) baseColor = mix(vec4(colors[6], 1.0), vec4(colors[7], 1.0), smoothstep(levels[6] - 0.05, levels[6] + 0.05, height));
             else baseColor = vec4(colors[7], 1.0);
         }
-        // Se tem 9 layers ativas
         else if (u_numActiveLayers == 9) {
             if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
             else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
@@ -327,7 +310,6 @@ export const fragmentShaderSource = glsl`#version 300 es
             else if (height < levels[7]) baseColor = mix(vec4(colors[7], 1.0), vec4(colors[8], 1.0), smoothstep(levels[7] - 0.05, levels[7] + 0.05, height));
             else baseColor = vec4(colors[8], 1.0);
         }
-        // Se tem 10 layers ativas (todas)
         else {
             if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
             else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
@@ -340,8 +322,7 @@ export const fragmentShaderSource = glsl`#version 300 es
             else if (height < levels[8]) baseColor = mix(vec4(colors[8], 1.0), vec4(colors[9], 1.0), smoothstep(levels[8] - 0.05, levels[8] + 0.05, height));
             else baseColor = vec4(colors[9], 1.0);
         }
-        
-        // Mistura cor do terreno com cor da rocha/penhasco baseado no slope
+
         vec4 slopeColorFinal = vec4(u_slopeColor, 1.0);
         return mix(baseColor, slopeColorFinal, slopeFactor);
     }
@@ -587,11 +568,13 @@ export const starVertexShaderSource = glsl`#version 300 es
     uniform mat4 u_viewProjectionMatrix;
 
     out float v_brightness;
+    out float v_colorSeed;
 
     void main() {
         gl_Position = u_viewProjectionMatrix * vec4(a_position, 1.0);
         gl_PointSize = a_size;
         v_brightness = a_size / 3.0;
+        v_colorSeed = fract(dot(a_position, vec3(12.9898, 78.233, 45.164)));
     }
 `;
 
@@ -599,6 +582,7 @@ export const starFragmentShaderSource = glsl`#version 300 es
     precision highp float;
 
     in float v_brightness;
+    in float v_colorSeed;
     out vec4 outColor;
 
     void main() {
@@ -607,14 +591,37 @@ export const starFragmentShaderSource = glsl`#version 300 es
 
         float brightness = (1.0 - dist * 2.0) * v_brightness;
 
-        vec3 starColor = vec3(1.0);
-        float colorVariation = fract(v_brightness * 123.456);
-        if (colorVariation > 0.95) {
-            starColor = vec3(1.0, 0.9, 0.95); // Rosa muito claro
-        } else if (colorVariation > 0.90) {
-            starColor = vec3(0.95, 0.95, 1.0); // Azul muito claro
+        vec3 starColor;
+        
+        if (v_colorSeed < 0.05) {
+            starColor = mix(vec3(0.6, 0.8, 1.0), vec3(0.8, 0.9, 1.0), v_colorSeed * 20.0);
+            brightness *= 1.3;
+        }
+        else if (v_colorSeed < 0.15) {
+            starColor = mix(vec3(0.85, 0.9, 1.0), vec3(0.95, 0.97, 1.0), (v_colorSeed - 0.05) * 10.0);
+            brightness *= 1.1;
+        }
+        else if (v_colorSeed < 0.50) {
+            starColor = mix(vec3(0.95, 0.95, 0.9), vec3(1.0, 1.0, 0.98), (v_colorSeed - 0.15) * 2.86);
+        }
+        else if (v_colorSeed < 0.85) {
+            starColor = mix(vec3(1.0, 0.95, 0.85), vec3(1.0, 0.9, 0.7), (v_colorSeed - 0.50) * 2.86);
+            brightness *= 0.95;
+        }
+        else if (v_colorSeed < 0.97) {
+            starColor = mix(vec3(1.0, 0.7, 0.5), vec3(1.0, 0.6, 0.4), (v_colorSeed - 0.85) * 8.33);
+            brightness *= 0.85;
+        }
+        else {
+            starColor = mix(vec3(1.0, 0.5, 0.3), vec3(0.9, 0.3, 0.2), (v_colorSeed - 0.97) * 33.33);
+            brightness *= 0.7;
         }
 
-        outColor = vec4(starColor * brightness, 1.0);
+        float twinkle = 1.0;
+        if (v_colorSeed > 0.9) {
+            twinkle = 0.7 + sin(v_colorSeed * 100.0) * 0.3;
+        }
+
+        outColor = vec4(starColor * brightness * twinkle, 1.0);
     }
 `;
