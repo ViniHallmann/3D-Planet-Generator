@@ -283,6 +283,14 @@ export class Renderer {
         this.updateTriangleHeightBuffer();
     }
 
+    regenerateGeometry(subdivisions) {
+        this.initializeGeometry(subdivisions);
+        
+        this.triangleHeights = this.calculateTriangleHeights(this.geometry, this.noiseParams);
+        this.updateTriangleHeightBuffer();
+        this.createBuffers(this.geometry);
+    }
+
     calculateTriangleHeights(geometry, params) {
         const numVertices = geometry.positions.length / 3;
         const heights = new Float32Array(numVertices);
@@ -411,7 +419,6 @@ export class Renderer {
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.uniform1i(this.uniformLocations['u_cloudTexture'], 1);
-
     }
 
     setUseColor(useColor) {
@@ -454,15 +461,15 @@ export class Renderer {
         this.gl.uniform1f(this.uniformLocations['u_cloudSpeed'], speed);
     }
 
-    setCloudWarpIntensity(intensity){
-        this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.uniformLocations['u_cloudWarpIntensity'], intensity);
-    }
+    // setCloudWarpIntensity(intensity){
+    //     this.gl.useProgram(this.program);
+    //     this.gl.uniform1f(this.uniformLocations['u_cloudWarpIntensity'], intensity);
+    // }
 
-    setCloudWarpTime(time){
-        this.gl.useProgram(this.program);
-        this.gl.uniform1f(this.uniformLocations['u_cloudWarpTime'], time);
-    }
+    // setCloudWarpTime(time){
+    //     this.gl.useProgram(this.program);
+    //     this.gl.uniform1f(this.uniformLocations['u_cloudWarpTime'], time);
+    // }
 
     setCloudThreshold(threshold){
         this.gl.useProgram(this.program);
