@@ -16,7 +16,6 @@ export const vertexShaderSource = glsl`#version 300 es
     uniform float u_terrainDisplacement;
 
     uniform float u_cloudScale;
-    uniform float u_cloudDisplacementIntensity;
     uniform float u_cloudSpeed;
 
     out vec3 v_normal;
@@ -46,20 +45,6 @@ export const vertexShaderSource = glsl`#version 300 es
         return x * weights.x + y * weights.y + z * weights.z;
     }
 
-    // vec3 gerstnerWave(vec3 position, vec2 direction, float steepness, float wavelength, float speed) {
-    //     float k = 2.0 * 3.14159 / wavelength;
-    //     float c = sqrt(9.8 / k);
-    //     vec2 d = normalize(direction);
-    //     float f = k * (dot(d, position.xz) - c * u_time * speed);
-    //     float a = steepness / k;
-        
-    //     return vec3(
-    //         d.x * a * cos(f),
-    //         a * sin(f),
-    //         d.y * a * cos(f)
-    //     );
-    // }
-
     void main() {
         vec3 pos;
 
@@ -71,18 +56,14 @@ export const vertexShaderSource = glsl`#version 300 es
 
         if (u_renderPass == 2.) {
             float displacementValue = getCloudDisplacement(a_position.xyz);
-            // float cloudBaseHeight = 0.8 + u_terrainDisplacement + (u_cloudScale - 1.0);
-            // float cloudVariation = displacementValue * u_cloudDisplacementIntensity * a_triangleHeight;
             
             float terrainInfluence = 0.5;
             
             float cloudBaseHeight = 1.0 + (u_terrainDisplacement * terrainInfluence) + (u_cloudScale - 1.0);
-            float cloudVariation = displacementValue * u_cloudDisplacementIntensity * a_triangleHeight;
+            float cloudVariation = displacementValue * 0.1 * a_triangleHeight;
 
             pos = a_position.xyz * (cloudBaseHeight + cloudVariation); 
             v_height = 0.0; 
-            
-            
         }
 
         if (u_renderPass == 3.) { //AQUI USA U_TERRAINDISPLACEMENT POIS A SOMBRA EH PROJETADA NA TERRA
@@ -106,54 +87,12 @@ export const vertexShaderSource = glsl`#version 300 es
             v_height = 0.0;
         }
 
-        // if (u_renderPass == 5.) {
-        //     float waterHeightLevel = 0.35;
-        //     float waterRadius = 1.0 + (waterHeightLevel * u_terrainDisplacement);
-            
-        //     vec3 weights = abs(normalize(a_position.xyz));
-        //     weights = max(weights - 0.2, 0.0);
-        //     weights /= dot(weights, vec3(1.0));
-            
-        //     float waveSpeed = 0.1;
-        //     vec3 wavePos = a_position.xyz + vec3(u_time * waveSpeed, 0.0, u_time * waveSpeed * 0.7);
-            
-        //     float wave1 = texture(u_cloudTexture, wavePos.yz * 2.0).r;
-        //     float wave2 = texture(u_cloudTexture, wavePos.xz * 3.0).r;
-        //     float wave3 = texture(u_cloudTexture, wavePos.xy * 1.5).r;
-            
-        //     float waveHeight = (wave1 * weights.x + wave2 * weights.y + wave3 * weights.z) - 0.5;
-            
-        //     float waveAmplitude = 0.01; // Tamanho das ondas
-        //     vec3 waveDisplacement = normalize(a_position.xyz) * waveHeight * waveAmplitude;
-            
-        //     pos = a_position.xyz * waterRadius + waveDisplacement;
-        //     v_height = 0.0;
-        // }
-
-
-        // if (u_renderPass == 5.) {
-        //     float waterHeightLevel = 0.35;
-        //     float waterRadius = 1.0 + (waterHeightLevel * u_terrainDisplacement);
-            
-        //     vec3 basePos = a_position.xyz * waterRadius;
-            
-        //     // Adicionar múltiplas ondas
-        //     vec3 wave = vec3(0.0);
-        //     wave += gerstnerWave(basePos, vec2(1.0, 0.0), 0.5, 0.3, 1.0);
-        //     wave += gerstnerWave(basePos, vec2(0.0, 1.0), 0.3, 0.2, 1.3);
-        //     wave += gerstnerWave(basePos, vec2(1.0, 1.0), 0.2, 0.15, 0.8);
-            
-        //     pos = basePos + wave * 0.01; // Escala do efeito
-        //     v_height = 0.0;
-        // }
-
         gl_Position = u_matrix * vec4(pos, 1.0);
         v_normal = mat3(u_modelMatrix) * a_normal;
         v_modelPosition = pos;
         v_worldPosition = (u_modelMatrix * vec4(pos, 1.0)).xyz;
         v_texcoord = a_texcoord;
         v_modelPosition = pos;
-        //v_modelPosition = a_position.xyz;
     }
 `;
 
@@ -301,21 +240,9 @@ export const fragmentShaderSource = glsl`#version 300 es
         weights = max(weights - 0.2, 0.0);
         weights /= dot(weights, vec3(1.0));
 
-
-        float warpTime = u_time * u_cloudWarpTime * 0.1;
-        vec3 warpOffset = vec3(warpTime, warpTime * 0.5, -warpTime);
-        vec3 warpPos = (pos * scale * 0.5) + warpOffset;
-
-        float wx = texture(u_cloudTexture, warpPos.yz).r;
-        float wy = texture(u_cloudTexture, warpPos.zx).r;
-        float wz = texture(u_cloudTexture, warpPos.xy).r;
-        float warpVal = wx * weights.x + wy * weights.y + wz * weights.z;
-
         float flowTime = u_time * 0.02;
         vec3 flowOffset = vec3(flowTime, 0.0, flowTime * 0.2);
-        
-        // float warpIntensity = 0.4;
-        vec3 mainPos = (pos * scale) + flowOffset + (vec3(warpVal) * u_cloudWarpIntensity);
+        vec3 mainPos = (pos * scale) + flowOffset;
 
         float x = texture(u_cloudTexture, mainPos.yz).r;
         float y = texture(u_cloudTexture, mainPos.zx).r;
@@ -436,6 +363,8 @@ export const fragmentShaderSource = glsl`#version 300 es
 
         if (terrainHeight >= cloudHeight - 0.01) discard;
 
+        if (dot(normal, lightDir) < 0.0) discard;
+
         float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
         if (cloudNoise < u_cloudThreshold) discard;
 
@@ -464,7 +393,11 @@ export const fragmentShaderSource = glsl`#version 300 es
     void main() {
         vec3 normal = normalize(v_normal);
         vec3 lightDir = getLightDirection();
-        float shadow = calculateShadow(v_worldPosition);
+        float shadow = 1.0;
+        if (u_renderPass == 1.0) {
+            shadow = calculateShadow(v_worldPosition);
+        }
+        
         float light = calculateLight(normal, lightDir, shadow);
         
         vec3 rim = vec3(0.0);
@@ -494,148 +427,6 @@ export const fragmentShaderSource = glsl`#version 300 es
 
     }
 
-    // void main() {
-    //     vec3 normal = normalize(v_normal);
-    //     float angle = u_lightAngle;
-    //     float pitch = u_lightPitch;
-    //     vec3 lightDir = getLightDirection();
-    //     float light;
-    //     light = u_lightBrightness;
-
-    //     float shadow = calculateShadow(v_worldPosition);
-    //     vec3 rim = vec3(0.0);
-    //     if (u_showRim == true) {
-    //         rim = rimLight(normal, u_viewPosition, v_worldPosition);
-    //     }
-
-    //     //vec3 rim = rimLight(normal, u_viewPosition, v_worldPosition);
-
-    //     if (u_renderPass == 1.) {
-    //         if (u_lambertianDiffuse == true) {
-    //             light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r * shadow;
-    //         } else {
-    //             light = 1.0;
-    //         }
-    //         if (u_useColor) {
-    //             outColor = vec4(u_color * light, 1.0);
-    //         } else {
-    //             vec3 color = defineTerrainColor(v_height).rgb;
-    //             outColor = vec4(color * light, 1.0);
-    //         }
-
-    //         //REFERENCIA DESSA PARTE DO CODIGO https://www.youtube.com/watch?v=6bnFfE82AJg
-    //         //DEPOIS TRANSFORMAR EM FUNCAO E ADICIONAR VARIAVEIS PARA CONTROLAR AS CORES E NIVEIS
-    //         //ADICIONAR TAMBEM ONDE FICA A LINHA DA AGUA E AREIA
-
-    //         // ISSO AQUI TEM QUE SAIR DAQUI E VIRAR UMA FUNCAO!!!!
-    //         //WAVES DAS AGUAS
-    //         if (v_height >= u_layer1Level && v_height < u_layer2Level) {
-    //             float distanceToSand = u_layer2Level - v_height;
-    //             float maxTransparencyDepth = u_layer3Level - u_layer2Level;
-                
-    //             float normalizeDepth = clamp(distanceToSand / maxTransparencyDepth, 0.0, 1.0);
-    //             float waterLerp = pow(1.0 - normalizeDepth, 2.0);
-                
-    //             vec3 sandColor = u_layer3Color * light;
-    //             outColor.rgb = mix(outColor.rgb, sandColor, waterLerp);
-                
-    //             float waveZone = 0.02;
-    //             float distanceFromSand = v_height - u_layer2Level;
-                
-    //             if (distanceToSand < waveZone) {
-    //                 float waveIntensity = 1.0 - (distanceToSand / waveZone);
-    //                 float wave = sin(u_time * 2.0 + distanceToSand * 150.0) * 0.5 + 0.5;
-    //                 wave *= waveIntensity;
-    //                 outColor.rgb += wave / 4.0 * light;
-    //             }
-    //         }
-    //         //SE DER TEMPO E LEMBRAR:
-    //         //AMBOS EFEITOS VISUAIS SAO BASEADOS EM LAYERS. MAS E SE A PESSOA FIZER UM PLANETA ARIDO POR EXEMPLO?
-    //         //TEM QUE TER A OPCAO DE DESATIVAR ESSES EFEITOS VISUAIS, OU PELO MENOS FAZER COM QUE ELAS CONSIGAM ESCOLHER EM QUE LAYER OCORRE O EFEITO
-    //         //SE ALGUEM FIZER UM PLANETA COM VARIAS LAYERS DE "AGUA", O EFEITO DA ONDA OCORRE SO NOS PRIMEIROS LAYERS.
-
-    //         //VIRIAR FUNCAO
-    //         //NIGHT LIGHTS
-    //         // float sunDot = dot(normalize(v_normal), lightDir); 
-    //         // float nightFactor = smoothstep(0.15, -0.15, sunDot);
-
-    //         // if (nightFactor > 0.0 && v_height > u_layer3Level && v_height < u_layer6Level) {
-                
-    //         //     float noise = texture(u_noiseTexture, v_modelPosition.xz * 75.0).r;
-    //         //     float cityDensity = smoothstep(0.7, 0.9, noise);
-                
-    //         //     if (cityDensity > 0.01) {
-    //         //         float microNoise = texture(u_noiseTexture, v_modelPosition.xz * 150.0).r;
-    //         //         float twinkle = hash(v_modelPosition.xz * 100.0); 
-                    
-                    
-    //         //         vec3 cityColorCore = vec3(1.0, 0.9, 0.8);     //Quase branco
-    //         //         vec3 cityColorOutskirt = vec3(1.0, 0.6, 0.2); //Laranja forte
-    //         //         vec3 finalCityColor = mix(cityColorOutskirt, cityColorCore, cityDensity);
-    //         //         float intensity = 2.5; 
-                    
-    //         //         outColor.rgb += finalCityColor * nightFactor * intensity;
-    //         //         outColor.rgb += (vec3(1.0, 0.5, 0.1) * 0.1) * cityDensity * nightFactor ;
-    //         //     }
-    //         // }
-    //         outColor.rgb += rim;
-    //     }
-
-    //     if (u_renderPass == 2.) {
-    //         if (u_lambertianDiffuse == true) {
-    //             light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
-    //         } else {
-    //             light = 1.0;
-    //         }
-    //         float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
-    //         if (cloudNoise < u_cloudThreshold) discard;
-            
-    //         float alpha = u_cloudOpacity * smoothstep(0.5, 0.8, cloudNoise);
-
-    //         //DEPOIS COLOCAR INPUT DO ALPHA NO HTML PARA CONTROLAR INTENSIDADE DAS CORES
-    //         outColor = vec4(u_cloudColor, alpha * light);
-    //     } 
-        
-    //     if (u_renderPass == 3.) {
-    //         if (u_lambertianDiffuse == true) {
-    //             light = lambertianDiffuse(normal, lightDir, u_lightBrightness).r;
-    //         } else {
-    //             light = 1.0;
-    //         }
-    //         float terrainHeight = length(v_modelPosition);
-    //         float terrainInfluence = 0.5;
-    //         float cloudHeight = 1.0 + (u_terrainDisplacement * terrainInfluence) + (u_cloudScale - 1.0);
-
-    //         if (terrainHeight >= cloudHeight - 0.01) discard;
-
-    //         float cloudNoise = triplanarSample(v_modelPosition, normal, u_cloudTextureZoom); 
-    //         if (cloudNoise < u_cloudThreshold) discard;
-
-    //         float alpha = smoothstep(0.65, 0.8, cloudNoise);
-            
-    //         alpha = 0.85; 
-    //         outColor = vec4(vec3(0.0), alpha * light);
-    //     }
-
-    //     if (u_renderPass == 4.) {
-    //         float light = u_lightBrightness;
-    //         if (u_lambertianDiffuse) {
-    //             vec3 lightDir = normalize(vec3(
-    //                 cos(u_lightAngle) * cos(u_lightPitch),
-    //                 sin(u_lightPitch),
-    //                 sin(u_lightAngle) * cos(u_lightPitch)
-    //             ));
-    //             light = max(dot(normalize(v_normal), lightDir), 0.0) * u_lightBrightness;
-    //         }
-            
-    //         if (u_useColor) {
-    //             outColor = vec4(u_color * light, 1.0);
-    //         } else {
-    //             vec3 texColor = texture(u_objectTexture, v_texcoord).rgb;
-    //             outColor = vec4(texColor * light, 1.0);
-    //         }
-    //     }
-    // }
 `;
 
 export const shadowVertexShaderSource = glsl`#version 300 es

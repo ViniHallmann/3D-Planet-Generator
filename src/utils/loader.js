@@ -1,21 +1,33 @@
-export async function loadTexture(renderer, url) {
+export async function loadTexture(renderer, url, maxSize = null) {
     return new Promise((resolve) => {
         const texture = renderer.gl.createTexture();
         const image = new Image();
         image.onload = () => {
             const gl = renderer.gl;
             const previousTexture = gl.getParameter(gl.TEXTURE_BINDING_2D);
-            
             gl.bindTexture(gl.TEXTURE_2D, texture);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+            
+            if (maxSize && (image.width > maxSize || image.height > maxSize)) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                const scale = Math.min(maxSize / image.width, maxSize / image.height);
+                canvas.width = Math.floor(image.width * scale);
+                canvas.height = Math.floor(image.height * scale);
+                
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+            } else {
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+            }
+            
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
             gl.generateMipmap(gl.TEXTURE_2D);
-            
             gl.bindTexture(gl.TEXTURE_2D, previousTexture);
-            
             resolve(texture);
         };
         image.src = url;

@@ -26,7 +26,7 @@ async function main() {
     const ringManager   = new RingManager();
     const raycaster     = new Raycaster(canvas, state.camera);
 
-    let cloudTexture = await loadTexture(renderer, './src/assets/noises/cloud2.png');
+    let cloudTexture = await loadTexture(renderer, './src/assets/noises/cloud3.png', 512);
 
     setupRendererSettings(state, renderer, cloudTexture);
     setupControls(state, renderer);
