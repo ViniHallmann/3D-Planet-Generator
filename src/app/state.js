@@ -31,5 +31,6 @@ export class State {
         this.clouds = { ...DEFAULTS.clouds };
         this.cloudShadowParams = { ...DEFAULTS.cloudShadowParams };
         this.water = { ...DEFAULTS.water };
+        this.terrainManipulation = { ...DEFAULTS.terrainManipulation };
     }
 }

@@ -263,5 +263,10 @@ export const DEFAULTS = {
     game : {
         score: 0,
         isPlaying: false,
+    },
+
+    terrainManipulation : {
+        brushRadius: 0.5,
+        brushIntensity: 0.1,
     }
 }

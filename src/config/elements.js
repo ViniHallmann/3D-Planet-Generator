@@ -93,8 +93,11 @@ export function getControlsElements() {
         removeRingBtn:   document.getElementById('remove-ring-btn'),
         clearRingsBtn:   document.getElementById('clear-rings-btn'),
         ringCount:     document.getElementById('ring-count'),
-        
         starsToggle: document.getElementById('stars-toggle'),
         presetChoise: document.getElementById('preset-choice'),
+        brushRadius:     document.getElementById('terrain-brush-radius'),
+        brushRadiusValue:document.getElementById('terrain-brush-radius-value'),
+        brushIntensity: document.getElementById('terrain-brush-intensity'),
+        brushIntensityValue: document.getElementById('terrain-brush-intensity-value'),
     }
 }

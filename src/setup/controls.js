@@ -320,5 +320,7 @@ export function setupControls(state, renderer) {
         renderer.setSlopeColor(state.shaders.slopeColor);
     });
     
-    
+    //BRUSH
+    setupInputListeners(elements.brushRadius, elements.brushRadiusValue, state.terrainManipulation, 'brushRadius', parseFloat, (val) => val.toFixed(2), false);
+    setupInputListeners(elements.brushIntensity, elements.brushIntensityValue, state.terrainManipulation, 'brushIntensity', parseFloat, (val) => val.toFixed(2), false);
 }

@@ -174,7 +174,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
             return;
         }
     }
-    
+
     function handleMouseUp(event) {
         if (event.button === 0 || event.button === 1) {
             state.camera.isDragging = false;
@@ -224,8 +224,8 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         if (result.hit) {
             const normalizedPoint = raycaster.normalizeToSphere(result.point);
             
-            const brushRadius = 0.15;
-            const intensity = 0.01; 
+            const brushRadius = state.terrainManipulation.brushRadius;
+            const intensity = state.terrainManipulation.brushIntensity; 
             const strength = keysPressed['r'] ? intensity : -intensity;
 
             renderer.applyBrush(normalizedPoint, brushRadius, strength);
