@@ -1011,7 +1011,7 @@ export class Renderer {
         gl.disable(gl.BLEND);
     }
 
-    render(time, cameraPos, params, wireframe=true, lambertianDiffuse=true, autoRotate=false, renderPass, planetRotationMatrix=null, rimLight, showWaves) {
+    render(time, cameraPos, params, wireframe=true, lambertianDiffuse=true, autoRotate=false, renderPass, planetRotationMatrix=null, rimLight, showWaves, showStars) {
         const gl = this.gl;
         
         const modelMatrix       = this.matrixCache.model;
@@ -1033,7 +1033,8 @@ export class Renderer {
         this.currentViewProjection = viewProjectionMatrix;                                                   
         mat4.multiply(mvpMatrix, viewProjectionMatrix, modelMatrix); // Agora a mvpMatrix tem tudo junto
 
-        this.renderStars(viewProjectionMatrix);
+        if (showStars)
+            this.renderStars(viewProjectionMatrix);
 
         gl.useProgram(this.program);
 
