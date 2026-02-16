@@ -516,6 +516,21 @@ export class Renderer {
         this.gl.uniform1i(this.uniformLocations['u_showWaves'], show);
     }
 
+    setSlopeColor(color){
+        this.gl.useProgram(this.program);
+        this.gl.uniform3fv(this.uniformLocations['u_slopeColor'], color);
+    }
+
+    setSlopeThreshold(threshold){
+        this.gl.useProgram(this.program);
+        this.gl.uniform1f(this.uniformLocations['u_slopeThreshold'], threshold);
+    }
+
+    setSlopeBlend(blend){
+        this.gl.useProgram(this.program);
+        this.gl.uniform1f(this.uniformLocations['u_slopeBlend'], blend);
+    }
+
     resizeCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;

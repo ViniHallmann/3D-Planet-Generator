@@ -55,16 +55,24 @@ export const vertexShaderSource = glsl`#version 300 es
         }
 
         if (u_renderPass == 2.) {
-            float displacementValue = getCloudDisplacement(a_position.xyz);
-            
             float terrainInfluence = 0.5;
-            
             float cloudBaseHeight = 1.0 + (u_terrainDisplacement * terrainInfluence) + (u_cloudScale - 1.0);
-            float cloudVariation = displacementValue * 0.1 * a_triangleHeight;
-
-            pos = a_position.xyz * (cloudBaseHeight + cloudVariation); 
+            
+            pos = a_position.xyz * cloudBaseHeight;
             v_height = 0.0; 
         }
+
+        // if (u_renderPass == 2.) {
+        //     float displacementValue = getCloudDisplacement(a_position.xyz);
+            
+        //     float terrainInfluence = 0.5;
+            
+        //     float cloudBaseHeight = 1.0 + (u_terrainDisplacement * terrainInfluence) + (u_cloudScale - 1.0);
+        //     float cloudVariation = displacementValue * 0.1 * a_triangleHeight;
+
+        //     pos = a_position.xyz * (cloudBaseHeight + cloudVariation); 
+        //     v_height = 0.0; 
+        // }
 
         if (u_renderPass == 3.) { //AQUI USA U_TERRAINDISPLACEMENT POIS A SOMBRA EH PROJETADA NA TERRA
             vec3 terrainDisplacement = a_position.xyz * a_triangleHeight * u_terrainDisplacement;
@@ -170,6 +178,10 @@ export const fragmentShaderSource = glsl`#version 300 es
     uniform vec3 u_waterColor;
     uniform float u_waterOpacity;
 
+    uniform vec3 u_slopeColor;
+    uniform float u_slopeThreshold;
+    uniform float u_slopeBlend;
+
     out vec4 outColor;
 
     vec4 getLayer0Color(float height) { return vec4(u_layer0Color, 1.0); }
@@ -190,31 +202,31 @@ export const fragmentShaderSource = glsl`#version 300 es
 
         //REFERENCIA DO CODIGO DO SLOPE: https://www.youtube.com/watch?v=6bnFfE82AJg&t=60s
         float flatness = dot(normalize(v_normal), normalize(v_modelPosition));
+        
+        // Calcula o fator de slope (0 = plano, 1 = penhasco vertical)
+        float slope = 1.0 - flatness;
+        
+        // Suaviza a transição entre terreno normal e rocha
+        float slopeFactor = smoothstep(u_slopeThreshold, u_slopeThreshold + u_slopeBlend, slope);
 
         //REFERENCIA CODIGO VARIACAO HEIGHT VALUE: https://www.youtube.com/watch?v=fZh2p0odPyQ&t=175s
         //height += (hash(v_modelPosition.xz * 50.) * 2.0 - 1.0) * 0.0025;
 
-        // if (height < u_layer0Level)      return getLayer0Color(height);
-        // else if (height < u_layer1Level) return getLayer1Color(height);
-        // else if (height < u_layer2Level) return getLayer2Color(height);
-        // else if (height < u_layer3Level) return getLayer3Color(height);
-        // else if (height < u_layer4Level) return getLayer4Color(height);
-        // else if (height < u_layer5Level) return getLayer5Color(height);
-        // else if (height < u_layer6Level) return getLayer6Color(height);
-        // else if (height < u_layer7Level) return getLayer7Color(height);
-        // else if (height < u_layer8Level) return getLayer8Color(height);
-        // else return getLayer9Color(height);
-
-        if (height < u_layer0Level)      return mix(getLayer0Color(height), getLayer1Color(height), smoothstep(u_layer0Level - 0.05, u_layer0Level + 0.05, height));
-        else if (height < u_layer1Level) return mix(getLayer1Color(height), getLayer2Color(height), smoothstep(u_layer1Level - 0.05, u_layer1Level + 0.05, height));
-        else if (height < u_layer2Level) return mix(getLayer2Color(height), getLayer3Color(height), smoothstep(u_layer2Level - 0.05, u_layer2Level + 0.05, height));
-        else if (height < u_layer3Level) return mix(getLayer3Color(height), getLayer4Color(height), smoothstep(u_layer3Level - 0.05, u_layer3Level + 0.05, height));
-        else if (height < u_layer4Level) return mix(getLayer4Color(height), getLayer5Color(height), smoothstep(u_layer4Level - 0.05, u_layer4Level + 0.05, height));
-        else if (height < u_layer5Level) return mix(getLayer5Color(height), getLayer6Color(height), smoothstep(u_layer5Level - 0.05, u_layer5Level + 0.05, height));
-        else if (height < u_layer6Level) return mix(getLayer6Color(height), getLayer7Color(height), smoothstep(u_layer6Level - 0.05, u_layer6Level + 0.05, height));
-        else if (height < u_layer7Level) return mix(getLayer7Color(height), getLayer8Color(height), smoothstep(u_layer7Level - 0.05, u_layer7Level + 0.05, height));
-        else if (height < u_layer8Level) return mix(getLayer8Color(height), getLayer9Color(height), smoothstep(u_layer8Level - 0.05, u_layer8Level + 0.05, height));
-        else return getLayer9Color(height);
+        vec4 baseColor;
+        if (height < u_layer0Level)      baseColor = mix(getLayer0Color(height), getLayer1Color(height), smoothstep(u_layer0Level - 0.05, u_layer0Level + 0.05, height));
+        else if (height < u_layer1Level) baseColor = mix(getLayer1Color(height), getLayer2Color(height), smoothstep(u_layer1Level - 0.05, u_layer1Level + 0.05, height));
+        else if (height < u_layer2Level) baseColor = mix(getLayer2Color(height), getLayer3Color(height), smoothstep(u_layer2Level - 0.05, u_layer2Level + 0.05, height));
+        else if (height < u_layer3Level) baseColor = mix(getLayer3Color(height), getLayer4Color(height), smoothstep(u_layer3Level - 0.05, u_layer3Level + 0.05, height));
+        else if (height < u_layer4Level) baseColor = mix(getLayer4Color(height), getLayer5Color(height), smoothstep(u_layer4Level - 0.05, u_layer4Level + 0.05, height));
+        else if (height < u_layer5Level) baseColor = mix(getLayer5Color(height), getLayer6Color(height), smoothstep(u_layer5Level - 0.05, u_layer5Level + 0.05, height));
+        else if (height < u_layer6Level) baseColor = mix(getLayer6Color(height), getLayer7Color(height), smoothstep(u_layer6Level - 0.05, u_layer6Level + 0.05, height));
+        else if (height < u_layer7Level) baseColor = mix(getLayer7Color(height), getLayer8Color(height), smoothstep(u_layer7Level - 0.05, u_layer7Level + 0.05, height));
+        else if (height < u_layer8Level) baseColor = mix(getLayer8Color(height), getLayer9Color(height), smoothstep(u_layer8Level - 0.05, u_layer8Level + 0.05, height));
+        else baseColor = getLayer9Color(height);
+        
+        // Mistura cor do terreno com cor da rocha/penhasco baseado no slope
+        vec4 slopeColorFinal = vec4(u_slopeColor, 1.0);
+        return mix(baseColor, slopeColorFinal, slopeFactor);
     }
 
     vec3 lambertianDiffuse(vec3 normal, vec3 lightDir, float brightness) {

@@ -98,6 +98,9 @@ export const DEFAULTS = {
         planetScale: 0.05,
         rimColor: [0.0, 0.5, 1.0],
         rimIntensity: 0.5,
+        slopeColor: [0.4, 0.35, 0.3],
+        slopeThreshold: 0.15,
+        slopeBlend: 0.2,
     },
 
     clouds : {
