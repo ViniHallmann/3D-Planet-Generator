@@ -71,6 +71,7 @@ export class Renderer {
         this.normalLoc   = gl.getAttribLocation(this.program, 'a_normal');
         this.uvLoc       = gl.getAttribLocation(this.program, 'a_texcoord');
         this.triangleHeightLoc = gl.getAttribLocation(this.program, 'a_triangleHeight');
+        this.terrainNormalLoc = gl.getAttribLocation(this.program, 'a_terrainNormal');
         
         const numUniforms = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS);
         for (let i = 0; i < numUniforms; i++) {
@@ -122,6 +123,7 @@ export class Renderer {
         this.noiseGenerator = new NoiseGenerator(512, 512);
         this.noiseParams = noiseParams;
         this.triangleHeights = this.calculateTriangleHeights(this.geometry, noiseParams);
+        this.terrainNormals = this.calculateTerrainNormals(this.geometry, this.triangleHeights);
     }
 
     initShadowMap(resolution = 2048) {
@@ -201,6 +203,7 @@ export class Renderer {
         this.normalBuffer         = this.createBuffer(gl.ARRAY_BUFFER, geometry.normals);
         this.uvBuffer             = this.createBuffer(gl.ARRAY_BUFFER, geometry.uvs);
         this.triangleHeightBuffer = this.createBuffer(gl.ARRAY_BUFFER, this.triangleHeights);
+        this.terrainNormalBuffer  = this.createBuffer(gl.ARRAY_BUFFER, this.terrainNormals);
         this.indexBuffer          = this.createBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.indices);
         this.edgeIndexBuffer      = this.createBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.edgeIndices);
         
@@ -225,6 +228,7 @@ export class Renderer {
         this.bindAttribute(this.normalBuffer, this.normalLoc, 3);
         this.bindAttribute(this.uvBuffer, this.uvLoc, 2);
         this.bindAttribute(this.triangleHeightBuffer, this.triangleHeightLoc, 1);
+        this.bindAttribute(this.terrainNormalBuffer, this.terrainNormalLoc, 3);
         
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
         gl.bindVertexArray(null);
@@ -239,6 +243,7 @@ export class Renderer {
         this.bindAttribute(this.normalBuffer, this.normalLoc, 3);
         this.bindAttribute(this.uvBuffer, this.uvLoc, 2);
         this.bindAttribute(this.triangleHeightBuffer, this.triangleHeightLoc, 1);
+        this.bindAttribute(this.terrainNormalBuffer, this.terrainNormalLoc, 3);
         
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.edgeIndexBuffer);
         gl.bindVertexArray(null);
@@ -261,6 +266,10 @@ export class Renderer {
         this.updateBuffer(this.triangleHeightBuffer, this.triangleHeights);
     }
 
+    updateTerrainNormalBuffer() {
+        this.updateBuffer(this.terrainNormalBuffer, this.terrainNormals);
+    }
+
 
     setSeed(seed) {
         this.noiseGenerator.setSeed(seed);
@@ -270,8 +279,10 @@ export class Renderer {
         const { octaves, persistence, lacunarity, noiseZoom, noiseResolution } = params;
 
         this.triangleHeights = this.calculateTriangleHeights(this.geometry, params);
+        this.terrainNormals = this.calculateTerrainNormals(this.geometry, this.triangleHeights);
         
         this.updateTriangleHeightBuffer();
+        this.updateTerrainNormalBuffer();
         this.createNoiseTexture(params);
     }
 
@@ -280,14 +291,18 @@ export class Renderer {
         this.initializeNoise(noiseParams);
         this.createBuffers(this.geometry);
         this.triangleHeights = this.calculateTriangleHeights(this.geometry, noiseParams);
+        this.terrainNormals = this.calculateTerrainNormals(this.geometry, this.triangleHeights);
         this.updateTriangleHeightBuffer();
+        this.updateTerrainNormalBuffer();
     }
 
     regenerateGeometry(subdivisions) {
         this.initializeGeometry(subdivisions);
         
         this.triangleHeights = this.calculateTriangleHeights(this.geometry, this.noiseParams);
+        this.terrainNormals = this.calculateTerrainNormals(this.geometry, this.triangleHeights);
         this.updateTriangleHeightBuffer();
+        this.updateTerrainNormalBuffer();
         this.createBuffers(this.geometry);
     }
 
@@ -305,6 +320,81 @@ export class Renderer {
         }
         
         return heights;
+    }
+
+    calculateTerrainNormals(geometry, heights) {
+        const numVertices = geometry.positions.length / 3;
+        const normals = new Float32Array(numVertices * 3);
+        const normalCounts = new Uint32Array(numVertices);
+        
+        // Para cada triângulo, calcular a normal da face e acumular nos vértices
+        for (let i = 0; i < geometry.indices.length; i += 3) {
+            const i0 = geometry.indices[i];
+            const i1 = geometry.indices[i + 1];
+            const i2 = geometry.indices[i + 2];
+            
+            // Posições deslocadas (posição + height * posição para deslocamento radial)
+            const h0 = 1.0 + heights[i0];
+            const h1 = 1.0 + heights[i1];
+            const h2 = 1.0 + heights[i2];
+            
+            const v0x = geometry.positions[i0 * 3] * h0;
+            const v0y = geometry.positions[i0 * 3 + 1] * h0;
+            const v0z = geometry.positions[i0 * 3 + 2] * h0;
+            
+            const v1x = geometry.positions[i1 * 3] * h1;
+            const v1y = geometry.positions[i1 * 3 + 1] * h1;
+            const v1z = geometry.positions[i1 * 3 + 2] * h1;
+            
+            const v2x = geometry.positions[i2 * 3] * h2;
+            const v2y = geometry.positions[i2 * 3 + 1] * h2;
+            const v2z = geometry.positions[i2 * 3 + 2] * h2;
+            
+            // Vetores das arestas
+            const e1x = v1x - v0x;
+            const e1y = v1y - v0y;
+            const e1z = v1z - v0z;
+            
+            const e2x = v2x - v0x;
+            const e2y = v2y - v0y;
+            const e2z = v2z - v0z;
+            
+            // Produto vetorial para normal da face
+            const nx = e1y * e2z - e1z * e2y;
+            const ny = e1z * e2x - e1x * e2z;
+            const nz = e1x * e2y - e1y * e2x;
+            
+            // Acumular nos vértices
+            normals[i0 * 3] += nx;
+            normals[i0 * 3 + 1] += ny;
+            normals[i0 * 3 + 2] += nz;
+            normalCounts[i0]++;
+            
+            normals[i1 * 3] += nx;
+            normals[i1 * 3 + 1] += ny;
+            normals[i1 * 3 + 2] += nz;
+            normalCounts[i1]++;
+            
+            normals[i2 * 3] += nx;
+            normals[i2 * 3 + 1] += ny;
+            normals[i2 * 3 + 2] += nz;
+            normalCounts[i2]++;
+        }
+        
+        // Normalizar
+        for (let i = 0; i < numVertices; i++) {
+            const x = normals[i * 3];
+            const y = normals[i * 3 + 1];
+            const z = normals[i * 3 + 2];
+            const len = Math.sqrt(x * x + y * y + z * z);
+            if (len > 0) {
+                normals[i * 3] = x / len;
+                normals[i * 3 + 1] = y / len;
+                normals[i * 3 + 2] = z / len;
+            }
+        }
+        
+        return normals;
     }
 
     getTerrainHeightAtPosition(x, y, z, terrainDisplacement) {
@@ -355,6 +445,12 @@ export class Renderer {
 
     setGeometry(subdivisions) {
         this.geometry = createIcosphere(subdivisions);
+    }
+
+    setNumActiveLayers(num) {
+        const gl = this.gl;
+        gl.useProgram(this.program);
+        gl.uniform1i(this.uniformLocations['u_numActiveLayers'], num);
     }
 
     setLayerLevels(layers) {
