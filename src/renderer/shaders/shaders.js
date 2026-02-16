@@ -5,6 +5,7 @@ export const vertexShaderSource = glsl`#version 300 es
     in vec3 a_normal;
     in vec2 a_texcoord;
     in float a_triangleHeight;
+    in vec3 a_terrainNormal;
     
     uniform float u_time;
     uniform mat4 u_matrix;
@@ -19,6 +20,7 @@ export const vertexShaderSource = glsl`#version 300 es
     uniform float u_cloudSpeed;
 
     out vec3 v_normal;
+    out vec3 v_terrainNormal;
     out vec2 v_texcoord;
     out float v_height;
     out vec3 v_modelPosition;
@@ -97,6 +99,7 @@ export const vertexShaderSource = glsl`#version 300 es
 
         gl_Position = u_matrix * vec4(pos, 1.0);
         v_normal = mat3(u_modelMatrix) * a_normal;
+        v_terrainNormal = mat3(u_modelMatrix) * a_terrainNormal;
         v_modelPosition = pos;
         v_worldPosition = (u_modelMatrix * vec4(pos, 1.0)).xyz;
         v_texcoord = a_texcoord;
@@ -108,12 +111,15 @@ export const fragmentShaderSource = glsl`#version 300 es
     precision highp float;
 
     in vec3 v_normal;
+    in vec3 v_terrainNormal;
     in vec2 v_texcoord;
     in float v_height;
     in vec3 v_modelPosition;
     in vec3 v_worldPosition;
 
     uniform float u_renderPass;
+
+    uniform int u_numActiveLayers;
 
     uniform float u_layer0Level;  
     uniform float u_layer1Level;  
@@ -201,28 +207,139 @@ export const fragmentShaderSource = glsl`#version 300 es
     vec4 defineTerrainColor(float height) {
 
         //REFERENCIA DO CODIGO DO SLOPE: https://www.youtube.com/watch?v=6bnFfE82AJg&t=60s
-        float flatness = dot(normalize(v_normal), normalize(v_modelPosition));
+        // Usa a normal do terreno (calculada a partir dos triângulos deslocados) para detectar slope
+        float flatness = dot(normalize(v_terrainNormal), normalize(v_modelPosition));
         
         // Calcula o fator de slope (0 = plano, 1 = penhasco vertical)
         float slope = 1.0 - flatness;
         
         // Suaviza a transição entre terreno normal e rocha
         float slopeFactor = smoothstep(u_slopeThreshold, u_slopeThreshold + u_slopeBlend, slope);
+        
+        // Slope só é aplicado a partir do layer4 (vegetação para cima)
+        float heightFactor = smoothstep(u_layer4Level - 0.05, u_layer4Level + 0.05, height);
+        slopeFactor *= heightFactor;
 
         //REFERENCIA CODIGO VARIACAO HEIGHT VALUE: https://www.youtube.com/watch?v=fZh2p0odPyQ&t=175s
         //height += (hash(v_modelPosition.xz * 50.) * 2.0 - 1.0) * 0.0025;
 
+        // Obtém todas as cores das layers
+        vec3 colors[10];
+        colors[0] = u_layer0Color;
+        colors[1] = u_layer1Color;
+        colors[2] = u_layer2Color;
+        colors[3] = u_layer3Color;
+        colors[4] = u_layer4Color;
+        colors[5] = u_layer5Color;
+        colors[6] = u_layer6Color;
+        colors[7] = u_layer7Color;
+        colors[8] = u_layer8Color;
+        colors[9] = u_layer9Color;
+
+        // Obtém todos os níveis das layers
+        float levels[10];
+        levels[0] = u_layer0Level;
+        levels[1] = u_layer1Level;
+        levels[2] = u_layer2Level;
+        levels[3] = u_layer3Level;
+        levels[4] = u_layer4Level;
+        levels[5] = u_layer5Level;
+        levels[6] = u_layer6Level;
+        levels[7] = u_layer7Level;
+        levels[8] = u_layer8Level;
+        levels[9] = u_layer9Level;
+
+        // Cor da última layer ativa (índice = numActiveLayers - 1)
+        int lastActiveIdx = u_numActiveLayers - 1;
+        vec3 lastActiveColor = colors[lastActiveIdx];
+
         vec4 baseColor;
-        if (height < u_layer0Level)      baseColor = mix(getLayer0Color(height), getLayer1Color(height), smoothstep(u_layer0Level - 0.05, u_layer0Level + 0.05, height));
-        else if (height < u_layer1Level) baseColor = mix(getLayer1Color(height), getLayer2Color(height), smoothstep(u_layer1Level - 0.05, u_layer1Level + 0.05, height));
-        else if (height < u_layer2Level) baseColor = mix(getLayer2Color(height), getLayer3Color(height), smoothstep(u_layer2Level - 0.05, u_layer2Level + 0.05, height));
-        else if (height < u_layer3Level) baseColor = mix(getLayer3Color(height), getLayer4Color(height), smoothstep(u_layer3Level - 0.05, u_layer3Level + 0.05, height));
-        else if (height < u_layer4Level) baseColor = mix(getLayer4Color(height), getLayer5Color(height), smoothstep(u_layer4Level - 0.05, u_layer4Level + 0.05, height));
-        else if (height < u_layer5Level) baseColor = mix(getLayer5Color(height), getLayer6Color(height), smoothstep(u_layer5Level - 0.05, u_layer5Level + 0.05, height));
-        else if (height < u_layer6Level) baseColor = mix(getLayer6Color(height), getLayer7Color(height), smoothstep(u_layer6Level - 0.05, u_layer6Level + 0.05, height));
-        else if (height < u_layer7Level) baseColor = mix(getLayer7Color(height), getLayer8Color(height), smoothstep(u_layer7Level - 0.05, u_layer7Level + 0.05, height));
-        else if (height < u_layer8Level) baseColor = mix(getLayer8Color(height), getLayer9Color(height), smoothstep(u_layer8Level - 0.05, u_layer8Level + 0.05, height));
-        else baseColor = getLayer9Color(height);
+        
+        // Se só tem 1 layer ativa, usa só essa cor
+        if (u_numActiveLayers == 1) {
+            baseColor = vec4(colors[0], 1.0);
+        }
+        // Se tem 2 layers ativas
+        else if (u_numActiveLayers == 2) {
+            if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
+            else baseColor = vec4(colors[1], 1.0);
+        }
+        // Se tem 3 layers ativas
+        else if (u_numActiveLayers == 3) {
+            if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
+            else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
+            else baseColor = vec4(colors[2], 1.0);
+        }
+        // Se tem 4 layers ativas
+        else if (u_numActiveLayers == 4) {
+            if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
+            else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
+            else if (height < levels[2]) baseColor = mix(vec4(colors[2], 1.0), vec4(colors[3], 1.0), smoothstep(levels[2] - 0.05, levels[2] + 0.05, height));
+            else baseColor = vec4(colors[3], 1.0);
+        }
+        // Se tem 5 layers ativas
+        else if (u_numActiveLayers == 5) {
+            if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
+            else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
+            else if (height < levels[2]) baseColor = mix(vec4(colors[2], 1.0), vec4(colors[3], 1.0), smoothstep(levels[2] - 0.05, levels[2] + 0.05, height));
+            else if (height < levels[3]) baseColor = mix(vec4(colors[3], 1.0), vec4(colors[4], 1.0), smoothstep(levels[3] - 0.05, levels[3] + 0.05, height));
+            else baseColor = vec4(colors[4], 1.0);
+        }
+        // Se tem 6 layers ativas
+        else if (u_numActiveLayers == 6) {
+            if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
+            else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
+            else if (height < levels[2]) baseColor = mix(vec4(colors[2], 1.0), vec4(colors[3], 1.0), smoothstep(levels[2] - 0.05, levels[2] + 0.05, height));
+            else if (height < levels[3]) baseColor = mix(vec4(colors[3], 1.0), vec4(colors[4], 1.0), smoothstep(levels[3] - 0.05, levels[3] + 0.05, height));
+            else if (height < levels[4]) baseColor = mix(vec4(colors[4], 1.0), vec4(colors[5], 1.0), smoothstep(levels[4] - 0.05, levels[4] + 0.05, height));
+            else baseColor = vec4(colors[5], 1.0);
+        }
+        // Se tem 7 layers ativas
+        else if (u_numActiveLayers == 7) {
+            if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
+            else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
+            else if (height < levels[2]) baseColor = mix(vec4(colors[2], 1.0), vec4(colors[3], 1.0), smoothstep(levels[2] - 0.05, levels[2] + 0.05, height));
+            else if (height < levels[3]) baseColor = mix(vec4(colors[3], 1.0), vec4(colors[4], 1.0), smoothstep(levels[3] - 0.05, levels[3] + 0.05, height));
+            else if (height < levels[4]) baseColor = mix(vec4(colors[4], 1.0), vec4(colors[5], 1.0), smoothstep(levels[4] - 0.05, levels[4] + 0.05, height));
+            else if (height < levels[5]) baseColor = mix(vec4(colors[5], 1.0), vec4(colors[6], 1.0), smoothstep(levels[5] - 0.05, levels[5] + 0.05, height));
+            else baseColor = vec4(colors[6], 1.0);
+        }
+        // Se tem 8 layers ativas
+        else if (u_numActiveLayers == 8) {
+            if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
+            else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
+            else if (height < levels[2]) baseColor = mix(vec4(colors[2], 1.0), vec4(colors[3], 1.0), smoothstep(levels[2] - 0.05, levels[2] + 0.05, height));
+            else if (height < levels[3]) baseColor = mix(vec4(colors[3], 1.0), vec4(colors[4], 1.0), smoothstep(levels[3] - 0.05, levels[3] + 0.05, height));
+            else if (height < levels[4]) baseColor = mix(vec4(colors[4], 1.0), vec4(colors[5], 1.0), smoothstep(levels[4] - 0.05, levels[4] + 0.05, height));
+            else if (height < levels[5]) baseColor = mix(vec4(colors[5], 1.0), vec4(colors[6], 1.0), smoothstep(levels[5] - 0.05, levels[5] + 0.05, height));
+            else if (height < levels[6]) baseColor = mix(vec4(colors[6], 1.0), vec4(colors[7], 1.0), smoothstep(levels[6] - 0.05, levels[6] + 0.05, height));
+            else baseColor = vec4(colors[7], 1.0);
+        }
+        // Se tem 9 layers ativas
+        else if (u_numActiveLayers == 9) {
+            if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
+            else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
+            else if (height < levels[2]) baseColor = mix(vec4(colors[2], 1.0), vec4(colors[3], 1.0), smoothstep(levels[2] - 0.05, levels[2] + 0.05, height));
+            else if (height < levels[3]) baseColor = mix(vec4(colors[3], 1.0), vec4(colors[4], 1.0), smoothstep(levels[3] - 0.05, levels[3] + 0.05, height));
+            else if (height < levels[4]) baseColor = mix(vec4(colors[4], 1.0), vec4(colors[5], 1.0), smoothstep(levels[4] - 0.05, levels[4] + 0.05, height));
+            else if (height < levels[5]) baseColor = mix(vec4(colors[5], 1.0), vec4(colors[6], 1.0), smoothstep(levels[5] - 0.05, levels[5] + 0.05, height));
+            else if (height < levels[6]) baseColor = mix(vec4(colors[6], 1.0), vec4(colors[7], 1.0), smoothstep(levels[6] - 0.05, levels[6] + 0.05, height));
+            else if (height < levels[7]) baseColor = mix(vec4(colors[7], 1.0), vec4(colors[8], 1.0), smoothstep(levels[7] - 0.05, levels[7] + 0.05, height));
+            else baseColor = vec4(colors[8], 1.0);
+        }
+        // Se tem 10 layers ativas (todas)
+        else {
+            if (height < levels[0]) baseColor = mix(vec4(colors[0], 1.0), vec4(colors[1], 1.0), smoothstep(levels[0] - 0.05, levels[0] + 0.05, height));
+            else if (height < levels[1]) baseColor = mix(vec4(colors[1], 1.0), vec4(colors[2], 1.0), smoothstep(levels[1] - 0.05, levels[1] + 0.05, height));
+            else if (height < levels[2]) baseColor = mix(vec4(colors[2], 1.0), vec4(colors[3], 1.0), smoothstep(levels[2] - 0.05, levels[2] + 0.05, height));
+            else if (height < levels[3]) baseColor = mix(vec4(colors[3], 1.0), vec4(colors[4], 1.0), smoothstep(levels[3] - 0.05, levels[3] + 0.05, height));
+            else if (height < levels[4]) baseColor = mix(vec4(colors[4], 1.0), vec4(colors[5], 1.0), smoothstep(levels[4] - 0.05, levels[4] + 0.05, height));
+            else if (height < levels[5]) baseColor = mix(vec4(colors[5], 1.0), vec4(colors[6], 1.0), smoothstep(levels[5] - 0.05, levels[5] + 0.05, height));
+            else if (height < levels[6]) baseColor = mix(vec4(colors[6], 1.0), vec4(colors[7], 1.0), smoothstep(levels[6] - 0.05, levels[6] + 0.05, height));
+            else if (height < levels[7]) baseColor = mix(vec4(colors[7], 1.0), vec4(colors[8], 1.0), smoothstep(levels[7] - 0.05, levels[7] + 0.05, height));
+            else if (height < levels[8]) baseColor = mix(vec4(colors[8], 1.0), vec4(colors[9], 1.0), smoothstep(levels[8] - 0.05, levels[8] + 0.05, height));
+            else baseColor = vec4(colors[9], 1.0);
+        }
         
         // Mistura cor do terreno com cor da rocha/penhasco baseado no slope
         vec4 slopeColorFinal = vec4(u_slopeColor, 1.0);
