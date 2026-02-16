@@ -85,7 +85,7 @@ export class NoiseGenerator {
     // ============================================
     hash4D(x, y, z, w) {
         const n = this.perm[(x & 255) + this.perm[(y & 255) + this.perm[(z & 255) + this.perm[w & 255]]]];
-        return (n / 255.0) * 2.0 - 1.0; // Retorna valor entre -1 e 1
+        return (n / 255.0) * 2.0 - 1.0;
     }
 
     valueNoise4D(x, y, z, w) {

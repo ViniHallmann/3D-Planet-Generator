@@ -1,6 +1,7 @@
 import { getControlsElements } from '../config/elements.js';
 import { hexToRgb } from '../utils/utils.js';
 import { loadTexture } from '../utils/loader.js'; 
+import { CONSTANTS } from '../config/constants.js';
 
 export function setupControls(state, renderer) {
 
@@ -52,6 +53,7 @@ export function setupControls(state, renderer) {
     elements.rimToggle.addEventListener('change', (e) => state.app.showRim = e.target.checked);
     elements.waterToggle.addEventListener('change', (e) => state.app.showWater = e.target.checked);
     elements.wavesToggle.addEventListener('change', (e) => state.app.showWaves = e.target.checked);
+    elements.starsToggle.addEventListener('change', (e) => state.app.showStars = e.target.checked);
 
     //SEED
     elements.seedInput.addEventListener('change', (e) => {
@@ -83,20 +85,21 @@ export function setupControls(state, renderer) {
         state.app.numActiveLayers = parseInt(e.target.value);
         elements.numLayersValue.textContent = state.app.numActiveLayers;
         
-        const lastActiveKey = `layer${state.app.numActiveLayers - 1}Level`;
-        const lastActiveValue = state.layerLevels[lastActiveKey] || 1.0;
+        // Envia o número de layers ativas para o shader
+        renderer.setNumActiveLayers(state.app.numActiveLayers);
         
-        for (let i = state.app.numActiveLayers; i <= state.physics.MAX_LAYERS; i++) {
-            state.layerLevels[`layer${i}Level`] = lastActiveValue;
-        }
-
-        renderer.setLayerLevels(state.layerLevels);
-        
-        for (let i = 0; i <= state.physics.MAX_LAYERS; i++) {
-            const elId = `layer${i}-level`;
-            const el = document.getElementById(elId);
-            if (el && el.parentElement) {
-                 el.parentElement.style.display = (i < state.app.numActiveLayers) ? 'flex' : 'none';
+        // Esconde/mostra os controles de layer no UI
+        for (let i = 0; i < CONSTANTS.MAX_LAYERS; i++) {
+            const levelEl = document.getElementById(`layer${i}-level`);
+            const colorEl = document.getElementById(`layer${i}-color`);
+            
+            // Esconde o slider de level
+            if (levelEl && levelEl.parentElement) {
+                levelEl.parentElement.style.display = (i < state.app.numActiveLayers) ? 'flex' : 'none';
+            }
+            // Esconde o color picker também
+            if (colorEl && colorEl.parentElement) {
+                colorEl.parentElement.style.display = (i < state.app.numActiveLayers) ? 'flex' : 'none';
             }
         }
     });

@@ -12,6 +12,7 @@ function setupRendererSettings(state, renderer, cloudTexture) {
     renderer.setGeometry(state.noise.subdivisions);
     renderer.setLightSpeed(state.shaders.lightSpeed);
     renderer.setLightBrightness(state.shaders.lightBrightness);
+    renderer.setNumActiveLayers(state.app.numActiveLayers);
     renderer.setLayerLevels(state.layerLevels);
     renderer.setLayerColors(state.layerColors);
     renderer.setCloudTexture(cloudTexture);
