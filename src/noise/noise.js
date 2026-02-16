@@ -1,26 +1,5 @@
 import { createNoise4D } from 'https://cdn.skypack.dev/simplex-noise';
 import { seededRandom, fade, lerp } from '../utils/noise.js';
-
-// //ALGORITMO Mulberry32
-// function seededRandom(seed) {
-//     return function() {
-//         seed = (seed + 0x6D2B79F5) | 0;
-//         let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-//         t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-//         return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-//     };
-// }
-
-// // Função de interpolação suave (smoothstep)
-// function fade(t) {
-//     return t * t * t * (t * (t * 6 - 15) + 10);
-// }
-
-// // Interpolação linear
-// function lerp(a, b, t) {
-//     return a + t * (b - a);
-// }
-
 export class NoiseGenerator {
     constructor(width, height, seed=null, noiseType='simplex') {
         this.width = width;
@@ -29,7 +8,6 @@ export class NoiseGenerator {
         this.noiseType = noiseType;
         this.noise4D = createNoise4D(seededRandom(this.seed));
         
-        // Inicializa tabelas de permutação para Value e Perlin noise
         this.initPermutationTable();
         this.initGradients4D();
     }
@@ -39,25 +17,21 @@ export class NoiseGenerator {
         this.perm = new Uint8Array(512);
         const p = new Uint8Array(256);
         
-        // Preenche com valores 0-255
         for (let i = 0; i < 256; i++) {
             p[i] = i;
         }
         
-        // Embaralha usando Fisher-Yates
         for (let i = 255; i > 0; i--) {
             const j = Math.floor(random() * (i + 1));
             [p[i], p[j]] = [p[j], p[i]];
         }
         
-        // Duplica para evitar overflow
         for (let i = 0; i < 512; i++) {
             this.perm[i] = p[i & 255];
         }
     }
 
     initGradients4D() {
-        // Gradientes 4D para Perlin noise (32 gradientes)
         this.gradients4D = [
             [0,1,1,1], [0,1,1,-1], [0,1,-1,1], [0,1,-1,-1],
             [0,-1,1,1], [0,-1,1,-1], [0,-1,-1,1], [0,-1,-1,-1],

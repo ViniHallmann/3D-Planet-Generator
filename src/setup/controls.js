@@ -101,9 +101,9 @@ export function setupControls(state, renderer) {
     });
 
     //SLIDERS
-    //NOISE
+    //SUBDIVISION
     setupInputListeners(elements.subdivisionsSlider, elements.subdivisionsValue, state.noise, 'subdivisions', parseInt, (val) => val.toString(), false, (value) => {
-        renderer.regenerateIcosphere(value, state.noise);
+        renderer.regenerateGeometry(value);
     });
     //setupInputListeners(elements.subdivisionsSlider, elements.subdivisionsValue, state.noise, 'subdivisions', parseInt, (val) => val.toString());
     setupInputListeners(elements.octavesSlider, elements.octavesValue, state.noise, 'octaves', parseInt, (val) => val.toString());
