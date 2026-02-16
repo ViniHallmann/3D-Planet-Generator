@@ -207,7 +207,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
     }
 
     function handleTerrainInput(cameraPos) {
-        if (!keysPressed['r'] && !keysPressed['t']) return;
+        if (!keysPressed['+'] && !keysPressed['-']) return;
 
         const aspect = canvas.width / canvas.height;
         const projectionMatrix = mat4.create();
@@ -226,7 +226,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
             
             const brushRadius = state.terrainManipulation.brushRadius;
             const intensity = state.terrainManipulation.brushIntensity; 
-            const strength = keysPressed['r'] ? intensity : -intensity;
+            const strength = keysPressed['+'] ? intensity : -intensity;
 
             renderer.applyBrush(normalizedPoint, brushRadius, strength);
 

@@ -14,13 +14,54 @@
 
     <!-- Controls Tooltip -->
     <div id="controls-tooltip" class="controls-tooltip">
-        <span class="tooltip-key">C</span> Controlar avião (WASD para mover)
-        <span class="tooltip-key">Botão Esquerdo</span> Navegar avião
-        <span class="tooltip-key">Botão do Meio</span> Rotacionar planeta
-        <span class="tooltip-key">Botão Direito</span> Criar anel
-        <span class="tooltip-key">Scroll</span> Zoom in/out
-        <span class="tooltip-key">R</span> Adicionar terreno
-        <span class="tooltip-key">T</span> Remover terreno
+    
+        <div class="tooltip-section">
+            <div class="tooltip-item">
+                <div class="mouse-icon left-click"></div>
+                <span>Navegar</span>
+            </div>
+            <div class="tooltip-item">
+                <div class="mouse-icon middle-click"></div>
+                <span>Rotacionar</span>
+            </div>
+            <div class="tooltip-item">
+                <div class="mouse-icon right-click"></div>
+                <span>Anel</span>
+            </div>
+            <div class="tooltip-item">
+                <div class="mouse-icon scroll-click"></div> <span>Zoom</span>
+            </div>
+        </div>
+
+        <div class="tooltip-separator"></div>
+
+        <div class="tooltip-section">
+
+            <div class="tooltip-item">
+                <kbd class="key">C</kbd>
+                <span>Controlar Avião</span>
+            </div>
+
+            <div class="tooltip-item">
+                <div class="key-group">
+                    <kbd class="key">W</kbd>
+                    <div class="key-row">
+                        <kbd class="key">A</kbd><kbd class="key">S</kbd><kbd class="key">D</kbd>
+                    </div>
+                </div>
+                <span>Mover Avião</span>
+            </div>
+            
+            <div class="tooltip-item">
+                <kbd class="key">+</kbd>
+                <span>+ Terreno</span>
+            </div>
+            
+            <div class="tooltip-item">
+                <kbd class="key">-</kbd>
+                <span>- Terreno</span>
+            </div>
+        </div>
     </div>
 
     <!-- Controls Toggle Button -->

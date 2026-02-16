@@ -574,3 +574,201 @@ canvas {
     color: #fc8181; /* Vermelho suave */
     border: 1px solid rgba(252, 129, 129, 0.3); /* Borda sutil */
 }
+
+
+/* ==================== TOOLTIP (HUD STYLE) ==================== */
+.controls-tooltip {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  
+  /* Visual de Vidro Tecnológico */
+  background: rgba(10, 14, 26, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(79, 209, 199, 0.15);
+  box-shadow: 
+    0 4px 24px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  
+  padding: 12px 24px;
+  border-radius: 12px;
+  color: #a0aec0;
+  
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  
+  z-index: 100;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none; /* Permite clicar através do tooltip se necessário */
+}
+
+.controls-tooltip.hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
+}
+
+/* Seções Internas */
+.tooltip-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.tooltip-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.tooltip-item span {
+  color: #e2e8f0;
+  text-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+/* Separador Vertical */
+.tooltip-separator {
+  width: 1px;
+  height: 24px;
+  background: linear-gradient(to bottom, transparent, rgba(79, 209, 199, 0.3), transparent);
+}
+
+/* --- Estilização das Teclas (Keyboard Keys) --- */
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  
+  background: linear-gradient(180deg, rgba(30, 40, 55, 0.9) 0%, rgba(20, 25, 35, 0.9) 100%);
+  border: 1px solid rgba(79, 209, 199, 0.3);
+  border-bottom-width: 2px; /* Efeito 3D */
+  border-radius: 4px;
+  
+  font-family: 'SF Mono', 'Monaco', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4fd1c7;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.key-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-right: 4px;
+}
+
+.key-row {
+  display: flex;
+  gap: 2px;
+}
+
+/* --- Ícones de Mouse (Pure CSS) --- */
+.mouse-icon {
+  width: 16px;
+  height: 24px;
+  border: 2px solid rgba(160, 174, 192, 0.5);
+  border-radius: 8px;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* Linha divisória dos botões do mouse */
+.mouse-icon::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: -2px;
+  right: -2px;
+  height: 1px;
+  background: transparent; 
+  /* Não desenhamos a linha inteira, usamos box-shadow ou lógica específica abaixo */
+}
+
+/* Representação do clique */
+.mouse-icon.left-click {
+  background: linear-gradient(90deg, #4fd1c7 50%, transparent 50%);
+  border-color: #4fd1c7;
+}
+/* Ajuste fino para preencher apenas a parte superior esquerda */
+.mouse-icon.left-click::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 50%; height: 8px;
+  background: #4fd1c7;
+  border-top-left-radius: 5px;
+}
+
+.mouse-icon.right-click {
+  border-color: #4fd1c7;
+}
+.mouse-icon.right-click::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; width: 50%; height: 8px;
+  background: #4fd1c7;
+  border-top-right-radius: 5px;
+}
+
+.mouse-icon.middle-click {
+  border-color: #4fd1c7;
+}
+.mouse-icon.middle-click::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 6px;
+  background: #4fd1c7;
+  border-radius: 2px;
+}
+
+.mouse-icon.scroll-click {
+    border-color: rgba(160, 174, 192, 0.5);
+}
+.mouse-icon.scroll-click::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 50%; transform: translateX(-50%);
+  width: 2px; height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  animation: scroll-anim 1.5s infinite;
+}
+
+@keyframes scroll-anim {
+  0% { transform: translateX(-50%) translateY(0); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(6px); opacity: 0; }
+}
+
+/* Responsividade: Em telas pequenas, quebra em duas linhas */
+@media (max-width: 900px) {
+  .controls-tooltip {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    width: 90%;
+    bottom: 20px;
+  }
+  
+  .tooltip-separator {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(79, 209, 199, 0.3), transparent);
+  }
+  
+  .tooltip-section {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

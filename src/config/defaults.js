@@ -266,7 +266,7 @@ export const DEFAULTS = {
     },
 
     terrainManipulation : {
-        brushRadius: 0.5,
-        brushIntensity: 0.1,
+        brushRadius: 0.1,
+        brushIntensity: 0.005,
     }
 }
