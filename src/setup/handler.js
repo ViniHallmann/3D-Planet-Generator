@@ -390,7 +390,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         
         renderer.render(
             time, cameraPosition, state.shaders, state.app.showWireframe, 
-            state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 1., rotationMatrixToUse, state.app.showRim
+            state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 1., rotationMatrixToUse, state.app.showRim, state.app.showWaves, state.app.showStars
         );
 
 
