@@ -1,5 +1,6 @@
 import { getControlsElements } from '../config/elements.js';
 import { hexToRgb } from '../utils/utils.js';
+import { loadTexture } from '../utils/loader.js'; 
 
 export function setupControls(state, renderer) {
 
@@ -284,4 +285,11 @@ export function setupControls(state, renderer) {
             }
         });
     }
+
+    //CLOUD TYPE
+    elements.cloudType.addEventListener('change', async (e) => {
+        const texturePath = `./src/assets/noises/${e.target.value}.png`;
+        const newTexture = await loadTexture(renderer, texturePath, 512);
+        renderer.setCloudTexture(newTexture);
+    });
 }

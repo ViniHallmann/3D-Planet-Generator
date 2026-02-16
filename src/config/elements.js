@@ -90,5 +90,6 @@ export function getControlsElements() {
         removeRingBtn:   document.getElementById('remove-ring-btn'),
         clearRingsBtn:   document.getElementById('clear-rings-btn'),
         ringCount:     document.getElementById('ring-count'),
+        cloudType: document.getElementById('cloud-type'),
     }
 }
