@@ -57,6 +57,7 @@ export function setupControls(state, renderer) {
         const newSeed = parseInt(e.target.value);
         if (!isNaN(newSeed) && newSeed >= 0 && newSeed <= 2147483647) {
             renderer.noiseGenerator.setSeed(newSeed);
+            renderer.regenerateTerrain(state.noise);
         } else {
             e.target.value = renderer.noiseGenerator.getSeed();
         }

@@ -531,3 +531,36 @@ canvas {
   outline: 2px solid #4fd1c7;
   outline-offset: 2px;
 }
+
+/* ==================== SEED INPUT ==================== */
+.seed-input {
+  flex: 1;
+  padding: 6px 10px;
+  background: rgba(45, 55, 72, 0.8);
+  border: 1px solid rgba(79, 209, 199, 0.2);
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 13px;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.seed-input:hover {
+  border-color: rgba(79, 209, 199, 0.4);
+}
+
+.seed-input:focus {
+  border-color: #4fd1c7;
+  box-shadow: 0 0 0 2px rgba(79, 209, 199, 0.2);
+}
+
+.seed-input::-webkit-inner-spin-button,
+.seed-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.seed-input {
+  -moz-appearance: textfield;
+}
