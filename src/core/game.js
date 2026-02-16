@@ -12,6 +12,7 @@ export class Game {
         this.timeRemaining = 30;
         this.state.game.score = 0;
         ringManager.score = 0;
+        this.state.shaders.slopeThreshold = 999.0;
         
         if (!this.state.app.topDownMode) {
             this.state.app.topDownMode = true;

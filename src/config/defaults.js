@@ -242,8 +242,8 @@ export const DEFAULTS = {
         rimColor: [0.0, 0.5, 1.0],
         rimIntensity: 0.5,
         slopeColor: [0.500, 0.400, 0.300],
-        slopeThreshold: 0.15,
-        slopeBlend: 0.2,
+        slopeThreshold: 0.2,
+        slopeBlend: 0.5,
     },
 
     clouds : {
