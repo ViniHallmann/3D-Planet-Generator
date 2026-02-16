@@ -439,6 +439,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
     window.addEventListener('keydown', (e) => {
         if (e.key.toLowerCase() === 'c') {
             state.app.topDownMode = !state.app.topDownMode;
+            state.shaders.slopeThreshold = state.app.topDownMode ? 999.0 : 0.2;
             const tooltip = document.getElementById('controls-tooltip');
             if (tooltip) tooltip.classList.toggle('hidden', state.app.topDownMode);
             
@@ -502,7 +503,6 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
 
     if (restartBtn) {
         restartBtn.addEventListener('click', () => {
-            // Limpar anéis visuais
             for (let i = ringObjects.length - 1; i >= 0; i--) {
                 const obj = ringObjects[i];
                 const rendererIndex = renderer.objects.indexOf(obj);
@@ -510,13 +510,10 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
                 ringObjects.splice(i, 1);
             }
             
-            // Limpar anéis do manager
+            state.shaders.slopeThreshold = 0.2;
             ringManager.clearRings();
-            
-            // Resetar jogo
             game.reset();
             
-            // Voltar ao modo normal
             if (state.app.topDownMode) {
                 state.app.topDownMode = false;
                 physics.toggleTopDownMode(plane, state.app.topDownMode);
