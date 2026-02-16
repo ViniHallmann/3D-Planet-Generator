@@ -91,5 +91,6 @@ export function getControlsElements() {
         clearRingsBtn:   document.getElementById('clear-rings-btn'),
         ringCount:     document.getElementById('ring-count'),
         cloudType: document.getElementById('cloud-type'),
+        starsToggle: document.getElementById('stars-toggle'),
     }
 }

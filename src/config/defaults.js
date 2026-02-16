@@ -25,6 +25,7 @@ export const DEFAULTS = {
         showRim: true,
         showWater: true,
         showWaves: true,
+        showStars: true,
         topDownMode: false,
     },
 

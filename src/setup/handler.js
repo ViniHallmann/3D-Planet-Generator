@@ -303,11 +303,14 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
 
         ringObjects.forEach(ringObj => {
             if (ringObj.ringReference) {
+
                 ringObj.position[0] = ringObj.ringReference.position[0];
                 ringObj.position[1] = ringObj.ringReference.position[1];
                 ringObj.position[2] = ringObj.ringReference.position[2];
 
                 ringObj.ringReference.updateAnimation();
+                const collectScale = ringObj.ringReference.scale * 0.1;
+                
                 const s = ringObj.ringReference.scale * 0.1;
                 ringObj.scale = [s, s, s];
             }
@@ -394,14 +397,14 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
             
             renderer.render(
                 time, cameraPosition, waterParams, state.app.showWireframe, 
-                state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 5., rotationMatrixToUse, state.app.showRim, state.app.showWaves
+                state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 5., rotationMatrixToUse, state.app.showRim, state.app.showWaves, state.app.showStars
             );
         }
 
         if (state.app.showClouds){
             renderer.render(
                 time, cameraPosition, state.cloudShadowParams, state.app.showWireframe, 
-                state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 3., rotationMatrixToUse, state.app.showRim, state.app.showWaves
+                state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 3., rotationMatrixToUse, state.app.showRim, state.app.showWaves, state.app.showStars
             );
             
             for (let i = 0; i < state.app.numActiveCloudLayers; i++) {
@@ -413,7 +416,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
                 };
                 renderer.render(
                     time, cameraPosition, layerParams, state.app.showWireframe, 
-                    state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 2., rotationMatrixToUse, state.app.showRim, state.app.showWaves
+                    state.app.showLambertianDiffuse, state.physics.AUTO_ROTATE, 2., rotationMatrixToUse, state.app.showRim, state.app.showWaves,  state.app.showStars
                 );
             }
         }
