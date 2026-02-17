@@ -251,7 +251,7 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
         cameraEndRadius: state.camera.radius,
         cameraDuration: 2000,
         
-        scaleDuration: 1500,
+        scaleDuration: 2500,
     };
 
 
@@ -277,14 +277,12 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
             const elapsed = now - intro.startTime;
             
             if (intro.phase === 0) {
-                // ZOOM: de longe para perto
                 const progress = Math.min(elapsed / intro.cameraDuration, 1.0);
                 const easedProgress = easing.easeOutCubic(progress);
                 
                 state.camera.radius = intro.cameraStartRadius + 
                     (intro.cameraEndRadius - intro.cameraStartRadius) * easedProgress;
                 
-                // Quando zoom chega em ~70%, começa o scale do planeta
                 if (progress >= 0.7 && !physics.animation.isAnimating) {
                     physics.animation.isAnimating = true;
                     physics.animation.startTime = now;
@@ -297,7 +295,6 @@ export function setupHandlers(canvas, state, renderer, physics, plane, ringManag
                     intro.phase = 1;
                 }
             } else if (intro.phase === 1) {
-                // Espera scale do planeta terminar
                 if (!physics.animation.isAnimating) {
                     intro.isActive = false;
                 }

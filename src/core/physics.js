@@ -26,7 +26,7 @@ export class Physics {
         this.animation = {
             isAnimating: true,
             startTime: performance.now(),
-            duration: 4500, 
+            duration: 5500, 
             startScale: 0.005,
             targetScale: 1.0,
             currentScale: 0.005,
