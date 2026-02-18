@@ -772,3 +772,15 @@ canvas {
     justify-content: center;
   }
 }
+/* ==================== CONTROLS FOOTER ==================== */
+.controls-footer {
+  margin-top: 24px;
+  padding: 12px 0 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: #a0aec0;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  letter-spacing: 0.2px;
+  opacity: 0.85;
+  border-top: 1px solid rgba(79, 209, 199, 0.12);
+}
